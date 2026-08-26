@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/privacy", "destination": "/" },
+    { "source": "/terms", "destination": "/" },
+    { "source": "/support", "destination": "/" }
+  ]
+}

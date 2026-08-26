@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <image x="182" y="80" width="660" height="660" xlink:href="homeypaw-mark-transparent.png" />
+  <text
+    x="512"
+    y="888"
+    fill="#2C2926"
+    font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif"
+    font-size="112"
+    font-weight="700"
+    letter-spacing="-2"
+    text-anchor="middle"
+  >HomeyPaw</text>
+</svg>

@@ -1,0 +1,715 @@
+{
+  "common": {
+    "seeAll": "查看全部",
+    "comingSoon": "這個功能會在後續階段開放。",
+    "loading": "載入中…",
+    "back": "返回",
+    "cancel": "取消",
+    "continue": "繼續",
+    "close": "關閉",
+    "error": "發生錯誤",
+    "retry": "再試一次",
+    "save": "儲存",
+    "edit": "編輯"
+  },
+  "auth": {
+    "tagline": "記錄毛孩一生的私人寵物日記",
+    "restoringSession": "正在恢復登入狀態…",
+    "fields": {
+      "displayName": "暱稱",
+      "displayNamePlaceholder": "你想顯示的名稱",
+      "email": "電郵地址",
+      "emailPlaceholder": "name@example.com",
+      "password": "密碼",
+      "passwordPlaceholder": "輸入密碼",
+      "passwordCreatePlaceholder": "最少 8 個字元",
+      "confirmPassword": "確認密碼",
+      "confirmPasswordPlaceholder": "再次輸入密碼",
+      "togglePassword": "顯示或隱藏密碼"
+    },
+    "validation": {
+      "displayNameRequired": "請輸入暱稱。",
+      "displayNameTooLong": "暱稱不可超過 80 個字元。",
+      "emailRequired": "請輸入電郵地址。",
+      "emailInvalid": "請輸入有效的電郵地址。",
+      "passwordRequired": "請輸入密碼。",
+      "passwordMinimum": "密碼最少需要 8 個字元。",
+      "confirmPasswordRequired": "請再次輸入密碼。",
+      "passwordMismatch": "兩次輸入的密碼不相同。"
+    },
+    "errors": {
+      "configuration": "尚未設定 Supabase。請先在 .env.local 填寫 Project URL 和 publishable／anon key，然後重新啟動 App。",
+      "emailExists": "這個電郵地址已經註冊。你可以直接登入或重設密碼。",
+      "generic": "暫時無法完成操作，請稍後再試。",
+      "invalidCredentials": "電郵地址或密碼不正確。",
+      "invalidEmail": "這個電郵地址無效。",
+      "network": "無法連接伺服器，請檢查網絡後再試。",
+      "rateLimit": "嘗試次數過多，請稍後再試。",
+      "signUpDisabled": "目前暫停建立新帳戶。",
+      "weakPassword": "密碼強度不足，請使用更長且較難猜的密碼。"
+    },
+    "signIn": {
+      "title": "登入",
+      "submit": "登入",
+      "forgotPassword": "忘記密碼？",
+      "noAccount": "還沒有帳戶？",
+      "createAccount": "建立帳戶"
+    },
+    "signUp": {
+      "title": "建立帳戶",
+      "subtitle": "建立你的私人 HomeyPaw 空間。",
+      "submit": "建立帳戶",
+      "hasAccount": "已經有帳戶？",
+      "signIn": "登入"
+    },
+    "checkEmail": {
+      "title": "檢查你的電郵",
+      "subtitle": "帳戶已建立，還差最後一步。",
+      "body": "請開啟確認郵件並按下連結。完成確認後返回 HomeyPaw 登入；在確認前我們不會把你顯示為已登入。",
+      "backToSignIn": "返回登入"
+    },
+    "forgotPassword": {
+      "title": "重設密碼",
+      "subtitle": "輸入註冊電郵，我們會寄出重設連結。",
+      "submit": "傳送重設電郵",
+      "success": "如果這個電郵已註冊，你很快會收到重設郵件。"
+    },
+    "resetPassword": {
+      "title": "設定新密碼",
+      "subtitle": "使用電郵中的安全連結設定新密碼。",
+      "submit": "更新密碼",
+      "preparing": "正在驗證重設連結…",
+      "invalidLink": "這個重設連結無效、已過期或已使用。請重新傳送重設電郵。",
+      "successTitle": "密碼已更新",
+      "successBody": "請使用新密碼重新登入 HomeyPaw。"
+    }
+  },
+  "tabs": {
+    "home": "首頁",
+    "journal": "日記",
+    "create": "新增",
+    "chat": "聊天",
+    "profile": "我的"
+  },
+  "home": {
+    "greeting": "晚上好 👋",
+    "greetings": {
+      "morning": "早晨好 👋",
+      "afternoon": "午安 👋",
+      "evening": "晚上好 👋"
+    },
+    "greetingSubtitle": "今天也留一點時間給彼此。",
+    "petName": "豆豆",
+    "petBreedAge": "柴犬 · 4歲",
+    "companionEyebrow": "一起生活的日子",
+    "companionDays": "陪伴你的第 {{days}} 天",
+    "quickRecord": "快速記錄",
+    "quickRecordHint": "把此刻留給未來的你",
+    "recentMemory": "最近回憶",
+    "memoryDate": "去年今日",
+    "memoryTitle": "海旁吹風的午後",
+    "memoryBody": "陽光很好，豆豆一路追着自己的影子。",
+    "latestJournal": "最近日記",
+    "latestJournalDate": "8月18日",
+    "latestJournalTitle": "今天的散步比平時久一點",
+    "notifications": "查看提醒",
+    "changePet": "切換毛孩",
+    "petAvatar": "豆豆的頭像",
+    "memoryPhoto": "豆豆在海旁散步的回憶相片",
+    "journalPhoto": "豆豆最近日記的相片",
+    "recordToday": "記錄今天",
+    "recordTodayHint": "留住今天和 {{name}} 的小片段",
+    "recentActivity": "家庭近況",
+    "noActivity": "還沒有家庭日記，一起記下第一個片段吧。",
+    "family": "毛孩家庭",
+    "familyCount_one": "{{count}} 位家庭成員",
+    "familyCount_other": "{{count}} 位家庭成員",
+    "inviteFamily": "邀請家人一起記錄 {{name}} 的生活",
+    "viewFamily": "查看家庭成員",
+    "viewJournal": "查看完整日記",
+    "memory": {
+      "onThisDay": "那年今日",
+      "yearsAgo_one": "{{count}} 年前的今天",
+      "yearsAgo_other": "{{count}} 年前的今天",
+      "recent": "最近回憶",
+      "empty": "累積更多日記後，珍貴回憶會在這裡再次出現。"
+    },
+    "errors": {
+      "refresh": "部分內容暫時未能更新，請稍後再試。"
+    }
+  },
+  "journal": {
+    "title": "日記",
+    "subtitle": "豆豆的生活，都在這裡慢慢累積。",
+    "photoCount": "{{count}} 張相片",
+    "timelineSubtitle": "{{name}} 的生命時間軸，由家人一起慢慢寫下。",
+    "today": "今天",
+    "yesterday": "昨天",
+    "readMore": "閱讀更多",
+    "morePhotos": "還有 {{count}} 張相片",
+    "entries": {
+      "walk": {
+        "date": "2026年8月18日",
+        "tag": "散步",
+        "body": "今天的風很舒服，我們沿着海旁慢慢走了很久。"
+      },
+      "meal": {
+        "date": "2026年8月15日",
+        "tag": "吃飯",
+        "body": "新鮮雞肉飯大成功，吃完還坐在碗旁邊等加餐。"
+      },
+      "quiet": {
+        "date": "2026年8月11日",
+        "tag": "睡覺",
+        "body": "下雨的午後，一起在沙發上睡了一覺。平凡，但很珍貴。"
+      }
+    },
+    "photos": {
+      "walk": "豆豆散步時的相片",
+      "mealOne": "豆豆吃飯的相片一",
+      "mealTwo": "豆豆吃飯的相片二"
+    }
+  },
+  "create": {
+    "title": "新增記錄",
+    "subtitle": "留住今天和毛孩相處的小片段。",
+    "emptyTitle": "從一張相片開始",
+    "emptyBody": "之後可以加入相片、文字、日期和標籤。Phase 1 暫時只展示流程入口。",
+    "choosePhoto": "選擇相片"
+  },
+  "posts": {
+    "authorWithDate": "{{author}} · {{date}} · {{time}}",
+    "fields": {
+      "photos": "相片",
+      "content": "文字",
+      "eventDate": "記錄日期",
+      "tag": "標籤（選填）",
+      "location": "地點名稱（選填）"
+    },
+    "tags": {
+      "walk": "散步",
+      "meal": "吃飯",
+      "sleep": "睡覺",
+      "play": "玩耍",
+      "grooming": "美容",
+      "vet": "看醫生",
+      "birthday": "生日",
+      "travel": "旅行",
+      "other": "其他"
+    },
+    "form": {
+      "contentPlaceholder": "寫下這一刻。只有相片也可以。",
+      "locationPlaceholder": "例如：西九海濱長廊"
+    },
+    "validation": {
+      "contentTooLong": "文字不可超過 4,000 個字元。",
+      "locationTooLong": "地點名稱不可超過 160 個字元。",
+      "dateInvalid": "請選擇今天或之前的有效日期。",
+      "contentOrPhoto": "請加入文字或至少一張相片。"
+    },
+    "photos": {
+      "choose": "選擇相片",
+      "count": "{{count}} / {{maximum}} 張",
+      "preview": "第 {{position}} 張相片預覽",
+      "entryPhoto": "日記的第 {{position}} 張相片",
+      "remove": "移除相片",
+      "moveEarlier": "向前移動",
+      "moveLater": "向後移動",
+      "permissionDenied": "未取得相片權限。你可以在系統設定中允許 HomeyPaw 存取相片。",
+      "limitedPermission": "目前只可讀取你選擇的部分相片；你仍可繼續發布，或到系統設定改為完整存取。",
+      "selectionError": "暫時無法讀取所選相片，請再試一次。",
+      "openSettings": "開啟系統設定",
+      "openFullscreen": "全螢幕查看第 {{position}} 張相片",
+      "fullscreen": "全螢幕相片 {{position}}",
+      "previous": "上一張相片",
+      "next": "下一張相片",
+      "viewerPosition": "{{position}} / {{total}}"
+    },
+    "progress": {
+      "processing": "正在處理相片 {{completed}} / {{total}}…",
+      "uploading": "正在上傳相片 {{completed}} / {{total}}…",
+      "saving": "正在安全儲存日記…"
+    },
+    "create": {
+      "title": "新增日記",
+      "subtitle": "記錄 {{name}} 的這一天。",
+      "submit": "發布日記",
+      "saved": "日記已發佈。"
+    },
+    "edit": {
+      "title": "編輯日記",
+      "subtitle": "未更改的相片不會重新上傳。",
+      "saved": "日記已更新。"
+    },
+    "list": {
+      "subtitle": "{{name}}的家庭共享生活記錄。",
+      "noPetSubtitle": "先建立毛孩檔案，再開始記錄。",
+      "add": "新增"
+    },
+    "empty": {
+      "title": "還沒有日記",
+      "body": "寫下 {{name}} 的第一個生活片段。",
+      "action": "新增日記",
+      "noPetTitle": "還沒有毛孩",
+      "noPetBody": "建立毛孩檔案後，就可以為牠保存私人相片日記。"
+    },
+    "delete": {
+      "title": "刪除這篇日記？",
+      "body": "日記和相關相片將永久刪除，無法復原。",
+      "action": "刪除日記"
+    },
+    "actions": {
+      "title": "日記操作"
+    },
+    "loading": {
+      "detail": "正在載入日記…",
+      "edit": "正在準備日記…"
+    },
+    "errors": {
+      "load": "暫時無法載入日記，請稍後再試。",
+      "notFound": "找不到這篇日記，或你沒有權限查看。",
+      "mediaLoad": "暫時無法安全載入日記相片，請稍後再試。",
+      "publish": "發布失敗。你選擇的相片仍然保留，可以直接重試。",
+      "publishCleanup": "發布失敗，而且暫時無法確認已上傳相片的清理狀態。相片仍保留在表單；請保持網絡連線後重試。",
+      "update": "儲存失敗。原有日記沒有被取代，你可以直接重試。",
+      "updateCleanup": "儲存失敗，而且暫時無法確認新增相片的清理狀態。原有日記仍保留；請保持網絡連線後重試。",
+      "removedMediaCleanup": "日記已儲存，但已移除相片的伺服器清理暫時未能確認；帳戶或毛孩刪除流程仍會再次清理私人媒體。",
+      "delete": "日記未能刪除，請稍後再試。",
+      "authorOnly": "只有日記作者可以編輯這篇內容。"
+    }
+  },
+  "family": {
+    "roles": {
+      "owner": "管理者",
+      "member": "家庭成員",
+      "viewer": "查看者"
+    },
+    "members": {
+      "title": "家庭成員",
+      "subtitle": "共有 {{count}} 人一起照顧{{name}}。",
+      "detailAction": "家庭成員 {{count}}",
+      "loading": "正在載入家庭成員…",
+      "avatar": "{{name}}的個人頭像預留位置",
+      "formerMember": "家庭成員",
+      "remove": "移除",
+      "removeTitle": "移除{{name}}？",
+      "removeConfirm": "{{name}}會立即失去這隻毛孩及其日記的存取權；過去發布的日記會繼續保留。",
+      "removed": "已移除家庭成員。"
+    },
+    "invite": {
+      "title": "邀請家人加入照顧{{name}}",
+      "fixedRules": "7 日內有效 · 最多 5 位家庭成員",
+      "loading": "正在檢查目前邀請…",
+      "create": "建立邀請碼",
+      "regenerate": "重新產生邀請碼",
+      "revoke": "撤銷",
+      "revokeTitle": "撤銷這個邀請？",
+      "revokeConfirm": "目前邀請碼將立即失效，已加入的家庭成員不受影響。",
+      "codeLabel": "邀請碼",
+      "codeHidden": "目前已有有效邀請。基於安全考慮，系統不會保存邀請碼明文；如需再次分享，請重新產生。",
+      "activeDetails": "有效至 {{expiresAt}} · 已使用 {{usedCount}}／{{maxUses}} 次",
+      "expired": "這個邀請已過期。如需邀請家人，請重新產生邀請碼。",
+      "fullyUsed": "這個邀請已達使用上限。如有需要，請重新產生邀請碼。",
+      "copy": "複製邀請碼",
+      "share": "分享",
+      "copiedTitle": "已複製邀請碼",
+      "copiedBody": "現在可以私下傳送給家庭成員。",
+      "shareMessage": "一起加入 HomeyPaw 照顧{{name}} 🐾\n\n邀請碼：{{code}}"
+    },
+    "join": {
+      "action": "加入家庭",
+      "title": "加入毛孩家庭",
+      "subtitle": "輸入毛孩管理者私下分享給你的邀請碼。",
+      "codeLabel": "邀請碼",
+      "codePlaceholder": "8 位字元",
+      "invitedBy": "{{inviter}} 邀請你加入{{name}}的 HomeyPaw 家庭。",
+      "confirm": "加入家庭",
+      "successTitle": "已加入家庭",
+      "viewPet": "查看毛孩",
+      "joined": "歡迎加入{{name}}的家庭 🐾",
+      "alreadyMember": "你已經是{{name}}的家庭成員。"
+    },
+    "errors": {
+      "invalidInvite": "邀請碼無效或已失效。",
+      "network": "暫時無法驗證邀請，請檢查網絡後再試。",
+      "createInvite": "暫時無法建立邀請，請稍後再試。",
+      "revokeInvite": "暫時無法撤銷邀請，請稍後再試。",
+      "loadMembers": "暫時無法載入家庭成員，或你已失去存取權。",
+      "removeMember": "暫時無法移除這位家庭成員，請稍後再試。"
+    }
+  },
+  "reminders": {
+    "title": "提醒",
+    "subtitle": "共享家庭照顧任務與本機提醒。",
+    "petFamily": "目前選擇的毛孩家庭",
+    "today": "今天",
+    "dayLabel": {
+      "today": "今天",
+      "tomorrow": "明天"
+    },
+    "todayEmpty": "今天暫時沒有待完成的照顧任務。",
+    "upcoming": "未來 30 天",
+    "emptyTitle": "別錯過毛孩的重要日子",
+    "emptyBody": "建立家庭共享的餵食、散步、用藥或自訂照顧任務。",
+    "add": "新增提醒",
+    "new": {
+      "title": "新增提醒",
+      "subtitle": "這個毛孩家庭的所有成員都會看到任務。",
+      "choosePet": "點一下選擇毛孩家庭"
+    },
+    "edit": {
+      "title": "編輯提醒",
+      "subtitle": "變更只會套用到未來的發生項目。"
+    },
+    "fields": {
+      "title": "任務名稱",
+      "type": "照顧類型",
+      "repeat": "排程",
+      "date": "日期",
+      "startsOn": "開始日期",
+      "time": "時間",
+      "weekDay": "星期幾",
+      "monthDay": "每月日期",
+      "note": "備註（選填）",
+      "timeZone": "排程時區"
+    },
+    "form": {
+      "titlePlaceholder": "例如：晚上吃藥",
+      "notePlaceholder": "劑量、準備事項或家庭備註",
+      "monthDayHint": "如果該月沒有這一天，會跳過該月。",
+      "timeZone": "固定家庭排程：{{timeZone}}"
+    },
+    "types": {
+      "custom": "自訂"
+    },
+    "schedule": {
+      "once": "單次",
+      "daily": "每天",
+      "weekly": "每週",
+      "monthly": "每月"
+    },
+    "scheduleLabel": {
+      "daily": "每天 {{time}}",
+      "weekly": "每逢{{day}} {{time}}",
+      "monthly": "每月 {{day}} 日 {{time}}"
+    },
+    "weekDays": {
+      "1": "週一",
+      "2": "週二",
+      "3": "週三",
+      "4": "週四",
+      "5": "週五",
+      "6": "週六",
+      "7": "週日"
+    },
+    "status": {
+      "upcoming": "即將到來",
+      "due": "現在要做",
+      "overdue": "已逾時",
+      "completed": "已完成"
+    },
+    "createdBy": "由 {{name}} 建立",
+    "createdByLabel": "建立者",
+    "completedBy": "{{name}} 於 {{time}} 完成",
+    "completedLabel": "完成紀錄",
+    "nextOccurrence": "下次時間",
+    "complete": {
+      "title": "完成照顧任務",
+      "action": "標記完成",
+      "note": "完成備註（選填）",
+      "notePlaceholder": "有甚麼需要讓家人知道"
+    },
+    "undo": {
+      "action": "復原完成",
+      "title": "復原這次完成？",
+      "body": "這次完成記錄和對應的照顧記錄會一併刪除，提醒會重新顯示為未完成。"
+    },
+    "deactivate": {
+      "title": "停止這個提醒？",
+      "body": "未來發生項目和本機通知會被移除；過往 Care Log 不會改變。",
+      "action": "停止提醒"
+    },
+    "permission": {
+      "promptTitle": "在這部裝置接收照顧提醒",
+      "promptBody": "HomeyPaw 可以在家庭共享任務到期時提醒你。任務已經成功儲存，你之後也可以更改權限。",
+      "allow": "允許通知",
+      "later": "稍後再說",
+      "deniedTitle": "通知已關閉",
+      "deniedBody": "共享任務仍可正常使用。請到設定開啟通知，才會收到裝置提醒。",
+      "settings": "設定"
+    },
+    "notification": {
+      "title": "{{petName}}：{{taskTitle}}",
+      "body": "今天 {{time}} · 點一下查看家庭照顧"
+    },
+    "validation": {
+      "title": "請輸入 100 個字元以內的任務名稱。",
+      "date": "請選擇有效日期。",
+      "time": "請選擇有效時間。",
+      "future": "請選擇未來的日期和時間。",
+      "weekDay": "請選擇星期幾。",
+      "monthDay": "請輸入 1 至 31。",
+      "note": "備註不可超過 300 個字元。"
+    },
+    "errors": {
+      "load": "暫時無法載入提醒，或你已失去存取權。",
+      "save": "提醒未能儲存；你填寫的內容仍然保留，可以直接重試。",
+      "complete": "任務未能完成，系統沒有建立重複的 Care Log。",
+      "undo": "暫時無法復原完成，請稍後再試。",
+      "deactivate": "暫時無法停止提醒，請稍後再試。",
+      "notFound": "這個提醒不存在，或你已失去存取權。"
+    },
+    "badgeAccessibility": "提醒，有 {{count}} 個任務需要處理",
+    "rowAccessibility": "{{petName}}，{{title}}，{{time}}，{{status}}"
+  },
+  "chat": {
+    "title": "家庭聊天",
+    "subtitle": "為每隻毛孩保留一個私密家庭空間。",
+    "petFamily": "目前選擇的毛孩家庭",
+    "comingTitle": "家庭聊天即將開放",
+    "comingBody": "之後，{{name}} 的管理者和家庭成員可在這裡私密交流。",
+    "privateNote": "這裡不會出現公開搜尋或陌生人訊息；被移除的成員也會失去存取權。",
+    "noPetTitle": "先選擇一個毛孩家庭",
+    "noPetBody": "建立毛孩檔案或使用邀請碼加入家庭後，聊天入口會顯示在這裡。"
+  },
+  "profile": {
+    "title": "我的",
+    "avatar": "使用者頭像",
+    "loading": "載入個人資料…",
+    "loadError": "暫時無法載入個人資料。",
+    "emailUnavailable": "未提供電郵地址",
+    "editProfile": "編輯個人資料",
+    "accountSecurity": "帳戶與安全",
+    "myPets": "我的毛孩",
+    "joinFamily": "加入家庭",
+    "language": "語言",
+    "about": "關於 HomeyPaw",
+    "aboutBody": "HomeyPaw 是記錄毛孩一生、與家庭安心協作的私人寵物日記。",
+    "zhHK": "繁體中文",
+    "english": "English",
+    "signOut": "登出",
+    "signOutConfirmTitle": "確定要登出 HomeyPaw？",
+    "signOutConfirmBody": "你需要再次輸入電郵和密碼才能回到私人內容。",
+    "edit": {
+      "title": "編輯個人資料",
+      "subtitle": "暱稱和語言會儲存在你的私人 Profile。",
+      "saved": "個人資料已更新。",
+      "saveError": "暫時無法儲存個人資料，請稍後再試。"
+    }
+  },
+  "pets": {
+    "codes": {
+      "dog": "狗狗",
+      "cat": "貓咪",
+      "other": "其他",
+      "male": "男生",
+      "female": "女生",
+      "unknown": "不確定"
+    },
+    "fields": {
+      "name": "名字",
+      "species": "種類",
+      "breed": "品種",
+      "gender": "性別",
+      "birthday": "生日",
+      "adoptionDate": "到家日",
+      "weight": "體重（公斤）",
+      "description": "關於牠",
+      "age": "年齡"
+    },
+    "age": {
+      "year_one": "{{count}}歲",
+      "year_other": "{{count}}歲",
+      "month_one": "{{count}}個月",
+      "month_other": "{{count}}個月"
+    },
+    "form": {
+      "namePlaceholder": "毛孩的名字",
+      "optionalPlaceholder": "選填",
+      "weightPlaceholder": "例如 8.5",
+      "descriptionPlaceholder": "寫下牠的個性、喜好或你想記住的事。",
+      "selectDate": "選擇日期",
+      "clearDate": "清除日期",
+      "unnamedPet": "毛孩"
+    },
+    "validation": {
+      "nameRequired": "請輸入毛孩的名字。",
+      "nameTooLong": "名字不可超過 80 個字元。",
+      "breedTooLong": "品種不可超過 80 個字元。",
+      "descriptionTooLong": "關於牠不可超過 2,000 個字元。",
+      "weightPositive": "體重必須是大於 0 的數字，最多兩位小數。",
+      "weightMaximum": "體重不可超過 1,000 公斤。",
+      "dateInvalid": "請輸入有效日期。",
+      "dateFuture": "日期不可在未來。"
+    },
+    "avatar": {
+      "accessibility": "{{name}}的頭像",
+      "choose": "選擇頭像",
+      "remove": "移除頭像",
+      "openSettings": "開啟系統設定",
+      "permissionDenied": "未取得相片權限。你可以在系統設定中允許 HomeyPaw 存取相片。",
+      "prepareError": "暫時無法處理這張相片，請選擇另一張相片。"
+    },
+    "empty": {
+      "title": "還沒有毛孩",
+      "body": "建立第一份毛孩檔案，開始保存你們一起生活的日子。",
+      "action": "新增毛孩",
+      "homeTitle": "歡迎來到 HomeyPaw",
+      "homeBody": "建立第一位毛孩的檔案，開始記錄你們的日子。"
+    },
+    "list": {
+      "title": "我的毛孩",
+      "subtitle": "查看你擁有及共同照顧的毛孩。",
+      "add": "新增"
+    },
+    "create": {
+      "title": "新增毛孩",
+      "subtitle": "建立一份只屬於你們的毛孩檔案。",
+      "submit": "建立毛孩檔案",
+      "saved": "毛孩檔案已建立。"
+    },
+    "edit": {
+      "title": "編輯{{name}}",
+      "subtitle": "更新毛孩的基本資料和頭像。",
+      "action": "編輯檔案"
+    },
+    "detail": {
+      "companionDays": "陪伴天數",
+      "weightValue": "{{weight}} 公斤",
+      "viewProfile": "查看毛孩檔案"
+    },
+    "switcher": {
+      "title": "我的毛孩",
+      "add": "新增毛孩"
+    },
+    "delete": {
+      "title": "刪除{{name}}？",
+      "body": "刪除後，{{name}}的檔案、日記、相關相片與照顧記錄將永久刪除，無法復原。",
+      "action": "刪除毛孩",
+      "completed": "毛孩檔案已刪除"
+    },
+    "loading": {
+      "home": "正在載入毛孩…",
+      "list": "正在載入我的毛孩…",
+      "detail": "正在載入毛孩檔案…"
+    },
+    "errors": {
+      "load": "暫時無法載入毛孩資料，請稍後再試。",
+      "notFound": "找不到這份毛孩檔案，或你沒有權限查看。",
+      "create": "暫時無法建立毛孩檔案，請稍後再試。",
+      "update": "暫時無法儲存變更，請稍後再試。",
+      "delete": "毛孩檔案未能刪除，請稍後再試。",
+      "ownerOnly": "只有毛孩管理者可以編輯或刪除這份檔案。",
+      "avatarCleanupPending": "毛孩檔案已正確刪除，但頭像檔案暫時未能清理。頭像已不能透過你的帳戶存取。",
+      "avatarUploadAfterCreate": "毛孩檔案已建立，但頭像未能上傳。你可以稍後在編輯頁重試。"
+    }
+  },
+  "care": {
+    "types": {
+      "feeding": "餵食",
+      "walk": "散步",
+      "medicine": "用藥",
+      "bath": "洗澡",
+      "grooming": "梳毛美容",
+      "other": "其他照顧"
+    },
+    "quick": {
+      "title": "想記錄甚麼？",
+      "subtitle": "為{{name}}新增生活片段或已完成的照顧。",
+      "journal": "相片日記"
+    },
+    "fields": {
+      "occurredAt": "日期與時間",
+      "duration": "時長（選填）",
+      "note": "備註"
+    },
+    "form": {
+      "optional": "選填",
+      "required": "必填",
+      "forPet": "記錄給",
+      "changePet": "切換毛孩",
+      "durationPlaceholder": "分鐘",
+      "notePlaceholder": "補充簡短照顧內容"
+    },
+    "create": {
+      "title": "記錄照顧",
+      "subtitle": "把已完成的照顧安全分享給家庭。",
+      "submit": "儲存照顧記錄",
+      "saved": "照顧記錄已儲存。"
+    },
+    "edit": { "title": "編輯照顧記錄", "saved": "照顧記錄已更新。" },
+    "home": {
+      "title": "今日照顧",
+      "empty": "今天還沒有照顧記錄。",
+      "add": "記錄照顧",
+      "meta": "{{name}} · {{time}}"
+    },
+    "history": {
+      "title": "照顧歷史",
+      "subtitle": "毛孩家庭共同分享的已完成照顧。"
+    },
+    "empty": {
+      "title": "還沒有照顧記錄",
+      "body": "為{{name}}記下第一項已完成照顧。",
+      "action": "記錄照顧",
+      "noPetTitle": "還沒有毛孩",
+      "noPetBody": "先建立或加入毛孩家庭，再開始記錄照顧。"
+    },
+    "delete": {
+      "title": "刪除這項照顧記錄？",
+      "body": "這項已完成照顧會被永久刪除。",
+      "action": "刪除"
+    },
+    "performedBy": "由{{name}}記錄",
+    "durationMinutes_one": "{{count}} 分鐘",
+    "durationMinutes_other": "{{count}} 分鐘",
+    "validation": {
+      "noteTooLong": "備註不可超過 500 個字元。",
+      "timeInvalid": "請選擇有效時間，最多只可晚於現在 5 分鐘。",
+      "otherNoteRequired": "請填寫備註說明這項照顧。",
+      "durationInvalid": "請輸入 1 至 1,440 之間的整數分鐘。"
+    },
+    "loading": { "edit": "正在載入照顧記錄…" },
+    "errors": {
+      "invalidType": "請選擇有效的照顧類型。",
+      "load": "暫時無法載入照顧記錄，請稍後再試。",
+      "create": "照顧記錄未能儲存，你填寫的內容仍然保留，可以直接重試。",
+      "update": "儲存失敗，原有照顧記錄沒有被取代。",
+      "delete": "照顧記錄未能刪除，請稍後再試。",
+      "authorOnly": "只有記錄這項照顧的人可以編輯。"
+    }
+  },
+  "network": {
+    "offline": "目前沒有網絡連線。你仍可查看已載入內容。",
+    "reconnected": "網絡已恢復。"
+  },
+  "globalError": {
+    "title": "HomeyPaw 暫時遇到問題",
+    "body": "你的資料沒有被更改。請再試一次；如果問題持續，請重新開啟 App。"
+  },
+  "about": {
+    "title": "關於 HomeyPaw",
+    "tagline": "陪伴毛孩一生的私人家庭日記。",
+    "version": "版本 {{version}}（{{build}}）",
+    "privacy": "私隱政策",
+    "terms": "服務條款",
+    "contact": "聯絡支援",
+    "privacyTitle": "私隱政策",
+    "termsTitle": "服務條款",
+    "updated": "更新日期：2026 年 8 月 27 日",
+    "privacyBody": "HomeyPaw 會處理你主動提供的帳戶、毛孩、家庭共享、日記、相片、照顧記錄與提醒資料，用於提供私人寵物日記服務。資料儲存在 Supabase，並以登入、Row Level Security 及私人 Storage 規則限制存取。相片權限只在你選擇相片時使用；通知權限只用於你在裝置上啟用的本機提醒。HomeyPaw 目前不使用廣告追蹤、聯絡人、精確位置、相機、麥克風或遠端推送。你可在 App 內刪除帳戶及相關資料。如需支援，請電郵 lenny996@163.com。公開政策網址會在正式發佈前提供。",
+    "termsBody": "你須為自己的帳戶憑據與分享邀請碼負責，並只上載你有權使用的內容。家庭成員可依角色查看或管理共享毛孩資料；移除成員會停止其之後的存取，但已發佈內容會依產品列明的資料生命週期處理。提醒屬輔助工具，不應取代獸醫或緊急照護建議。服務可能因維護或網絡中斷而暫時不可用。刪除帳戶或毛孩是不可復原操作。如需支援，請電郵 lenny996@163.com。公開條款網址會在正式發佈前提供。"
+  },
+  "accountSecurity": {
+    "title": "帳戶與安全",
+    "subtitle": "管理你的 HomeyPaw 帳戶和私人資料。",
+    "dangerZone": "危險操作",
+    "deleteDescription": "刪除帳戶會永久刪除登入身份、Profile 和你擁有的毛孩資料，也會永久刪除你在共享毛孩中建立的日記、相片與照顧記錄。這個操作無法復原。",
+    "deleteAction": "永久刪除帳戶",
+    "confirmTitle": "刪除 HomeyPaw 帳戶？",
+    "confirmBody": "你的帳戶及擁有的毛孩資料將永久刪除；你在共享毛孩中建立的日記、相片與照顧記錄也會永久刪除。",
+    "finalConfirmTitle": "最後確認",
+    "finalConfirmBody": "刪除帳戶也會永久刪除你在共享毛孩中建立的日記、相片與照顧記錄。確定現在刪除帳戶？",
+    "deleteError": "帳戶未能刪除。你的登入狀態和資料沒有被更改，請稍後再試。"
+  }
+}

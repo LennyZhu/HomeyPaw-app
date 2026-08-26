@@ -1,0 +1,13 @@
+project_id = "pawday"
+
+[functions.delete-account]
+verify_jwt = true
+
+[functions.delete-pet]
+verify_jwt = true
+
+[functions.delete-post]
+verify_jwt = true
+
+[functions.preview-pet-invite]
+verify_jwt = true

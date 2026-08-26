@@ -1,0 +1,93 @@
+{
+  "expo": {
+    "name": "HomeyPaw",
+    "slug": "pawday",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/branding/homeypaw-app-icon.png",
+    "scheme": "pawday",
+    "userInterfaceStyle": "light",
+    "locales": {
+      "en": {
+        "ios": {
+          "CFBundleDisplayName": "HomeyPaw",
+          "NSPhotoLibraryUsageDescription": "HomeyPaw needs access to your photos so you can choose pet profile pictures and share memories."
+        }
+      },
+      "zh-HK": {
+        "ios": {
+          "CFBundleDisplayName": "HomeyPaw",
+          "NSPhotoLibraryUsageDescription": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。"
+        }
+      }
+    },
+    "ios": {
+      "icon": "./assets/branding/homeypaw-app-icon.png",
+      "supportsTablet": false,
+      "bundleIdentifier": "com.zhushunli.pawday",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.zhushunli.pawday",
+      "versionCode": 1,
+      "permissions": ["android.permission.SCHEDULE_EXACT_ALARM"],
+      "adaptiveIcon": {
+        "backgroundColor": "#FFF9F5",
+        "foregroundImage": "./assets/branding/homeypaw-mark-transparent.png",
+        "monochromeImage": "./assets/branding/homeypaw-mark-transparent.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/branding/homeypaw-favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "headers": {
+            "Cross-Origin-Embedder-Policy": "credentialless",
+            "Cross-Origin-Opener-Policy": "same-origin"
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFF9F5",
+          "image": "./assets/branding/homeypaw-splash.png",
+          "imageWidth": 220,
+          "resizeMode": "contain"
+        }
+      ],
+      "expo-image",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "expo-localization",
+      "./plugins/with-local-notifications-only",
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "pawday-reminders",
+          "enableBackgroundRemoteNotifications": false
+        }
+      ],
+      "expo-sqlite",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,0 +1,715 @@
+{
+  "common": {
+    "seeAll": "See all",
+    "comingSoon": "This feature will be available in a later phase.",
+    "loading": "Loading…",
+    "back": "Back",
+    "cancel": "Cancel",
+    "continue": "Continue",
+    "close": "Close",
+    "error": "Something went wrong",
+    "retry": "Try again",
+    "save": "Save",
+    "edit": "Edit"
+  },
+  "auth": {
+    "tagline": "A private journal for your pet's whole life",
+    "restoringSession": "Restoring your session…",
+    "fields": {
+      "displayName": "Display name",
+      "displayNamePlaceholder": "The name you want to show",
+      "email": "Email address",
+      "emailPlaceholder": "name@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "passwordCreatePlaceholder": "At least 8 characters",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Enter your password again",
+      "togglePassword": "Show or hide password"
+    },
+    "validation": {
+      "displayNameRequired": "Enter a display name.",
+      "displayNameTooLong": "Display name cannot exceed 80 characters.",
+      "emailRequired": "Enter your email address.",
+      "emailInvalid": "Enter a valid email address.",
+      "passwordRequired": "Enter your password.",
+      "passwordMinimum": "Password must be at least 8 characters.",
+      "confirmPasswordRequired": "Enter your password again.",
+      "passwordMismatch": "The passwords do not match."
+    },
+    "errors": {
+      "configuration": "Supabase is not configured. Add the Project URL and publishable/anon key to .env.local, then restart the app.",
+      "emailExists": "That email address is already registered. Sign in or reset your password.",
+      "generic": "We could not complete that action. Try again shortly.",
+      "invalidCredentials": "The email address or password is incorrect.",
+      "invalidEmail": "That email address is invalid.",
+      "network": "We could not reach the server. Check your connection and try again.",
+      "rateLimit": "Too many attempts. Please wait and try again.",
+      "signUpDisabled": "New account creation is currently unavailable.",
+      "weakPassword": "Choose a longer password that is harder to guess."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create account"
+    },
+    "signUp": {
+      "title": "Create account",
+      "subtitle": "Create your private space in HomeyPaw.",
+      "submit": "Create account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "checkEmail": {
+      "title": "Check your email",
+      "subtitle": "Your account is almost ready.",
+      "body": "Open the confirmation email and follow its link. Then return to HomeyPaw and sign in. We will not show you as signed in before confirmation.",
+      "backToSignIn": "Back to sign in"
+    },
+    "forgotPassword": {
+      "title": "Reset password",
+      "subtitle": "Enter your registered email and we'll send a reset link.",
+      "submit": "Send reset email",
+      "success": "If that email is registered, a reset message will arrive shortly."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Use the secure link from your email to choose a new password.",
+      "submit": "Update password",
+      "preparing": "Verifying your reset link…",
+      "invalidLink": "This reset link is invalid, expired, or already used. Send a new reset email and try again.",
+      "successTitle": "Password updated",
+      "successBody": "Sign in to HomeyPaw again using your new password."
+    }
+  },
+  "tabs": {
+    "home": "Home",
+    "journal": "Journal",
+    "create": "New",
+    "chat": "Chat",
+    "profile": "Me"
+  },
+  "home": {
+    "greeting": "Good evening 👋",
+    "greetings": {
+      "morning": "Good morning 👋",
+      "afternoon": "Good afternoon 👋",
+      "evening": "Good evening 👋"
+    },
+    "greetingSubtitle": "Make a little time for each other today.",
+    "petName": "Doudou",
+    "petBreedAge": "Shiba Inu · 4 years",
+    "companionEyebrow": "Your time together",
+    "companionDays": "Day {{days}} by your side",
+    "quickRecord": "Quick entry",
+    "quickRecordHint": "Keep this moment for your future self",
+    "recentMemory": "Recent memory",
+    "memoryDate": "This day last year",
+    "memoryTitle": "A breezy afternoon by the harbour",
+    "memoryBody": "The sun was lovely, and Doudou chased his own shadow all the way.",
+    "latestJournal": "Latest journal",
+    "latestJournalDate": "18 Aug",
+    "latestJournalTitle": "Our walk was a little longer today",
+    "notifications": "View reminders",
+    "changePet": "Switch pet",
+    "petAvatar": "Doudou's avatar",
+    "memoryPhoto": "A memory of Doudou walking by the harbour",
+    "journalPhoto": "Photo from Doudou's latest journal entry",
+    "recordToday": "Record today",
+    "recordTodayHint": "Keep a little moment from today with {{name}}",
+    "recentActivity": "Family activity",
+    "noActivity": "No family journal entries yet. Save the first little moment together.",
+    "family": "Pet family",
+    "familyCount_one": "{{count}} family member",
+    "familyCount_other": "{{count}} family members",
+    "inviteFamily": "Invite family to keep {{name}}'s story together",
+    "viewFamily": "View family members",
+    "viewJournal": "View full journal",
+    "memory": {
+      "onThisDay": "On this day",
+      "yearsAgo_one": "This day {{count}} year ago",
+      "yearsAgo_other": "This day {{count}} years ago",
+      "recent": "Recent memory",
+      "empty": "As the journal grows, precious memories will return here."
+    },
+    "errors": {
+      "refresh": "Some content could not be refreshed. Try again shortly."
+    }
+  },
+  "journal": {
+    "title": "Journal",
+    "subtitle": "A quiet collection of Doudou's everyday life.",
+    "photoCount": "{{count}} photos",
+    "timelineSubtitle": "{{name}}'s life timeline, written together by family.",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "readMore": "Read more",
+    "morePhotos": "{{count}} more photos",
+    "entries": {
+      "walk": {
+        "date": "18 August 2026",
+        "tag": "Walk",
+        "body": "The breeze felt wonderful, so we took our time walking along the harbour."
+      },
+      "meal": {
+        "date": "15 August 2026",
+        "tag": "Meal",
+        "body": "The fresh chicken bowl was a hit. He stayed beside it, hoping for seconds."
+      },
+      "quiet": {
+        "date": "11 August 2026",
+        "tag": "Nap",
+        "body": "We napped together on the sofa through a rainy afternoon. Ordinary, but precious."
+      }
+    },
+    "photos": {
+      "walk": "Doudou out for a walk",
+      "mealOne": "Doudou's meal photo one",
+      "mealTwo": "Doudou's meal photo two"
+    }
+  },
+  "create": {
+    "title": "New entry",
+    "subtitle": "Keep a little piece of today with your pet.",
+    "emptyTitle": "Start with a photo",
+    "emptyBody": "You will be able to add photos, notes, a date and tags. Phase 1 only previews this entry point.",
+    "choosePhoto": "Choose photos"
+  },
+  "posts": {
+    "authorWithDate": "{{author}} · {{date}} · {{time}}",
+    "fields": {
+      "photos": "Photos",
+      "content": "Note",
+      "eventDate": "Entry date",
+      "tag": "Tag (optional)",
+      "location": "Place name (optional)"
+    },
+    "tags": {
+      "walk": "Walk",
+      "meal": "Meal",
+      "sleep": "Sleep",
+      "play": "Play",
+      "grooming": "Grooming",
+      "vet": "Vet",
+      "birthday": "Birthday",
+      "travel": "Travel",
+      "other": "Other"
+    },
+    "form": {
+      "contentPlaceholder": "Write down this moment. A photo on its own is fine too.",
+      "locationPlaceholder": "For example, West Kowloon Promenade"
+    },
+    "validation": {
+      "contentTooLong": "The note cannot exceed 4,000 characters.",
+      "locationTooLong": "The place name cannot exceed 160 characters.",
+      "dateInvalid": "Choose a valid date no later than today.",
+      "contentOrPhoto": "Add a note or at least one photo."
+    },
+    "photos": {
+      "choose": "Choose photos",
+      "count": "{{count}} / {{maximum}} photos",
+      "preview": "Photo {{position}} preview",
+      "entryPhoto": "Journal photo {{position}}",
+      "remove": "Remove photo",
+      "moveEarlier": "Move earlier",
+      "moveLater": "Move later",
+      "permissionDenied": "Photo access was not granted. You can allow HomeyPaw to access photos in system settings.",
+      "limitedPermission": "HomeyPaw can currently read only selected photos. You can still publish, or switch to full access in system settings.",
+      "selectionError": "We couldn't read the selected photos. Please try again.",
+      "openSettings": "Open system settings",
+      "openFullscreen": "View photo {{position}} full screen",
+      "fullscreen": "Full-screen photo {{position}}",
+      "previous": "Previous photo",
+      "next": "Next photo",
+      "viewerPosition": "{{position}} / {{total}}"
+    },
+    "progress": {
+      "processing": "Processing photo {{completed}} / {{total}}…",
+      "uploading": "Uploading photo {{completed}} / {{total}}…",
+      "saving": "Saving your journal securely…"
+    },
+    "create": {
+      "title": "New journal entry",
+      "subtitle": "Keep this day with {{name}}.",
+      "submit": "Publish entry",
+      "saved": "Journal entry published."
+    },
+    "edit": {
+      "title": "Edit journal entry",
+      "subtitle": "Photos you keep will not be uploaded again.",
+      "saved": "Journal entry updated."
+    },
+    "list": {
+      "subtitle": "{{name}}'s shared family journal.",
+      "noPetSubtitle": "Create a pet profile to begin journaling.",
+      "add": "New"
+    },
+    "empty": {
+      "title": "No journal entries yet",
+      "body": "Save the first little moment from {{name}}'s life.",
+      "action": "New entry",
+      "noPetTitle": "No pets yet",
+      "noPetBody": "Create a pet profile, then you can keep a private photo journal for them."
+    },
+    "delete": {
+      "title": "Delete this journal entry?",
+      "body": "The entry and its photos will be permanently deleted. This cannot be undone.",
+      "action": "Delete entry"
+    },
+    "actions": {
+      "title": "Journal actions"
+    },
+    "loading": {
+      "detail": "Loading journal entry…",
+      "edit": "Preparing journal entry…"
+    },
+    "errors": {
+      "load": "We couldn't load the journal. Try again shortly.",
+      "notFound": "This journal entry was not found, or you do not have access.",
+      "mediaLoad": "We couldn't securely load the journal photos. Try again shortly.",
+      "publish": "Publishing failed. Your selected photos are still here, so you can retry.",
+      "publishCleanup": "Publishing failed and cleanup of uploaded photos could not be confirmed. Your selections remain in the form; reconnect and retry.",
+      "update": "Saving failed. The original entry was not replaced, so you can retry.",
+      "updateCleanup": "Saving failed and cleanup of newly uploaded photos could not be confirmed. The original entry remains; reconnect and retry.",
+      "removedMediaCleanup": "The entry was saved, but cleanup of removed photos could not be confirmed. Account and pet deletion will still clean private media again.",
+      "delete": "The journal entry was not deleted. Try again shortly.",
+      "authorOnly": "Only the author can edit this journal entry."
+    }
+  },
+  "family": {
+    "roles": {
+      "owner": "Owner",
+      "member": "Family member",
+      "viewer": "Viewer"
+    },
+    "members": {
+      "title": "Family members",
+      "subtitle": "{{count}} people care for {{name}} together.",
+      "detailAction": "Family members {{count}}",
+      "loading": "Loading family members…",
+      "avatar": "{{name}}'s profile placeholder",
+      "formerMember": "Family member",
+      "remove": "Remove",
+      "removeTitle": "Remove {{name}}?",
+      "removeConfirm": "{{name}} will immediately lose access to this pet and its journal. Their existing journal entries will remain.",
+      "removed": "The family member has been removed."
+    },
+    "invite": {
+      "title": "Invite family to care for {{name}}",
+      "fixedRules": "Valid for 7 days · Up to 5 family members",
+      "loading": "Checking the current invitation…",
+      "create": "Create invite code",
+      "regenerate": "Generate a new code",
+      "revoke": "Revoke",
+      "revokeTitle": "Revoke this invitation?",
+      "revokeConfirm": "The current code will stop working. Existing family members will not be affected.",
+      "codeLabel": "Invite code",
+      "codeHidden": "An invitation is active. For security, its plaintext code is not stored. Generate a new code if you need to share it again.",
+      "activeDetails": "Expires {{expiresAt}} · {{usedCount}} of {{maxUses}} uses",
+      "expired": "This invitation has expired. Generate a new code to invite someone.",
+      "fullyUsed": "This invitation has reached its use limit. Generate a new code if needed.",
+      "copy": "Copy code",
+      "share": "Share",
+      "copiedTitle": "Invite code copied",
+      "copiedBody": "You can now send it privately to your family member.",
+      "shareMessage": "Join me on HomeyPaw to care for {{name}} 🐾\n\nInvite code: {{code}}"
+    },
+    "join": {
+      "action": "Join a family",
+      "title": "Join a pet family",
+      "subtitle": "Enter the private invite code shared by the pet owner.",
+      "codeLabel": "Invite code",
+      "codePlaceholder": "8 characters",
+      "invitedBy": "{{inviter}} invited you to join {{name}}'s HomeyPaw family.",
+      "confirm": "Join family",
+      "successTitle": "Family joined",
+      "viewPet": "View pet",
+      "joined": "Welcome to {{name}}'s family 🐾",
+      "alreadyMember": "You are already a family member of {{name}}."
+    },
+    "errors": {
+      "invalidInvite": "This invite code is invalid or has expired.",
+      "network": "We couldn't verify the invitation. Check your connection and try again.",
+      "createInvite": "We couldn't create an invitation. Try again shortly.",
+      "revokeInvite": "We couldn't revoke the invitation. Try again shortly.",
+      "loadMembers": "We couldn't load the family members, or you no longer have access.",
+      "removeMember": "We couldn't remove this family member. Try again shortly."
+    }
+  },
+  "reminders": {
+    "title": "Reminders",
+    "subtitle": "Shared family care tasks and device reminders.",
+    "petFamily": "Selected pet family",
+    "today": "Today",
+    "dayLabel": {
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
+    "todayEmpty": "No care task is due today.",
+    "upcoming": "Upcoming 30 days",
+    "emptyTitle": "Never miss an important day",
+    "emptyBody": "Create a shared feeding, walk, medicine or custom care task.",
+    "add": "Add reminder",
+    "new": {
+      "title": "New reminder",
+      "subtitle": "Everyone in this pet family will see the task.",
+      "choosePet": "Tap to choose a pet family"
+    },
+    "edit": {
+      "title": "Edit reminder",
+      "subtitle": "Changes apply to future occurrences only."
+    },
+    "fields": {
+      "title": "Task title",
+      "type": "Care type",
+      "repeat": "Schedule",
+      "date": "Date",
+      "startsOn": "Starts on",
+      "time": "Time",
+      "weekDay": "Day of week",
+      "monthDay": "Day of month",
+      "note": "Note (optional)",
+      "timeZone": "Schedule time zone"
+    },
+    "form": {
+      "titlePlaceholder": "For example, evening medicine",
+      "notePlaceholder": "Dose, preparation or family note",
+      "monthDayHint": "Months without this date are skipped.",
+      "timeZone": "Fixed family schedule: {{timeZone}}"
+    },
+    "types": {
+      "custom": "Custom"
+    },
+    "schedule": {
+      "once": "Once",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "scheduleLabel": {
+      "daily": "Every day at {{time}}",
+      "weekly": "Every {{day}} at {{time}}",
+      "monthly": "Day {{day}} of each month at {{time}}"
+    },
+    "weekDays": {
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat",
+      "7": "Sun"
+    },
+    "status": {
+      "upcoming": "Upcoming",
+      "due": "Due",
+      "overdue": "Overdue",
+      "completed": "Completed"
+    },
+    "createdBy": "Created by {{name}}",
+    "createdByLabel": "Created by",
+    "completedBy": "{{name}} completed at {{time}}",
+    "completedLabel": "Completion",
+    "nextOccurrence": "Next occurrence",
+    "complete": {
+      "title": "Complete care task",
+      "action": "Mark complete",
+      "note": "Completion note (optional)",
+      "notePlaceholder": "Anything the family should know"
+    },
+    "undo": {
+      "action": "Undo completion",
+      "title": "Undo this completion?",
+      "body": "This completion and its linked Care Log will be deleted, and the reminder will become incomplete again."
+    },
+    "deactivate": {
+      "title": "Stop this reminder?",
+      "body": "Future occurrences and local notifications will be removed. Previous Care Logs remain unchanged.",
+      "action": "Stop reminder"
+    },
+    "permission": {
+      "promptTitle": "Get care reminders on this device",
+      "promptBody": "HomeyPaw can notify you when a shared family task is due. The task is already saved, and you can change this permission later.",
+      "allow": "Allow notifications",
+      "later": "Maybe later",
+      "deniedTitle": "Notifications are off",
+      "deniedBody": "Shared tasks still work. Turn on notifications in Settings to receive device reminders.",
+      "settings": "Settings"
+    },
+    "notification": {
+      "title": "{{petName}}: {{taskTitle}}",
+      "body": "Today {{time}} · Tap to view family care"
+    },
+    "validation": {
+      "title": "Enter a task title of 100 characters or fewer.",
+      "date": "Choose a valid date.",
+      "time": "Choose a valid time.",
+      "future": "Choose a future date and time.",
+      "weekDay": "Choose a day of the week.",
+      "monthDay": "Enter a day from 1 to 31.",
+      "note": "The note cannot exceed 300 characters."
+    },
+    "errors": {
+      "load": "We couldn't load reminders, or you no longer have access.",
+      "save": "The reminder couldn't be saved. Your entries are still here, so you can try again.",
+      "complete": "The task couldn't be completed. No duplicate Care Log was created.",
+      "undo": "The completion couldn't be undone. Try again shortly.",
+      "deactivate": "The reminder couldn't be stopped. Try again shortly.",
+      "notFound": "This reminder doesn't exist or you no longer have access."
+    },
+    "badgeAccessibility": "Reminders, {{count}} tasks need attention",
+    "rowAccessibility": "{{petName}}, {{title}}, {{time}}, {{status}}"
+  },
+  "chat": {
+    "title": "Family chat",
+    "subtitle": "A private family space for each pet.",
+    "petFamily": "Currently selected pet family",
+    "comingTitle": "Family chat is coming soon",
+    "comingBody": "Later, {{name}}'s owner and family members will be able to talk here privately.",
+    "privateNote": "There will be no public discovery or messages from strangers, and removed members will lose access.",
+    "noPetTitle": "Choose a pet family first",
+    "noPetBody": "Create a pet profile or join with an invite code, and the chat entry will appear here."
+  },
+  "profile": {
+    "title": "Me",
+    "avatar": "User profile picture",
+    "loading": "Loading your profile…",
+    "loadError": "We couldn't load your profile.",
+    "emailUnavailable": "Email address unavailable",
+    "editProfile": "Edit profile",
+    "accountSecurity": "Account and security",
+    "myPets": "My pets",
+    "joinFamily": "Join a family",
+    "language": "Language",
+    "about": "About HomeyPaw",
+    "aboutBody": "HomeyPaw is a private pet journal for a lifetime of calm family care.",
+    "zhHK": "繁體中文",
+    "english": "English",
+    "signOut": "Sign out",
+    "signOutConfirmTitle": "Sign out of HomeyPaw?",
+    "signOutConfirmBody": "You'll need your email and password to access private content again.",
+    "edit": {
+      "title": "Edit profile",
+      "subtitle": "Your display name and language are stored in your private profile.",
+      "saved": "Your profile has been updated.",
+      "saveError": "We couldn't save your profile. Try again shortly."
+    }
+  },
+  "pets": {
+    "codes": {
+      "dog": "Dog",
+      "cat": "Cat",
+      "other": "Other",
+      "male": "Male",
+      "female": "Female",
+      "unknown": "Not sure"
+    },
+    "fields": {
+      "name": "Name",
+      "species": "Species",
+      "breed": "Breed",
+      "gender": "Gender",
+      "birthday": "Birthday",
+      "adoptionDate": "Homecoming date",
+      "weight": "Weight (kg)",
+      "description": "About",
+      "age": "Age"
+    },
+    "age": {
+      "year_one": "{{count}} year",
+      "year_other": "{{count}} years",
+      "month_one": "{{count}} month",
+      "month_other": "{{count}} months"
+    },
+    "form": {
+      "namePlaceholder": "Your pet's name",
+      "optionalPlaceholder": "Optional",
+      "weightPlaceholder": "For example, 8.5",
+      "descriptionPlaceholder": "Their personality, favourite things, or anything you want to remember.",
+      "selectDate": "Choose a date",
+      "clearDate": "Clear date",
+      "unnamedPet": "Pet"
+    },
+    "validation": {
+      "nameRequired": "Enter your pet's name.",
+      "nameTooLong": "Name cannot exceed 80 characters.",
+      "breedTooLong": "Breed cannot exceed 80 characters.",
+      "descriptionTooLong": "About cannot exceed 2,000 characters.",
+      "weightPositive": "Weight must be greater than 0 with at most two decimal places.",
+      "weightMaximum": "Weight cannot exceed 1,000 kg.",
+      "dateInvalid": "Enter a valid date.",
+      "dateFuture": "The date cannot be in the future."
+    },
+    "avatar": {
+      "accessibility": "{{name}}'s avatar",
+      "choose": "Choose avatar",
+      "remove": "Remove avatar",
+      "openSettings": "Open system settings",
+      "permissionDenied": "Photo access was not granted. You can allow HomeyPaw to access photos in system settings.",
+      "prepareError": "We couldn't process that photo. Please choose another one."
+    },
+    "empty": {
+      "title": "No pets yet",
+      "body": "Create your first pet profile and start keeping the days you share.",
+      "action": "Add a pet",
+      "homeTitle": "Welcome to HomeyPaw",
+      "homeBody": "Create your first pet profile and start recording your days together."
+    },
+    "list": {
+      "title": "My pets",
+      "subtitle": "Your owned and shared pet families.",
+      "add": "Add"
+    },
+    "create": {
+      "title": "Add a pet",
+      "subtitle": "Create a private profile for the life you share.",
+      "submit": "Create pet profile",
+      "saved": "Pet profile created."
+    },
+    "edit": {
+      "title": "Edit {{name}}",
+      "subtitle": "Update your pet's details and avatar.",
+      "action": "Edit profile"
+    },
+    "detail": {
+      "companionDays": "Days together",
+      "weightValue": "{{weight}} kg",
+      "viewProfile": "View pet profile"
+    },
+    "switcher": {
+      "title": "My pets",
+      "add": "Add a pet"
+    },
+    "delete": {
+      "title": "Delete {{name}}?",
+      "body": "Once deleted, {{name}}'s profile, journal entries, photos and care records will be permanently removed.",
+      "action": "Delete pet",
+      "completed": "Pet profile deleted"
+    },
+    "loading": {
+      "home": "Loading pets…",
+      "list": "Loading your pets…",
+      "detail": "Loading pet profile…"
+    },
+    "errors": {
+      "load": "We couldn't load your pet data. Try again shortly.",
+      "notFound": "This pet profile was not found, or you do not have access.",
+      "create": "We couldn't create the pet profile. Try again shortly.",
+      "update": "We couldn't save your changes. Try again shortly.",
+      "delete": "The pet profile was not deleted. Try again shortly.",
+      "ownerOnly": "Only the pet owner can edit or delete this profile.",
+      "avatarCleanupPending": "The pet profile was deleted correctly, but its avatar file could not be cleaned up yet. The avatar is no longer accessible through your account.",
+      "avatarUploadAfterCreate": "The pet profile was created, but its avatar could not be uploaded. You can retry from the edit screen."
+    }
+  },
+  "care": {
+    "types": {
+      "feeding": "Feeding",
+      "walk": "Walk",
+      "medicine": "Medicine",
+      "bath": "Bath",
+      "grooming": "Grooming",
+      "other": "Other care"
+    },
+    "quick": {
+      "title": "What would you like to record?",
+      "subtitle": "Add a moment or completed care for {{name}}.",
+      "journal": "Photo journal"
+    },
+    "fields": {
+      "occurredAt": "Date and time",
+      "duration": "Duration (optional)",
+      "note": "Note"
+    },
+    "form": {
+      "optional": "Optional",
+      "required": "Required",
+      "forPet": "Recording for",
+      "changePet": "Switch pet",
+      "durationPlaceholder": "Minutes",
+      "notePlaceholder": "Add a short care note"
+    },
+    "create": {
+      "title": "Record care",
+      "subtitle": "Save a completed care fact for the family.",
+      "submit": "Save care record",
+      "saved": "Care record saved."
+    },
+    "edit": { "title": "Edit care record", "saved": "Care record updated." },
+    "home": {
+      "title": "Today's care",
+      "empty": "No care has been recorded today yet.",
+      "add": "Record care",
+      "meta": "{{name}} · {{time}}"
+    },
+    "history": {
+      "title": "Care history",
+      "subtitle": "Completed care shared by the pet family."
+    },
+    "empty": {
+      "title": "No care records yet",
+      "body": "Record the first completed care for {{name}}.",
+      "action": "Record care",
+      "noPetTitle": "No pets yet",
+      "noPetBody": "Create or join a pet family before recording care."
+    },
+    "delete": {
+      "title": "Delete this care record?",
+      "body": "This completed care fact will be permanently removed.",
+      "action": "Delete"
+    },
+    "performedBy": "Recorded by {{name}}",
+    "durationMinutes_one": "{{count}} minute",
+    "durationMinutes_other": "{{count}} minutes",
+    "validation": {
+      "noteTooLong": "The note cannot exceed 500 characters.",
+      "timeInvalid": "Choose a valid time no more than five minutes in the future.",
+      "otherNoteRequired": "Add a note describing this care.",
+      "durationInvalid": "Enter a whole number from 1 to 1,440 minutes."
+    },
+    "loading": { "edit": "Loading care record…" },
+    "errors": {
+      "invalidType": "Choose a valid care type.",
+      "load": "We couldn't load care records. Try again shortly.",
+      "create": "The care record was not saved. Your input is still here, so you can retry.",
+      "update": "Saving failed. The original care record was not replaced.",
+      "delete": "The care record was not deleted. Try again shortly.",
+      "authorOnly": "Only the person who recorded this care can edit it."
+    }
+  },
+  "network": {
+    "offline": "You're offline. Previously loaded content remains available.",
+    "reconnected": "You're back online."
+  },
+  "globalError": {
+    "title": "HomeyPaw ran into a problem",
+    "body": "Your data was not changed. Try again, or reopen the app if the problem continues."
+  },
+  "about": {
+    "title": "About HomeyPaw",
+    "tagline": "A private family journal for your pet's whole life.",
+    "version": "Version {{version}} ({{build}})",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact support",
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Service",
+    "updated": "Updated August 27, 2026",
+    "privacyBody": "HomeyPaw processes the account, pet, family sharing, journal, photo, care record, and reminder data you choose to provide so it can deliver a private pet journal. Data is stored in Supabase and access is restricted through authentication, Row Level Security, and private Storage policies. Photo access is used only when you choose images. Notification access is used only for local reminders you enable on your device. HomeyPaw currently does not use advertising tracking, contacts, precise location, camera, microphone, or remote push notifications. You can delete your account and related data in the app. For support, email lenny996@163.com. A public policy URL will be added before release.",
+    "termsBody": "You are responsible for your account credentials and family invite codes, and you may upload only content you have the right to use. Family members can view or manage shared pet data according to their role. Removing a member ends future access, while previously published content follows the data lifecycle described in the product. Reminders are an aid and are not a substitute for veterinary or emergency advice. The service may be temporarily unavailable for maintenance or network interruptions. Account and pet deletion cannot be undone. For support, email lenny996@163.com. A public terms URL will be added before release."
+  },
+  "accountSecurity": {
+    "title": "Account and security",
+    "subtitle": "Manage your HomeyPaw account and private data.",
+    "dangerZone": "Danger zone",
+    "deleteDescription": "Deleting your account permanently removes your login identity, profile and owned pets. It also permanently deletes journal entries, photos and care records you created in shared pet families. This cannot be undone.",
+    "deleteAction": "Permanently delete account",
+    "confirmTitle": "Delete your HomeyPaw account?",
+    "confirmBody": "Your account and owned pet data will be permanently deleted. Journal entries, photos and care records you created in shared pet families will also be permanently deleted.",
+    "finalConfirmTitle": "Final confirmation",
+    "finalConfirmBody": "Deleting your account also permanently deletes journal entries, photos and care records you created in shared pet families. Delete your account now?",
+    "deleteError": "Your account was not deleted. Your session and data are unchanged; please try again later."
+  }
+}
