@@ -470,7 +470,171 @@
     "comingBody": "之後，{{name}} 的管理者和家庭成員可在這裡私密交流。",
     "privateNote": "這裡不會出現公開搜尋或陌生人訊息；被移除的成員也會失去存取權。",
     "noPetTitle": "先選擇一個毛孩家庭",
-    "noPetBody": "建立毛孩檔案或使用邀請碼加入家庭後，聊天入口會顯示在這裡。"
+    "noPetBody": "建立毛孩檔案或使用邀請碼加入家庭後，聊天入口會顯示在這裡。",
+    "preview": {
+      "label": "開發預覽",
+      "date": {
+        "today": "今天",
+        "yesterday": "昨天"
+      },
+      "unread": "以下是新訊息",
+      "typing": "媽媽正在輸入…",
+      "loadEarlier": "載入較早訊息",
+      "loading": "正在載入模擬聊天室…",
+      "header": {
+        "title": "{{name}}的家庭聊天室",
+        "memberCount_one": "{{count}} 位家人",
+        "memberCount_other": "{{count}} 位家人",
+        "more": "查看家庭成員及聊天室設定預覽",
+        "switchPet": "目前是{{name}}的家庭聊天室",
+        "switchHint": "輕點切換另一隻毛孩的模擬聊天室"
+      },
+      "controls": {
+        "title": "聊天室功能預覽",
+        "body": "這是開發中的介面預覽。所有訊息、成員、狀態與操作都是 Mock，重新開啟頁面後會消失。",
+        "hint": "輕點選擇另一個 Mock 測試場景",
+        "accessibility": "開發預覽，目前場景：{{story}}",
+        "open": "開啟開發預覽場景",
+        "messageCount_one": "{{count}} 條 Mock",
+        "messageCount_other": "{{count}} 條 Mock",
+        "zhHK": "繁體中文",
+        "english": "English"
+      },
+      "stories": {
+        "active": "Active Chat",
+        "empty": "Empty Chat",
+        "noPet": "No Pet",
+        "singleMember": "Single Member",
+        "longMessage": "Long Message",
+        "multiImage": "Multi-image Mock",
+        "systemCare": "System & Care",
+        "keyboard": "Keyboard Open",
+        "maxDynamicType": "Max Dynamic Type",
+        "performance": "100 Messages",
+        "loading": "Loading State",
+        "error": "Error State"
+      },
+      "storyNotes": {
+        "active": "一般家庭對話、日期、未讀分隔線與打字提示。",
+        "empty": "新家庭的第一句話提示，Composer 保持可用。",
+        "noPet": "沒有毛孩時的新增毛孩與加入家庭入口。",
+        "singleMember": "只有管理者時，引導邀請家人。",
+        "longMessage": "500 字以上內容、Emoji 與自動換行。",
+        "multiImage": "一張、兩張及四張本地圖片視覺佔位。",
+        "systemCare": "成員、Care 與 Reminder 系統訊息的低權重呈現。",
+        "keyboard": "Composer 自動聚焦，用於檢查鍵盤與 Home Indicator。",
+        "maxDynamicType": "配合系統最大文字尺寸檢查 Header、Bubble 與 Composer。",
+        "performance": "FlatList 顯示 100 條固定 Mock 訊息。",
+        "loading": "純 Mock 載入狀態，不會發送請求。",
+        "error": "純 Mock 錯誤與本地重試狀態。"
+      },
+      "petSwitcher": {
+        "title": "切換毛孩聊天室",
+        "body": "每隻毛孩都有獨立的固定 Mock 訊息，切換後不會混合。"
+      },
+      "members": {
+        "title": "家庭成員",
+        "settingsComing": "聊天室設定即將提供。這個 Prototype 不會修改成員或任何資料。"
+      },
+      "attachment": {
+        "title": "加入聊天室相片",
+        "photo": "相片",
+        "camera": "相機",
+        "unavailable": "聊天相片功能將於正式聊天室中提供；目前不會開啟相簿或相機，也沒有新增權限。"
+      },
+      "composer": {
+        "placeholder": "說點什麼…",
+        "inputLabel": "輸入家庭聊天室訊息",
+        "send": "傳送訊息",
+        "attachment": "加入相片",
+        "attachmentHint": "只會顯示功能預覽，不會開啟相片或相機",
+        "charactersRemaining": "尚可輸入 {{count}} 個字元"
+      },
+      "empty": {
+        "title": "豆豆的家庭聊天室",
+        "body": "和家人說第一句話吧。",
+        "prompt": "今天豆豆過得怎麼樣？"
+      },
+      "noPet": {
+        "title": "還沒有家庭聊天室",
+        "body": "先新增毛孩，\n或加入家人的 HomeyPaw 家庭。",
+        "add": "新增毛孩",
+        "join": "加入家庭"
+      },
+      "singleMember": {
+        "title": "這裡暫時只有你",
+        "body": "邀請家人後，\n就可以一起在這裡聊天。",
+        "action": "邀請家人"
+      },
+      "error": {
+        "title": "暫時無法顯示聊天室",
+        "body": "這是用來檢查錯誤介面的 Mock 狀態，沒有發生網絡請求。"
+      },
+      "accessibility": {
+        "messageList": "家庭聊天室訊息列表",
+        "you": "你的訊息",
+        "image": "模擬相片 {{index}}，共 {{count}} 張",
+        "imageMessage": "{{count}} 張模擬相片，{{body}}",
+        "memberAvatar": "{{name}}的成員頭像預留位置"
+      },
+      "mock": {
+        "members": {
+          "lenny": "Lenny",
+          "mum": "媽媽",
+          "sister": "妹妹",
+          "dad": "爸爸"
+        },
+        "doudou": {
+          "yesterdayMeal": "睡前再看了一次，豆豆已經把晚餐吃完了。",
+          "midnightReply": "收到，明早我會留意牠的胃口。",
+          "joinedSystem": "媽媽邀請妹妹加入了豆豆的家庭",
+          "appetite": "豆豆今天胃口很好 😂",
+          "walkQuestion": "等下要不要帶牠散步？",
+          "walkReply": "今晚我帶牠出去散步。",
+          "careSystem": "媽媽完成了餵食 🍚",
+          "afternoon": "下午牠在窗邊睡得很香，醒來還找大家玩。",
+          "reminderSystem": "爸爸完成了「晚上吃藥」 💊",
+          "evening": "我們到海旁走了一圈，牠現在心情很好 🐾"
+        },
+        "mochi": {
+          "yesterdayMeal": "Mochi 睡前喝了點水，精神看起來不錯。",
+          "midnightReply": "好，我早上會再幫牠添水。",
+          "joinedSystem": "媽媽邀請妹妹加入了 Mochi 的家庭",
+          "appetite": "Mochi 今天把早餐吃光了 😋",
+          "walkQuestion": "午餐後要不要讓牠到露台曬太陽？",
+          "walkReply": "可以，我會陪牠一會兒。",
+          "careSystem": "媽媽完成了梳毛 ✨",
+          "afternoon": "牠剛才追著玩具跑了好幾圈，現在休息中。",
+          "reminderSystem": "妹妹完成了「清潔水碗」 💧",
+          "evening": "Mochi 已經回到自己的小床上了。"
+        },
+        "images": {
+          "caption": "今天散步拍到的兩張相片 🐕",
+          "single": "早餐吃得乾乾淨淨。",
+          "double": "海旁散步的小記錄。",
+          "grid": "把今天最可愛的四個瞬間放在一起。"
+        },
+        "long": {
+          "body": "今天早上豆豆起床後先慢慢伸了個懶腰，然後跑到客廳逐個房間找大家。牠吃早餐的速度比平日慢一點，但最後仍然把碗裡的食物吃完，也有主動喝水。我帶牠到樓下走了一小圈，天氣有點暖，所以我們沿著有樹蔭的位置走，期間牠對路邊的新味道很有興趣，停下來聞了好幾次。回家後我替牠抹乾淨腳掌，也檢查了趾縫，沒有看到紅腫或不舒服。中午牠在窗邊睡了大約一小時，醒來後願意玩尋寶玩具，反應和平日一樣。下午有人按門鈴時牠叫了兩聲，但很快便安靜下來，沒有持續緊張。我把今天的食量、喝水、散步和精神狀態都記在這裡，方便大家晚上回家後一起留意。如果今晚牠仍然願意吃飯，而且散步時步伐正常，我想暫時不用太擔心；不過如果牠突然不想動、連水也不喝，或者腸胃情況有變，我們就再一起商量是否要提早聯絡獸醫。還有一件小事：牠今天特別喜歡那條綠色毛巾，睡覺時一直把頭靠在上面，所以先不要收走。晚點有空的人可以陪牠做五分鐘的安靜嗅聞遊戲，不需要太興奮，也不要一次給太多零食。散步袋已經放回門邊，裡面的紙巾和小水樽也補好了；如果晚上下雨，可以改在走廊做幾輪慢慢找零食的遊戲，讓牠消耗一點精神後再準備睡覺。這段訊息故意寫得很長，是為了確認最大字體、小螢幕和很長的家庭更新都能自然換行，不會出現橫向溢出，也不會讓時間或作者名稱蓋住正文。",
+          "emojiReply": "收到，謝謝你記得這麼仔細 🙌🐾 我今晚會繼續留意。"
+        },
+        "system": {
+          "contextBefore": "我先準備早餐，大家不用急。",
+          "memberJoined": "媽媽邀請妹妹加入了豆豆的家庭",
+          "careFeed": "媽媽完成了餵食 🍚",
+          "contextMiddle": "我午休時可以陪牠玩一會兒。",
+          "careWalk": "妹妹帶豆豆散步了 32 分鐘 🐕",
+          "reminderMedicine": "爸爸完成了「晚上吃藥」 💊",
+          "contextAfter": "辛苦大家，今晚讓牠早點休息。"
+        },
+        "performance": {
+          "line0": "剛剛看過，牠正在舒服地休息。",
+          "line1": "水碗還有水，我晚點再補滿。",
+          "line2": "今天精神很好，還主動拿玩具過來。",
+          "line3": "收到，我會把下一次照顧情況也留在這裡。"
+        }
+      }
+    }
   },
   "profile": {
     "title": "我的",

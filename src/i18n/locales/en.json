@@ -470,7 +470,171 @@
     "comingBody": "Later, {{name}}'s owner and family members will be able to talk here privately.",
     "privateNote": "There will be no public discovery or messages from strangers, and removed members will lose access.",
     "noPetTitle": "Choose a pet family first",
-    "noPetBody": "Create a pet profile or join with an invite code, and the chat entry will appear here."
+    "noPetBody": "Create a pet profile or join with an invite code, and the chat entry will appear here.",
+    "preview": {
+      "label": "Development Preview",
+      "date": {
+        "today": "Today",
+        "yesterday": "Yesterday"
+      },
+      "unread": "New messages below",
+      "typing": "Mum is typing…",
+      "loadEarlier": "Load earlier messages",
+      "loading": "Loading the mock chat…",
+      "header": {
+        "title": "{{name}}'s family chat",
+        "memberCount_one": "{{count}} family member",
+        "memberCount_other": "{{count}} family members",
+        "more": "View family members and the chat settings preview",
+        "switchPet": "Currently in {{name}}'s family chat",
+        "switchHint": "Double tap to switch to another pet's mock chat"
+      },
+      "controls": {
+        "title": "Chat feature preview",
+        "body": "This interface is in development. Every message, member, state, and action is mocked and disappears when the page is reopened.",
+        "hint": "Double tap to choose another mock test scenario",
+        "accessibility": "Development preview, current scenario: {{story}}",
+        "open": "Open development preview scenarios",
+        "messageCount_one": "{{count}} mock",
+        "messageCount_other": "{{count}} mocks",
+        "zhHK": "繁體中文",
+        "english": "English"
+      },
+      "stories": {
+        "active": "Active Chat",
+        "empty": "Empty Chat",
+        "noPet": "No Pet",
+        "singleMember": "Single Member",
+        "longMessage": "Long Message",
+        "multiImage": "Multi-image Mock",
+        "systemCare": "System & Care",
+        "keyboard": "Keyboard Open",
+        "maxDynamicType": "Max Dynamic Type",
+        "performance": "100 Messages",
+        "loading": "Loading State",
+        "error": "Error State"
+      },
+      "storyNotes": {
+        "active": "Family conversation, dates, unread divider, and typing indicator.",
+        "empty": "A first-message prompt with the composer still available.",
+        "noPet": "Entry points to add a pet or join a family.",
+        "singleMember": "An invitation prompt when only the owner is present.",
+        "longMessage": "More than 500 characters, emoji, and natural wrapping.",
+        "multiImage": "One-, two-, and four-image local visual placeholders.",
+        "systemCare": "Low-emphasis member, Care, and Reminder system messages.",
+        "keyboard": "Auto-focuses the composer to check the keyboard and Home Indicator.",
+        "maxDynamicType": "Use the system's largest text size to inspect the header, bubbles, and composer.",
+        "performance": "FlatList rendering 100 deterministic mock messages.",
+        "loading": "A fully mocked loading state with no request.",
+        "error": "A fully mocked error and local retry state."
+      },
+      "petSwitcher": {
+        "title": "Switch pet chat",
+        "body": "Each pet has an independent fixed mock dataset, so messages never mix."
+      },
+      "members": {
+        "title": "Family members",
+        "settingsComing": "Chat settings are coming later. This prototype cannot change members or any data."
+      },
+      "attachment": {
+        "title": "Add chat photos",
+        "photo": "Photos",
+        "camera": "Camera",
+        "unavailable": "Chat photos will be available in the real chat. This preview does not open photos or the camera and adds no permissions."
+      },
+      "composer": {
+        "placeholder": "Say something…",
+        "inputLabel": "Enter a family chat message",
+        "send": "Send message",
+        "attachment": "Add photos",
+        "attachmentHint": "Only opens a feature preview; it will not open photos or the camera",
+        "charactersRemaining": "{{count}} characters remaining"
+      },
+      "empty": {
+        "title": "豆豆's family chat",
+        "body": "Say the first thing to your family.",
+        "prompt": "How has 豆豆 been today?"
+      },
+      "noPet": {
+        "title": "No family chat yet",
+        "body": "Add a pet first,\nor join your family's HomeyPaw space.",
+        "add": "Add a pet",
+        "join": "Join family"
+      },
+      "singleMember": {
+        "title": "It's just you for now",
+        "body": "Invite family, then you can\ntalk together here.",
+        "action": "Invite family"
+      },
+      "error": {
+        "title": "The chat can't be shown right now",
+        "body": "This is a mock state for checking the error interface. No network request occurred."
+      },
+      "accessibility": {
+        "messageList": "Family chat message list",
+        "you": "Your message",
+        "image": "Mock photo {{index}} of {{count}}",
+        "imageMessage": "{{count}} mock photos, {{body}}",
+        "memberAvatar": "Member avatar placeholder for {{name}}"
+      },
+      "mock": {
+        "members": {
+          "lenny": "Lenny",
+          "mum": "Mum",
+          "sister": "Sister",
+          "dad": "Dad"
+        },
+        "doudou": {
+          "yesterdayMeal": "I checked again before bed. 豆豆 finished all of dinner.",
+          "midnightReply": "Got it. I'll keep an eye on the appetite in the morning.",
+          "joinedSystem": "Mum invited Sister to join 豆豆's family",
+          "appetite": "豆豆 has a great appetite today 😂",
+          "walkQuestion": "Shall we go for a walk later?",
+          "walkReply": "I'll take 豆豆 out for a walk tonight.",
+          "careSystem": "Mum finished feeding 🍚",
+          "afternoon": "There was a lovely nap by the window, followed by playtime with everyone.",
+          "reminderSystem": "Dad completed “Evening medicine” 💊",
+          "evening": "We walked by the harbour and 豆豆 is in a very good mood now 🐾"
+        },
+        "mochi": {
+          "yesterdayMeal": "Mochi had some water before bed and seemed bright and comfortable.",
+          "midnightReply": "Okay, I'll refill the bowl in the morning.",
+          "joinedSystem": "Mum invited Sister to join Mochi's family",
+          "appetite": "Mochi finished every bit of breakfast today 😋",
+          "walkQuestion": "Shall we let Mochi enjoy some sun on the balcony after lunch?",
+          "walkReply": "Sure, I'll stay nearby for a while.",
+          "careSystem": "Mum finished grooming ✨",
+          "afternoon": "Mochi chased the toy for several laps and is resting now.",
+          "reminderSystem": "Sister completed “Clean the water bowl” 💧",
+          "evening": "Mochi is tucked into the little bed now."
+        },
+        "images": {
+          "caption": "Two photos from today's walk 🐕",
+          "single": "Breakfast was completely finished.",
+          "double": "A small record of our harbour walk.",
+          "grid": "Four of today's sweetest moments together."
+        },
+        "long": {
+          "body": "豆豆 started the morning with a slow stretch, then padded through every room looking for the family. Breakfast took a little longer than usual, but the bowl was eventually finished and there was some water without prompting. We took a short walk downstairs while the weather was still comfortable, staying mostly under the trees. There were several interesting new smells along the path, so we paused often and kept the pace gentle. Back home, I wiped every paw and checked between the toes; there was no redness, swelling, or sign of discomfort. Around noon, 豆豆 slept beside the window for about an hour and woke up ready to work on the puzzle toy, with the same focus and enthusiasm as usual. When the doorbell rang in the afternoon there were two quick barks, followed by a calm settle without prolonged pacing or stress. I am leaving all of this detail here so everyone can compare appetite, water, walking, rest, and mood when they get home. If dinner goes normally and the evening walk still looks comfortable, I do not think we need to worry. If there is a sudden reluctance to move, no interest in water, or any digestive change, we can decide together whether to call the vet sooner. One small note: the green towel is today's favourite and has become a pillow, so please leave it where it is for now. Anyone with a few quiet minutes later can offer a short sniffing game without making things too exciting or giving too many treats. This intentionally long family update also lets us verify that very large text, a small screen, and a detailed message all wrap naturally without horizontal overflow or the timestamp covering the body.",
+          "emojiReply": "Got it, and thank you for keeping such a careful note 🙌🐾 I'll watch tonight."
+        },
+        "system": {
+          "contextBefore": "I'll prepare breakfast, so nobody needs to rush.",
+          "memberJoined": "Mum invited Sister to join 豆豆's family",
+          "careFeed": "Mum finished feeding 🍚",
+          "contextMiddle": "I can spend some time playing at lunch.",
+          "careWalk": "Sister walked 豆豆 for 32 minutes 🐕",
+          "reminderMedicine": "Dad completed “Evening medicine” 💊",
+          "contextAfter": "Thanks, everyone. Let's help 豆豆 have an early night."
+        },
+        "performance": {
+          "line0": "I checked just now, and everything looks comfortable.",
+          "line1": "There is still water in the bowl; I'll top it up later.",
+          "line2": "Energy is good today, and the toy was brought over without prompting.",
+          "line3": "Got it. I'll leave the next care update here too."
+        }
+      }
+    }
   },
   "profile": {
     "title": "Me",

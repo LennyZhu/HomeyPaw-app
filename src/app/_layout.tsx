@@ -105,6 +105,9 @@ function RootNavigator() {
           <Stack.Screen name="posts" />
           <Stack.Screen name="care" />
         </Stack.Protected>
+        <Stack.Protected guard={__DEV__}>
+          <Stack.Screen name="chat-preview" />
+        </Stack.Protected>
         <Stack.Protected
           guard={Boolean(
             !session &&
