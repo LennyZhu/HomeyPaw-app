@@ -25,5 +25,12 @@
       "environment": "production",
       "node": "22.13.0"
     }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "6806111286"
+      }
+    }
   }
 }

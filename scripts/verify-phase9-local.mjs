@@ -17,6 +17,7 @@ const appConfig = JSON.parse(read('app.json'));
 const easConfig = JSON.parse(read('eas.json'));
 const expo = appConfig.expo ?? {};
 const production = easConfig.build?.production ?? {};
+const productionIosSubmit = easConfig.submit?.production?.ios ?? {};
 
 assert(expo.name === 'HomeyPaw', 'Production name must be HomeyPaw.');
 assert(expo.version === '1.0.0', 'Production version must be 1.0.0.');
@@ -44,6 +45,14 @@ assert(
 assert(
   production.developmentClient !== true,
   'The production profile must not enable the development client.',
+);
+assert(
+  productionIosSubmit.ascAppId === '6806111286',
+  'The production iOS submit profile must target App Store Connect app 6806111286.',
+);
+assert(
+  Object.keys(productionIosSubmit).every((key) => key === 'ascAppId'),
+  'The production iOS submit profile must not contain Apple credentials.',
 );
 assert(
   expo.extra?.eas?.projectId === easProjectId,
