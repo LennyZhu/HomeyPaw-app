@@ -2,6 +2,11 @@
 
 更新时间：2026-08-27（Asia/Hong_Kong）
 
+> Historical Phase 8 snapshot. Phase 9 later changed the production Bundle ID
+> and Expo slug to `com.zhushunli.homeypaw` / `homeypaw`; the compatibility URL
+> scheme `pawday://` remains. References below describe the Phase 8 state at the
+> time of its real-device acceptance.
+
 ## 当前目标与边界
 
 - 当前阶段：Phase 8 — Product Polish + Real Device + App Store Readiness。
@@ -155,7 +160,7 @@
 - 锁屏本地提醒与冷启动通知点击已用新建单次任务复测，正确进入对应提醒内容。
 - 9 图日记（含横图、竖图、HEIC、Live Photo 静态输出）发布、详情、Memory、前后台与全屏切换通过。
 - Journal `FlatList` 缩略图异步 URL 更新与绘制问题已通过 `extraData` 和非绝对定位图片布局修复并真机复测。
-- 家庭双端真机同步因第二部 iPhone 未安装 Development Build，由用户选择跳过，不能记为通过。
+- 家庭双端最小真实验收后续已改用 iPhone Owner A + Simulator Member B 完成，结果见下方独立记录。
 
 ## 2026-08-26 品牌统一
 
@@ -168,39 +173,50 @@
 - 为避免现有登录回调、已发送邮件链接、本机资料与 Apple App 身份失效，以下兼容标识刻意保留：`com.zhushunli.pawday`、`pawday://`、Expo slug `pawday`、通知 channel/database key、storage key 与 `PAWDAY_*` 测试环境变量。
 - 新 `HomeyPaw` Development Build 已在真实 iPhone 完成编译及安装；没有建立或使用 Distribution 资源。
 
-### 新任务第一步
+## 2026-08-26 家庭双端真实验收
 
-先询问用户当前真机页面：
-
-- 如果已经进入首页：彻底划掉 App 再从主屏幕打开一次，确认不再进入重设页；然后重新申请一封全新的恢复邮件，完成一次完整 Password Recovery 回归。
-- 如果仍进入重设页：不要继续猜测 URL。先增加仅 Development 可见、且不含 token 的状态诊断，确认 `session`、`isPasswordRecovery`、`isProcessingAuthCallback` 和当前 pathname，再修正状态来源；诊断完成后移除临时日志。
+- 设备与账号：iPhone 17 登录 Owner A；iOS Simulator 保持 Member B 的既有登录会话；双方使用同一共享毛孩。
+- 共享基线：Member B 可见共享毛孩、两位家庭成员，以及双方既有 Journal／Care 数据。
+- A → B Journal：Owner A 在 iPhone 发布新的纯文字 Journal；Member B 在 Simulator 刷新后立即可见正确作者、日期与内容，通过。
+- B → A Care：Member B 在 Simulator 新增一条带唯一测试标记的喂食记录；Owner A 在 iPhone 刷新后可见正确作者与时间，通过。
+- 权限撤销：Owner A 在 iPhone 移除 Member B，并确认移除成功。
+- Member B 未登出或重新登录；Simulator 保持原 Auth Session，在回到前台并重新读取服务端数据后，共享毛孩从可用列表消失，首页进入无毛孩状态，Journal 显示无毛孩，新增入口不再提供 Journal／Care 写入，只允许新增毛孩，Reminder 数量归零。原 Pet／Journal／Care／Reminder 数据不再可访问，通过。
+- 结论：家庭共享双向同步、成员移除与既有会话下的权限撤销真实验收通过。
 
 ## 剩余真机代办
 
 - [x] 关闭旧 Password Recovery 路由残留问题。
 - [x] 使用全新恢复邮件验证：有效 token、成功重设、自动登出、成功提示、新密码重新登录。
-- [ ] 验证已使用链接与过期链接的友好错误（已使用通过；纯过期因无可用样本由用户跳过，不记为通过）。
+- [ ] 验证已使用链接与过期链接的友好错误（已使用通过；从未打开的纯过期链接无可用样本，经发布决策延期，不记为通过，列为非阻塞 Known Risk）。
 - [x] 验证 logged-in user 打开有效 recovery link。
 - [x] 验证冷启动与前台状态下 Password Recovery Deep Link。
 - [x] 验证冷启动与前台状态下 Sign Up confirmation link。
 - [x] 真机网络切换：Wi-Fi／蜂窝关闭、离线提示、Post／Care／Task 写入失败保留输入、恢复网络后原页重试。
 - [x] 真机键盘、Safe Area、Haptics、前后台切换与 cold start 检查。
 - [x] 真机 Notification User Switch，确认 A 私人毛孩的 pending notification 不残留给 B。
-- [ ] 视 Phase 8 清单完成家庭双端或真机 + Simulator 回归。
+- [x] 完成 iPhone Owner A + Simulator Member B 家庭双端真实回归：A → B Journal、B → A Care、Owner 移除 Member、Member B 原会话权限撤销均通过。
 - [x] 记录 Framework 补签问题与可重复 Development 构建方案。
 - [x] 用户提供 Support Email：`lenny996@163.com`。
 - [x] 发布并验证公开 Privacy Policy、Terms、Support URL（Vercel Project `homeypaw`；公开地址 `https://homeypaw.vercel.app/`；无登录 HTTPS、直达路由、双语切换、站内链接与 `mailto:lenny996@163.com` 已验证）。
-- [ ] 全部完成后输出 `## Phase 8 Result`，并停止，不进入 Phase 9。
+- [x] 输出 `## Phase 8 Result`，并停止，不进入 Phase 9。
 
 ## Phase 8 当前结论（2026-08-27）
 
 - 本地 Development Build 的单机真机功能、权限、离线、通知、Auth Deep Link、图片、布局、无障碍、品牌与 Support Email 验收已完成。
-- 自动检查保持通过；本轮新增的通知权限前台刷新与 Support Email 入口也已通过 TypeScript、ESLint、Prettier 与 i18n parity 检查。
-- 网站部署后的回归已通过：App `lint`、TypeScript、Phase 8 production verify、Prettier、iOS `expo export`，以及 Website TypeScript、ESLint 与 Vite production build；未执行 TestFlight、App Store 或 Distribution 流程。
-- 以下项目没有通过，不能标记为完成：从未打开的纯过期 Recovery Link（无样本，用户跳过）、家庭双端回归（用户跳过）。
+- 2026-08-26 最终核心回归通过：App `npm run typecheck`、`npm run lint`、`npm run format:check`、`npm run verify:i18n`、`npm run verify:phase8-production` 与 `npx expo export --platform ios`。
+- 家庭双端真实回归已通过：iPhone Owner A 与 Simulator Member B 完成双向 Journal／Care 同步，并验证 Owner 移除 Member 后 Member B 原会话不再访问 Pet／Journal／Care／Reminder。
+- 从未打开的纯过期 Recovery Link 因没有真实样本，经用户确认按发布决策延期；不得记为通过，作为非阻塞 Known Risk 保留。已使用链接的友好错误路径已通过。
 - 官方网站本地构建与 Vercel Production 部署已通过；`https://homeypaw.vercel.app/` 及 Privacy／Terms／Support 直达地址均已完成无登录 HTTPS 验证，公开 URL blocker 已解除并写入 metadata。
-- Phase 8 状态：**本地单机 Development 验收通过，三个公开 HTTPS 页面阻塞已解除；Phase 8 仍保留上述两项跳过记录，不进入 Phase 9。**
+- Phase 8 状态：**本地 Development 验收、家庭双端核心回归、公开 HTTPS 页面与核心自动检查均满足 Production Build 准备要求；仅保留纯过期链接的非阻塞 Known Risk。**
 - 停止在 Phase 8；不得进入 Phase 9、TestFlight、App Store、Distribution 或生产签名流程。
+
+## Phase 8 Result
+
+- Production Build Readiness：**READY**
+- Release Blockers：**NONE**
+- Known Risk / Deferred：从未打开的纯过期 Auth Recovery Link 尚无真实样本，未完成端到端验收，不记为通过；已有已使用链接的安全错误页验收可覆盖主要失效链接错误处理风险。
+- 已通过范围：单 iPhone Development Build 全量既有验收、iPhone + Simulator 家庭双端核心回归、Privacy／Terms／Support 公开 HTTPS、Phase 8 核心自动检查与 iOS Expo export。
+- 边界：此结论只表示可准备 Production Build；本阶段没有创建 Production／Distribution 资源，没有上传 TestFlight 或提交 App Store，也没有进入 Phase 9。
 
 ## 安全提醒
 

@@ -117,11 +117,11 @@ HomeyPaw 是真實上架產品。架構優先考慮可維護、可驗證與漸�
 - Query 預設 `staleTime` 30 秒、`gcTime` 5 分鐘、一次 retry、重新連線 refetch；相片 signed URL query 使用 50 分鐘 stale time／1 小時 GC。`expo-image` 使用 memory-disk cache，403／過期顯示時以每分鐘最多一次重新簽發避免 retry loop。
 - Journal 與 Care History 使用 Infinite Query、組合游標及 `FlatList` window/batch 控制；Home 只渲染近期小集合。
 - 正常成功使用非阻塞 feedback；破壞性操作仍使用確認 Alert。表單 mutation 維持 loading／disabled／錯誤內容保留。
-- App 強制 Light、Portrait，正式 identity 是 HomeyPaw／`com.zhushunli.pawday`／1.0.0 (1)。Chat 在 1.0 隱藏；沒有 Realtime、remote push、analytics、tracking 或 crash SaaS。
+- App 強制 Light、Portrait，正式 identity 是 HomeyPaw／`com.zhushunli.homeypaw`／1.0.0 (1)。`pawday://` 繼續作為兼容 URL scheme。Chat 在 1.0 隱藏；沒有 Realtime、remote push、analytics、tracking 或 crash SaaS。
 
 ## 原生工程
 
-專案採 Expo Continuous Native Generation。`ios/` 與 `android/` 由 app config 生成且不提交；原生權限說明、bundle identifier、版本、build number、正式 Icon／Splash 和 Android Adaptive Icon 均由 `app.json` 集中配置。`eas.json` 只準備本機 profiles，不代表已建立遠端 EAS project 或 Apple 資源。
+專案採 Expo Continuous Native Generation。`ios/` 與 `android/` 由 app config 生成且不提交；原生權限說明、bundle identifier、版本、build number、正式 Icon／Splash 和 Android Adaptive Icon 均由 `app.json` 集中配置。`eas.json` 的 production profile 使用 store distribution 與 EAS `production` environment；遠端 project 是 `@homeypaw/homeypaw`，Apple signing 由 EAS Managed Credentials 管理。
 
 ## 品質門檻
 

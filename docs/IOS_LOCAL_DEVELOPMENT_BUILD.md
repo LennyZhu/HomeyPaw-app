@@ -7,7 +7,7 @@
 - Workspace：`ios/HomeyPaw.xcworkspace`
 - Scheme／Target／Product：`HomeyPaw`
 - Configuration：`Debug`
-- Bundle Identifier：`com.zhushunli.pawday`
+- Bundle Identifier：`com.zhushunli.homeypaw`
 - Signing：Xcode Automatic Signing + 当前 Personal Team 的 Apple Development 身份
 - 不创建或使用 Distribution certificate、Distribution provisioning profile 或 App Store archive
 

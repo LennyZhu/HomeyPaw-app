@@ -1,6 +1,6 @@
 # Phase 8 Real iPhone Test Matrix
 
-Use a development build or local native build with bundle ID `com.zhushunli.pawday`; Expo Go alone is not final acceptance. Record device model, iOS version, build number, date, result, and evidence.
+Use a development build or local native build with bundle ID `com.zhushunli.homeypaw`; Expo Go alone is not final acceptance. Record device model, iOS version, build number, date, result, and evidence.
 
 ## Identity and lifecycle
 

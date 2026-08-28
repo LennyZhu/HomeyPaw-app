@@ -2,9 +2,9 @@
 
 Updated / 更新日期：2026-08-27
 
-> Release draft. A public URL must be added before TestFlight or App Store submission.
->
-> 發佈草稿。TestFlight 或 App Store 提交前必須補上公開網址。
+Published at `https://homeypaw.vercel.app/privacy`.
+
+公開網址：`https://homeypaw.vercel.app/privacy`。
 
 ## 繁體中文（香港）
 

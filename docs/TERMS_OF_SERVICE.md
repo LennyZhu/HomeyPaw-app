@@ -2,7 +2,9 @@
 
 Updated / 更新日期：2026-08-27
 
-> Release draft. A public URL must be added before TestFlight or App Store submission.
+Published at `https://homeypaw.vercel.app/terms`.
+
+公開網址：`https://homeypaw.vercel.app/terms`。
 
 ## 繁體中文（香港）
 
