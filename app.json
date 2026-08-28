@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HomeyPaw",
-    "slug": "pawday",
+    "slug": "homeypaw",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/branding/homeypaw-app-icon.png",
@@ -24,14 +24,14 @@
     "ios": {
       "icon": "./assets/branding/homeypaw-app-icon.png",
       "supportsTablet": false,
-      "bundleIdentifier": "com.zhushunli.pawday",
+      "bundleIdentifier": "com.zhushunli.homeypaw",
       "buildNumber": "1",
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.zhushunli.pawday",
+      "package": "com.zhushunli.homeypaw",
       "versionCode": 1,
       "permissions": ["android.permission.SCHEDULE_EXACT_ALARM"],
       "adaptiveIcon": {
@@ -88,6 +88,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3623de2b-5a77-48ec-b2ec-45e8136d9ac7"
+      }
+    },
+    "owner": "homeypaw"
   }
 }

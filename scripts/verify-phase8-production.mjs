@@ -5,6 +5,7 @@ const root = process.cwd();
 const failures = [];
 const supportEmail = 'lenny996@163.com';
 const publicWebsiteUrl = 'https://homeypaw.vercel.app/';
+const easProjectId = '3623de2b-5a77-48ec-b2ec-45e8136d9ac7';
 const appConfig = JSON.parse(
   fs.readFileSync(path.join(root, 'app.json'), 'utf8'),
 );
@@ -30,12 +31,12 @@ assert(expo.version === '1.0.0', 'App version must be 1.0.0.');
 assert(expo.orientation === 'portrait', 'V1 must be portrait-only.');
 assert(expo.userInterfaceStyle === 'light', 'V1 must use Light appearance.');
 assert(
-  expo.ios?.bundleIdentifier === 'com.zhushunli.pawday',
+  expo.ios?.bundleIdentifier === 'com.zhushunli.homeypaw',
   'Unexpected iOS bundle identifier.',
 );
 assert(expo.ios?.buildNumber === '1', 'Initial iOS build number must be 1.');
 assert(
-  expo.android?.package === 'com.zhushunli.pawday',
+  expo.android?.package === 'com.zhushunli.homeypaw',
   'Unexpected Android package.',
 );
 assert(
@@ -43,9 +44,11 @@ assert(
   'Initial Android versionCode must be 1.',
 );
 assert(
-  !expo.extra?.eas?.projectId,
-  'Remote EAS project ID was added without approval.',
+  expo.extra?.eas?.projectId === easProjectId,
+  'Unexpected EAS project ID.',
 );
+assert(expo.owner === 'homeypaw', 'Unexpected EAS project owner.');
+assert(expo.slug === 'homeypaw', 'Unexpected Expo project slug.');
 
 for (const asset of [
   'assets/branding/homeypaw-app-icon.png',

@@ -14,7 +14,7 @@ function redact(value: string, maximumLength = 240) {
     .slice(0, maximumLength);
 }
 
-function safeErrorDetails(error: unknown) {
+function safeErrorDetails(error: unknown, includeMessage: boolean) {
   if (!(error instanceof Error)) {
     return { name: 'UnknownError' };
   }
@@ -22,7 +22,9 @@ function safeErrorDetails(error: unknown) {
   const candidate = error as Error & { code?: unknown; status?: unknown };
   return {
     name: redact(candidate.name || 'Error'),
-    message: redact(candidate.message || 'Unexpected failure'),
+    ...(includeMessage
+      ? { message: redact(candidate.message || 'Unexpected failure') }
+      : {}),
     ...(typeof candidate.code === 'string'
       ? { code: redact(candidate.code) }
       : {}),
@@ -59,13 +61,12 @@ export function logError(
   error: unknown,
   metadata?: LogMetadata,
 ) {
-  const payload = {
-    context: redact(context),
-    error: safeErrorDetails(error),
-    metadata: safeMetadata(metadata),
-  };
-
   if (__DEV__) {
+    const payload = {
+      context: redact(context),
+      error: safeErrorDetails(error, true),
+      metadata: safeMetadata(metadata),
+    };
     const stack = error instanceof Error ? error.stack : undefined;
     console.error(
       '[HomeyPaw]',
@@ -78,7 +79,14 @@ export function logError(
   }
 
   // Keep production logging deliberately small and free of stacks, credentials,
-  // URLs, emails, user IDs, and request payloads. A crash SDK can replace this
-  // adapter later without changing call sites.
-  console.error('[HomeyPaw]', JSON.stringify(payload));
+  // URLs, emails, user IDs, request payloads, and backend error messages. A crash
+  // SDK can replace this adapter later without changing call sites.
+  console.error(
+    '[HomeyPaw]',
+    JSON.stringify({
+      context: redact(context),
+      error: safeErrorDetails(error, false),
+      metadata: safeMetadata(metadata),
+    }),
+  );
 }

@@ -21,6 +21,8 @@
     },
     "production": {
       "autoIncrement": false,
+      "distribution": "store",
+      "environment": "production",
       "node": "22.13.0"
     }
   }
