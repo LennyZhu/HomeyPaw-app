@@ -2,6 +2,17 @@
 
 Use this only after Apple Developer Program access, the App Store Connect record, signing, and an uploaded build exist. It does not authorize creating those resources.
 
+## Current Result — Build 1
+
+Recorded on 2026-08-28 from the release owner's completed real-device acceptance:
+
+- TestFlight build `1.0.0 (1)` is `VALID` and `IN_BETA_TESTING`.
+- Core feature acceptance: `PASS`.
+- Multi-account family sharing and RLS, Journal with 1/3/9 photos, Care, local reminders and notification navigation, session restoration, offline recovery, account deletion, Dynamic Type, production Chat hiding, debug-UI hiding, and HomeyPaw branding all passed.
+- Result: `PASS` for the tested release candidate.
+
+The checklist below remains the reusable evidence template. Its unchecked boxes do not override the recorded result above.
+
 ## Build Record
 
 - [ ] App version is `1.0.0`; build number is `1` unless Apple requires a new immutable build number.
@@ -52,7 +63,7 @@ Use this only after Apple Developer Program access, the App Store Connect record
 
 - [ ] A recovery link that was never previously opened is allowed to expire naturally, then opened on a real iPhone. Confirm a clear expired-link state and a successful retry path.
 
-This deferred edge case was not claimed as passed in Phase 8. Decide explicitly whether it remains an accepted Internal Testing risk before the first upload.
+This deferred edge case was not separately claimed as exercised. Confirm whether it remains an accepted App Store release risk; it does not override the recorded core acceptance result above.
 
 ## Exit Result
 

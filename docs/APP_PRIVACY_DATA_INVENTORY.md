@@ -1,6 +1,6 @@
 # App Privacy Data Inventory
 
-Prepared on 2026-08-27 for App Store Connect. This is a local answer sheet, not a submitted declaration.
+Updated on 2026-08-28 for App Store Connect. This is a local answer sheet, not a submitted declaration.
 
 ## Overall Answers
 
@@ -16,9 +16,10 @@ Prepared on 2026-08-27 for App Store Connect. This is a local answer sheet, not 
 | App Store category                | HomeyPaw data                                                                                                                    | Linked to identity | Tracking | Purpose                                    |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------- | ------------------------------------------ |
 | Contact Info → Email Address      | Supabase account email                                                                                                           | Yes                | No       | App Functionality                          |
-| Identifiers → User ID             | Supabase user ID, profile display name, language                                                                                 | Yes                | No       | App Functionality; Product Personalization |
+| Identifiers → User ID             | Supabase user ID and profile display name                                                                                        | Yes                | No       | App Functionality                          |
 | User Content → Photos or Videos   | Pet avatars and journal photos                                                                                                   | Yes                | No       | App Functionality                          |
 | User Content → Other User Content | Pet profiles, journal text, manually entered location name, household membership/invites, care logs, care tasks, and completions | Yes                | No       | App Functionality                          |
+| Other Data → Other Data Types     | Profile locale and IANA time-zone values stored with care records and tasks                                                      | Yes                | No       | App Functionality; Product Personalization |
 
 ## Data Types Not Collected by the App
 
@@ -44,4 +45,6 @@ The app opens the user's external mail composer only after the user taps Support
 
 - Recheck the shipped dependency tree for any newly added analytics, crash, advertising, or attribution SDK.
 - Recheck production permissions and network destinations against this inventory.
+- Confirm in the live questionnaire whether Apple expects locale and time-zone values under `Other Data Types`; keep the conservative declaration unless Apple Support provides a narrower classification.
+- Apple/TestFlight diagnostics collected only by Apple are not developer-collected by code. Reconfirm whether the release operator separately exports or retains crash reports before answering the live Diagnostics questions.
 - Ensure App Store Connect answers match the current privacy policy at `https://homeypaw.vercel.app/privacy`.

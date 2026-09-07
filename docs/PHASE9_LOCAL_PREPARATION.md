@@ -1,12 +1,12 @@
 # Phase 9 Local Preparation
 
-Updated 2026-08-28. This document began as the local-preparation record and now also records the approved remote identity/signing handoff before the first production build.
+Updated 2026-08-28. This document began as the local-preparation record and now records the completed production-build, TestFlight-upload, and Internal Testing handoff.
 
 ## Result
 
-`RELEASE CANDIDATE READY — FIRST PRODUCTION BUILD AUTHORIZED`
+`PHASE 9 COMPLETE — INTERNAL TESTFLIGHT BUILD 1 VALIDATED`
 
-The EAS project, Apple Bundle ID, App Store Connect app, Distribution certificate, and App Store provisioning profile have been created and verified. No production build, TestFlight upload, App Store submission, or App Review submission has occurred yet.
+The EAS project, Apple Bundle ID, App Store Connect app, Distribution certificate, App Store provisioning profile, production build, and Internal TestFlight upload have been created and verified. Build `1.0.0 (1)` is `VALID` and `IN_BETA_TESTING`; the release owner reports core acceptance `PASS`. No App Review submission has occurred.
 
 ## Locked Production Identity
 
@@ -18,6 +18,8 @@ The EAS project, Apple Bundle ID, App Store Connect app, Distribution certificat
 - Production Chat: hidden; no release route or tab
 - Notifications: local only; no remote push
 - Encryption declaration: `ITSAppUsesNonExemptEncryption = false`
+- EAS build ID: `d1ef9ee0-78aa-41ff-891b-f81e326dc29a`
+- EAS submission ID: `81a743e4-d4a3-46a8-bf3c-84e700f4e374`
 
 ## Completed Local Preparation
 
@@ -32,7 +34,7 @@ The EAS project, Apple Bundle ID, App Store Connect app, Distribution certificat
 
 ## Backend Boundary
 
-The currently linked `pawday-dev` Supabase project is approved as the first Internal TestFlight backend. It is not approved as a public-production backend. Before uploading the first build:
+The currently linked `pawday-dev` Supabase project is approved as the Internal TestFlight backend. The existing record does not yet contain explicit approval to use it as the public App Store production backend. Before App Review:
 
 - confirm the project remains the intended TestFlight backend;
 - keep only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the project-scoped EAS `production` environment;
@@ -63,11 +65,11 @@ Final suite completed on 2026-08-27 with the supported bundled Node `24.19.0`:
 
 The machine's default Node `24.0.0` is below the project engine floor. Local verification therefore used the bundled supported Node `24.19.0`; EAS production remains pinned to Node `22.13.0`.
 
-## Remaining Remote Release Work
+## Remaining App Store Release Work
 
-- Complete and inspect the first EAS production-signed build.
-- With separate approval, upload/select the build and complete Internal TestFlight processing and installation.
-- Complete final seller-dependent metadata, App Privacy, age rating, screenshots, DSA decision, export-compliance prompts, and review information.
+- Confirm whether `pawday-dev` is approved to remain the public App Store backend for Build 1.
+- Complete final metadata, screenshots, App Privacy, age rating, Content Rights, DSA decision, availability, export-compliance confirmation, review contact, and non-expiring demo accounts.
+- Assign the already uploaded Build 1 to App Store version `1.0.0` after the human-owned fields are complete.
 - Submit for App Review only after a separate explicit approval.
 
-The build authorization does not authorize TestFlight upload, external testing, DSA declaration, or App Review submission.
+Phase 9 completion does not authorize external testing, any legal/compliance declaration, Add for Review, or Submit for Review.

@@ -1,6 +1,8 @@
 # App Store Metadata — Final Local Draft
 
-Prepared on 2026-08-27. Nothing in this file has been submitted to App Store Connect.
+Updated on 2026-08-28. This remains a local metadata draft; the binary upload and
+Internal TestFlight setup do not mean these App Store fields have been submitted
+for review.
 
 ## App Record
 
@@ -13,7 +15,7 @@ Prepared on 2026-08-27. Nothing in this file has been submitted to App Store Con
 - Price recommendation: Free
 - Primary Category: Lifestyle
 - Secondary Category: Utilities
-- Copyright: `2026 [Apple Developer Program seller/legal name]` (replace only after enrollment is active)
+- Copyright recommendation: `2026 SHUNLI ZHU` (confirm the exact seller-name formatting shown in App Store Connect before entry)
 - Support Email: `lenny996@163.com`
 - Support URL: `https://homeypaw.vercel.app/support`
 - Privacy Policy URL: `https://homeypaw.vercel.app/privacy`
@@ -104,7 +106,7 @@ Known limitation: reminders are device-local and are not delivered across device
 
 ## Submission-Time Fields Still Requiring Account Access
 
-- Confirm the seller/legal name and replace the copyright placeholder.
+- Confirm that App Store Connect displays the seller/legal name as `SHUNLI ZHU`, then use the recommended copyright formatting above.
 - Keep the existing App Store Connect identity: numeric app ID `6806111286`, Bundle ID `com.zhushunli.homeypaw`, and SKU `HOMEYPAW-IOS-001`.
 - Enter App Privacy and Age Rating answers using the companion inventories.
 - Add review contact details and, if Apple requests them, a valid review account and review instructions.
