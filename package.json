@@ -71,7 +71,10 @@
     "verify:phase8-production": "node scripts/verify-phase8-production.mjs",
     "prepare:phase7-account-delete": "node scripts/prepare-care-task-account-delete.mjs",
     "verify:phase7-account-delete": "node scripts/verify-care-task-account-delete.mjs",
-    "verify:phase9-local": "node scripts/verify-phase9-local.mjs"
+    "verify:phase9-local": "node scripts/verify-phase9-local.mjs",
+    "verify:phase10a-chat": "node scripts/verify-phase10a-chat.mjs",
+    "verify:phase10a-chat-client": "node --experimental-strip-types scripts/verify-phase10a-chat-client.mjs",
+    "verify:phase10a-chat-rls": "node scripts/verify-phase10a-chat-rls.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

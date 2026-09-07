@@ -12,6 +12,8 @@ function assert(condition, message) {
 const route = read('src/app/chat-preview.tsx');
 const rootLayout = read('src/app/_layout.tsx');
 const tabsLayout = read('src/app/(tabs)/_layout.tsx');
+const liveRoute = read('src/app/(tabs)/chat.tsx');
+const featureFlags = read('src/config/features.ts');
 const mockData = read('src/features/chat/mock-chat-data.ts');
 const previewSource = [
   route,
@@ -36,8 +38,16 @@ assert(
   'Root navigator is missing its development-only protected route.',
 );
 assert(
-  !tabsLayout.includes('chat-preview') && !tabsLayout.includes('name="chat"'),
-  'Production bottom tabs expose a Chat route.',
+  !tabsLayout.includes('chat-preview') &&
+    tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })'),
+  'Bottom tabs do not hide Chat behind the approved feature flag.',
+);
+assert(
+  featureFlags.includes('__DEV__') &&
+    featureFlags.includes("EXPO_PUBLIC_CHAT_ENABLED === 'true'") &&
+    liveRoute.includes('if (!CHAT_ENABLED)') &&
+    liveRoute.includes('<Redirect href="/" />'),
+  'The real Chat route is missing its development-only production guard.',
 );
 assert(
   mockData.includes('Array.from({ length: 100 }'),

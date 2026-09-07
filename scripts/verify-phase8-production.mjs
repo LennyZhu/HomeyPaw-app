@@ -120,9 +120,16 @@ for (const file of sourceFiles) {
   );
 }
 
+const tabsLayout = read('src/app/(tabs)/_layout.tsx');
+const chatRoute = read('src/app/(tabs)/chat.tsx');
+const featureFlags = read('src/config/features.ts');
 assert(
-  !fs.existsSync(path.join(root, 'src/app/(tabs)/chat.tsx')),
-  'Chat route must not be exposed in the 1.0 production router.',
+  tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })') &&
+    featureFlags.includes('__DEV__') &&
+    featureFlags.includes("EXPO_PUBLIC_CHAT_ENABLED === 'true'") &&
+    chatRoute.includes('if (!CHAT_ENABLED)') &&
+    chatRoute.includes('<Redirect href="/" />'),
+  'Chat must remain inaccessible in a production export.',
 );
 assert(
   fs.existsSync(path.join(root, 'eas.json')),

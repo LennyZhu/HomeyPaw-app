@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
+import { CHAT_ENABLED } from '@/config/features';
 import { lightColors, layout, radius, shadows, spacing } from '@/theme';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -92,6 +93,23 @@ export default function TabsLayout() {
           tabBarAccessibilityLabel: t('tabs.create'),
           tabBarIcon: CreateTabIcon,
           tabBarLabel: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          ...(CHAT_ENABLED ? {} : { href: null }),
+          title: t('tabs.chat'),
+          tabBarAccessibilityLabel: t('tabs.chat'),
+          tabBarIcon: ({ color, focused, size }) => (
+            <TabIcon
+              color={color}
+              focused={focused}
+              name="chatbubble-ellipses-outline"
+              nameFocused="chatbubble-ellipses"
+              size={size}
+            />
+          ),
         }}
       />
       <Tabs.Screen

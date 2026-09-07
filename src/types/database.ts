@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          body: string;
+          client_message_id: string;
+          created_at: string;
+          id: string;
+          pet_id: string;
+          sender_id: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'chat_messages_pet_id_fkey';
+            columns: ['pet_id'];
+            isOneToOne: false;
+            referencedRelation: 'pets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      chat_read_states: {
+        Row: {
+          last_read_at: string;
+          last_read_message_id: string;
+          pet_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'chat_read_states_pet_id_fkey';
+            columns: ['pet_id'];
+            isOneToOne: false;
+            referencedRelation: 'pets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       care_logs: {
         Row: {
           care_type: Database['public']['Enums']['care_type'];
@@ -299,6 +341,53 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      delete_chat_message: {
+        Args: { target_message_id: string };
+        Returns: boolean;
+      };
+      get_chat_messages_page: {
+        Args: {
+          before_created_at?: string | null;
+          before_message_id?: string | null;
+          requested_limit?: number;
+          target_pet_id: string;
+        };
+        Returns: Database['public']['Tables']['chat_messages']['Row'][];
+      };
+      get_chat_unread_count: {
+        Args: { target_pet_id: string };
+        Returns: number;
+      };
+      get_pet_chat_channel_version: {
+        Args: { target_pet_id: string };
+        Returns: number;
+      };
+      get_pet_chat_members: {
+        Args: { target_pet_id: string };
+        Returns: {
+          member_avatar_url: string | null;
+          member_display_name: string;
+          member_joined_at: string;
+          member_role: Database['public']['Enums']['pet_member_role'];
+          member_user_id: string;
+        }[];
+      };
+      mark_chat_read: {
+        Args: { target_message_id: string; target_pet_id: string };
+        Returns: Database['public']['Tables']['chat_read_states']['Row'];
+      };
+      send_chat_message: {
+        Args: {
+          message_body: string;
+          target_client_message_id: string;
+          target_pet_id: string;
+        };
+        Returns: Database['public']['Tables']['chat_messages']['Row'];
+      };
+      update_chat_message: {
+        Args: { message_body: string; target_message_id: string };
+        Returns: Database['public']['Tables']['chat_messages']['Row'];
+      };
       complete_care_task: {
         Args: {
           care_log_id: string;
@@ -539,6 +628,9 @@ export type Database = {
 };
 
 export type Profile = Database['public']['Tables']['profiles']['Row'];
+export type ChatMessage = Database['public']['Tables']['chat_messages']['Row'];
+export type ChatReadState =
+  Database['public']['Tables']['chat_read_states']['Row'];
 export type CareLog = Database['public']['Tables']['care_logs']['Row'];
 export type CareTask = Database['public']['Tables']['care_tasks']['Row'];
 export type CareTaskCompletion =

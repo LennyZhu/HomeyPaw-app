@@ -1,6 +1,11 @@
 # Chat Architecture Proposal
 
-> Status: proposal only. Nothing in this document is implemented by the Chat UI Prototype.
+> **Archived proposal — superseded.** Phase 10A is now specified and documented
+> in [PHASE10A_SECURE_FAMILY_CHAT.md](./PHASE10A_SECURE_FAMILY_CHAT.md).
+> The earlier PostgreSQL Changes recommendation below was rejected because
+> DELETE delivery cannot meet HomeyPaw's required RLS event isolation. The
+> approved design uses versioned Supabase Private Realtime Broadcast. The rest
+> of this file is retained only as the historical UI-prototype proposal.
 
 ## Product Boundary
 

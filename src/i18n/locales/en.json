@@ -471,6 +471,89 @@
     "privateNote": "There will be no public discovery or messages from strangers, and removed members will lose access.",
     "noPetTitle": "Choose a pet family first",
     "noPetBody": "Create a pet profile or join with an invite code, and the chat entry will appear here.",
+    "live": {
+      "loading": "Securing the family chat…",
+      "loadEarlier": "Load earlier messages",
+      "formerMember": "Former family member",
+      "retry": "Retry message",
+      "sendFailed": "Not sent — long press to retry",
+      "actions": {
+        "title": "Message actions"
+      },
+      "header": {
+        "title": "{{name}}'s family chat",
+        "memberCount_one": "{{count}} family member",
+        "memberCount_other": "{{count}} family members",
+        "members": "View family members",
+        "switchPet": "Currently in {{name}}'s family chat",
+        "switchHint": "Double tap to switch to another pet's private chat"
+      },
+      "members": {
+        "title": "Family members",
+        "body_one": "{{count}} person can access {{name}}'s chat.",
+        "body_other": "{{count}} people can access {{name}}'s chat.",
+        "owner": "Owner",
+        "member": "Member"
+      },
+      "composer": {
+        "placeholder": "Message the family…",
+        "inputLabel": "Enter a private family chat message",
+        "send": "Send message",
+        "charactersRemaining": "{{count}} characters remaining"
+      },
+      "delete": {
+        "confirmTitle": "Delete this message?",
+        "confirmBody": "It will be removed from this family chat for everyone.",
+        "action": "Delete",
+        "failedTitle": "Message wasn't deleted",
+        "failedBody": "Check your connection and try again."
+      },
+      "edit": {
+        "title": "Edit message",
+        "body": "Only the message text will change. The original sender, pet and sent time stay fixed.",
+        "inputLabel": "Edit your family chat message",
+        "charactersRemaining": "{{count}} characters remaining",
+        "action": "Edit",
+        "save": "Save changes",
+        "failed": "The message wasn't updated. Check your access and connection, then try again."
+      },
+      "accessibility": {
+        "messageList": "Private family chat message list",
+        "you": "You",
+        "memberAvatar": "Profile image for {{name}}",
+        "retryHint": "Long press to retry with the same safe message identifier",
+        "deleteHint": "Long press to show the delete confirmation",
+        "actionsHint": "Tap or long press to show the available message actions"
+      },
+      "noPet": {
+        "title": "No family chat yet",
+        "body": "Add a pet or join a family to open its private chat.",
+        "add": "Add a pet",
+        "join": "Join family"
+      },
+      "singleMember": {
+        "title": "It's just you for now",
+        "body": "Invite a family member, or send the first update for later.",
+        "action": "Invite family"
+      },
+      "empty": {
+        "title": "Start the family conversation",
+        "body": "Share the first update about your pet."
+      },
+      "offline": {
+        "title": "You're offline",
+        "body": "Reconnect before sending. Failed or uncertain sends can be retried with the same message ID."
+      },
+      "accessLost": {
+        "title": "Chat access has changed",
+        "body": "This private chat is no longer available to your account. Cached chat data has been cleared.",
+        "action": "Return home"
+      },
+      "error": {
+        "title": "The chat can't connect",
+        "body": "Your messages are still stored safely. Check the connection and try again."
+      }
+    },
     "preview": {
       "label": "Development Preview",
       "date": {

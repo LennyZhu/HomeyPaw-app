@@ -18,6 +18,9 @@ const easConfig = JSON.parse(read('eas.json'));
 const expo = appConfig.expo ?? {};
 const production = easConfig.build?.production ?? {};
 const productionIosSubmit = easConfig.submit?.production?.ios ?? {};
+const tabsLayout = read('src/app/(tabs)/_layout.tsx');
+const chatRoute = read('src/app/(tabs)/chat.tsx');
+const featureFlags = read('src/config/features.ts');
 
 assert(expo.name === 'HomeyPaw', 'Production name must be HomeyPaw.');
 assert(expo.version === '1.0.0', 'Production version must be 1.0.0.');
@@ -60,6 +63,12 @@ assert(
 );
 assert(expo.owner === 'homeypaw', 'Unexpected EAS project owner.');
 assert(expo.slug === 'homeypaw', 'Unexpected Expo project slug.');
+assert(
+  tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })') &&
+    featureFlags.includes('__DEV__') &&
+    chatRoute.includes('if (!CHAT_ENABLED)'),
+  'Phase 10A Chat must remain hidden from the current production release.',
+);
 
 const serializedAppConfig = JSON.stringify(appConfig);
 for (const forbiddenPermission of [

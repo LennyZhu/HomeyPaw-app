@@ -471,6 +471,89 @@
     "privateNote": "這裡不會出現公開搜尋或陌生人訊息；被移除的成員也會失去存取權。",
     "noPetTitle": "先選擇一個毛孩家庭",
     "noPetBody": "建立毛孩檔案或使用邀請碼加入家庭後，聊天入口會顯示在這裡。",
+    "live": {
+      "loading": "正在安全連接家庭聊天室…",
+      "loadEarlier": "載入較早訊息",
+      "formerMember": "已離開的家庭成員",
+      "retry": "重新傳送訊息",
+      "sendFailed": "尚未傳送 — 長按再試",
+      "actions": {
+        "title": "訊息操作"
+      },
+      "header": {
+        "title": "{{name}}的家庭聊天室",
+        "memberCount_one": "{{count}} 位家人",
+        "memberCount_other": "{{count}} 位家人",
+        "members": "查看家庭成員",
+        "switchPet": "目前是{{name}}的家庭聊天室",
+        "switchHint": "輕點切換另一隻毛孩的私人聊天室"
+      },
+      "members": {
+        "title": "家庭成員",
+        "body_one": "{{count}} 位家人可進入{{name}}的聊天室。",
+        "body_other": "{{count}} 位家人可進入{{name}}的聊天室。",
+        "owner": "管理者",
+        "member": "成員"
+      },
+      "composer": {
+        "placeholder": "和家人說點什麼…",
+        "inputLabel": "輸入私人家庭聊天室訊息",
+        "send": "傳送訊息",
+        "charactersRemaining": "尚可輸入 {{count}} 個字元"
+      },
+      "delete": {
+        "confirmTitle": "刪除這則訊息？",
+        "confirmBody": "這則訊息會從所有家人的聊天室中移除。",
+        "action": "刪除",
+        "failedTitle": "未能刪除訊息",
+        "failedBody": "請檢查網絡連線後再試一次。"
+      },
+      "edit": {
+        "title": "編輯訊息",
+        "body": "只會修改訊息文字；原本的傳送者、毛孩及傳送時間不會改變。",
+        "inputLabel": "編輯你的家庭聊天室訊息",
+        "charactersRemaining": "尚可輸入 {{count}} 個字元",
+        "action": "編輯",
+        "save": "儲存修改",
+        "failed": "未能更新訊息，請檢查存取權及網絡連線後再試一次。"
+      },
+      "accessibility": {
+        "messageList": "私人家庭聊天室訊息列表",
+        "you": "你",
+        "memberAvatar": "{{name}}的個人圖片",
+        "retryHint": "長按並使用相同的安全訊息識別碼重新傳送",
+        "deleteHint": "長按以顯示刪除確認",
+        "actionsHint": "輕點或長按以顯示可用的訊息操作"
+      },
+      "noPet": {
+        "title": "還沒有家庭聊天室",
+        "body": "新增毛孩或加入家庭後，即可開啟專屬私人聊天室。",
+        "add": "新增毛孩",
+        "join": "加入家庭"
+      },
+      "singleMember": {
+        "title": "這裡暫時只有你",
+        "body": "可以先邀請家人，或留下第一則毛孩近況。",
+        "action": "邀請家人"
+      },
+      "empty": {
+        "title": "開始家庭對話",
+        "body": "分享第一則毛孩近況吧。"
+      },
+      "offline": {
+        "title": "目前離線",
+        "body": "請在重新連線後傳送；失敗或結果不明的訊息會沿用相同訊息識別碼重試。"
+      },
+      "accessLost": {
+        "title": "聊天室存取權已變更",
+        "body": "你的帳戶已無法進入這個私人聊天室，裝置上的聊天室快取亦已清除。",
+        "action": "返回首頁"
+      },
+      "error": {
+        "title": "暫時無法連接聊天室",
+        "body": "訊息仍安全儲存在資料庫，請檢查網絡後再試一次。"
+      }
+    },
     "preview": {
       "label": "開發預覽",
       "date": {
