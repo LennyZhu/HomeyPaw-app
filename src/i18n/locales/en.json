@@ -926,6 +926,98 @@
       "authorOnly": "Only the person who recorded this care can edit it."
     }
   },
+  "schedule": {
+    "title": "Family schedule",
+    "subtitle": "Share each care responsibility without losing the full family picture.",
+    "seeAll": "See all",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "today": "Today",
+    "unassigned": "Unassigned",
+    "claimable": "Waiting to be claimed",
+    "claimed": "Claimed",
+    "assigned": "Assigned",
+    "scheduled": "Scheduled",
+    "completed": "Completed",
+    "pending": "Pending",
+    "canceled": "Canceled",
+    "edit": "Edit schedule",
+    "complete": "Complete",
+    "claim": "I'll take care of it",
+    "add": "Add schedule",
+    "addCareTask": "Add care task",
+    "petFamily": "Family care schedule",
+    "dayItemCount_one": "{{count}} care item",
+    "dayItemCount_other": "{{count}} care items",
+    "remainingItems_one": "See {{count}} more item",
+    "remainingItems_other": "See {{count}} more items",
+    "emptyDate": "No schedule",
+    "emptyDateBody": "Nothing is assigned for this date yet.",
+    "loading": "Loading family schedule…",
+    "loadingOccurrences": "Loading available care tasks…",
+    "noPetTitle": "No pets yet",
+    "noPetBody": "Create or join a pet family before making a care schedule.",
+    "completedBy": "Completed by {{name}}",
+    "calendar": {
+      "todaySuffix": ", Today",
+      "dateAccessibility": "{{date}}{{today}}. {{memberCount}} family members, {{itemCount}} care items, {{completedCount}} completed, {{unassignedCount}} unassigned."
+    },
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "canceled": "Schedule canceled",
+      "completedOutsideSchedule": "Schedule canceled; underlying task later completed by {{name}}"
+    },
+    "form": {
+      "createSubtitle": "Choose existing care task occurrences and assign them as one responsibility bundle.",
+      "date": "Date",
+      "dateInvalid": "Choose today or a valid future date.",
+      "assignee": "Responsible family member",
+      "assignedToSelf": "Assigned to you",
+      "tasks": "Care tasks",
+      "note": "Note",
+      "notePlaceholder": "Add context for the person taking this shift",
+      "create": "Create schedule",
+      "details": "Schedule details",
+      "currentTasks": "Current care tasks",
+      "addTasks": "Add care tasks",
+      "addSelected": "Add selected tasks",
+      "noOccurrences": "No available care task occurrences on this date.",
+      "selected": "Selected",
+      "available": "Available",
+      "occurrenceAccessibility": "{{time}}, {{title}}, {{state}}"
+    },
+    "cancelItem": {
+      "title": "Cancel this scheduled item?",
+      "body": "The underlying care task remains available in Reminders.",
+      "action": "Cancel item"
+    },
+    "cancelShift": {
+      "title": "Cancel this schedule?",
+      "body": "Completed history stays unchanged. Only remaining scheduled responsibility is canceled.",
+      "action": "Cancel schedule"
+    },
+    "feedback": {
+      "claimed": "This schedule is now yours.",
+      "completed": "Care item completed.",
+      "created": "Family schedule created.",
+      "updated": "Schedule details updated.",
+      "itemsAdded": "Care tasks added.",
+      "itemCanceled": "Scheduled item canceled.",
+      "canceled": "Schedule canceled."
+    },
+    "errors": {
+      "load": "We couldn't load the family schedule. Try again.",
+      "accessLost": "You no longer have access to this pet's schedule.",
+      "alreadyClaimed": "Another family member has already claimed this schedule.",
+      "claim": "This schedule could not be claimed. Refresh and try again.",
+      "complete": "The care item was not completed. Refresh and try again.",
+      "save": "The schedule was not saved. Your input is still here.",
+      "occurrences": "Available care tasks could not be loaded.",
+      "cancel": "The scheduled responsibility was not canceled.",
+      "notMutable": "This schedule is unavailable or its history can no longer be changed."
+    }
+  },
   "network": {
     "offline": "You're offline. Previously loaded content remains available.",
     "reconnected": "You're back online."

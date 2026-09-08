@@ -926,6 +926,98 @@
       "authorOnly": "只有記錄這項照顧的人可以編輯。"
     }
   },
+  "schedule": {
+    "title": "家庭排班",
+    "subtitle": "清楚分配每項照顧責任，同時保留完整家庭紀錄。",
+    "seeAll": "查看全部",
+    "previousMonth": "前一個月",
+    "nextMonth": "下一個月",
+    "today": "今天",
+    "unassigned": "未分配",
+    "claimable": "待認領",
+    "claimed": "已認領",
+    "assigned": "已分配",
+    "scheduled": "已安排",
+    "completed": "已完成",
+    "pending": "待完成",
+    "canceled": "已取消",
+    "edit": "編輯排班",
+    "complete": "完成",
+    "claim": "我來負責",
+    "add": "新增排班",
+    "addCareTask": "新增照顧事項",
+    "petFamily": "家庭照顧排班",
+    "dayItemCount_one": "{{count}} 項照顧事項",
+    "dayItemCount_other": "{{count}} 項照顧事項",
+    "remainingItems_one": "查看其餘 {{count}} 項",
+    "remainingItems_other": "查看其餘 {{count}} 項",
+    "emptyDate": "沒有排班",
+    "emptyDateBody": "這一天還沒有分配照顧責任。",
+    "loading": "正在載入家庭排班…",
+    "loadingOccurrences": "正在載入可用照顧事項…",
+    "noPetTitle": "還沒有毛孩",
+    "noPetBody": "先建立或加入毛孩家庭，再開始安排照顧責任。",
+    "completedBy": "由 {{name}} 完成",
+    "calendar": {
+      "todaySuffix": "，今天",
+      "dateAccessibility": "{{date}}{{today}}，{{memberCount}} 位家庭成員，{{itemCount}} 項照顧事項，{{completedCount}} 項已完成，{{unassignedCount}} 項待認領。"
+    },
+    "status": {
+      "pending": "待完成",
+      "completed": "已完成",
+      "canceled": "已取消排班",
+      "completedOutsideSchedule": "排班已取消；底層照顧事項其後由 {{name}} 完成"
+    },
+    "form": {
+      "createSubtitle": "選擇已有的照顧事項 occurrence，組成一個清晰的責任排班。",
+      "date": "日期",
+      "dateInvalid": "請選擇今天或有效的未來日期。",
+      "assignee": "負責家庭成員",
+      "assignedToSelf": "由你負責",
+      "tasks": "照顧事項",
+      "note": "備註",
+      "notePlaceholder": "為負責這個排班的人補充說明",
+      "create": "建立排班",
+      "details": "排班詳情",
+      "currentTasks": "現有照顧事項",
+      "addTasks": "加入照顧事項",
+      "addSelected": "加入已選事項",
+      "noOccurrences": "這一天沒有可用的照顧事項 occurrence。",
+      "selected": "已選擇",
+      "available": "可選擇",
+      "occurrenceAccessibility": "{{time}}，{{title}}，{{state}}"
+    },
+    "cancelItem": {
+      "title": "取消這項排班責任？",
+      "body": "底層照顧事項仍會保留在提醒中。",
+      "action": "取消此項"
+    },
+    "cancelShift": {
+      "title": "取消這個排班？",
+      "body": "已完成歷史不會改變，只會取消尚未完成的排班責任。",
+      "action": "取消排班"
+    },
+    "feedback": {
+      "claimed": "這個排班現在由你負責。",
+      "completed": "照顧事項已完成。",
+      "created": "家庭排班已建立。",
+      "updated": "排班詳情已更新。",
+      "itemsAdded": "照顧事項已加入。",
+      "itemCanceled": "排班事項已取消。",
+      "canceled": "排班已取消。"
+    },
+    "errors": {
+      "load": "暫時無法載入家庭排班，請再試一次。",
+      "accessLost": "你已沒有權限查看這個毛孩的排班。",
+      "alreadyClaimed": "這個排班已被其他家庭成員認領。",
+      "claim": "未能認領這個排班，請重新整理後再試。",
+      "complete": "照顧事項未能完成，請重新整理後再試。",
+      "save": "排班未能儲存，你填寫的內容仍然保留。",
+      "occurrences": "暫時無法載入可用照顧事項。",
+      "cancel": "排班責任未能取消。",
+      "notMutable": "找不到這個排班，或這段歷史已不能修改。"
+    }
+  },
   "network": {
     "offline": "目前沒有網絡連線。你仍可查看已載入內容。",
     "reconnected": "網絡已恢復。"

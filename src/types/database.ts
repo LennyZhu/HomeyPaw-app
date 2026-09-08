@@ -77,9 +77,76 @@ export type Database = {
           },
         ];
       };
+      care_shifts: {
+        Row: {
+          assignee_user_id: string | null;
+          canceled_at: string | null;
+          canceled_by: string | null;
+          claimed_at: string | null;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          local_date: string;
+          note: string | null;
+          pet_id: string;
+          split_from_shift_id: string | null;
+          status: Database['public']['Enums']['care_schedule_status'];
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'care_shifts_pet_id_fkey';
+            columns: ['pet_id'];
+            isOneToOne: false;
+            referencedRelation: 'pets';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'care_shifts_split_from_shift_id_fkey';
+            columns: ['split_from_shift_id'];
+            isOneToOne: false;
+            referencedRelation: 'care_shifts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      care_shift_tasks: {
+        Row: {
+          canceled_at: string | null;
+          canceled_by: string | null;
+          care_task_id: string;
+          created_at: string;
+          id: string;
+          pet_id: string;
+          shift_id: string;
+          source_scheduled_for: string;
+          status: Database['public']['Enums']['care_schedule_status'];
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'care_shift_tasks_shift_pet_fkey';
+            columns: ['shift_id', 'pet_id'];
+            isOneToOne: false;
+            referencedRelation: 'care_shifts';
+            referencedColumns: ['id', 'pet_id'];
+          },
+          {
+            foreignKeyName: 'care_shift_tasks_task_pet_fkey';
+            columns: ['care_task_id', 'pet_id'];
+            isOneToOne: false;
+            referencedRelation: 'care_tasks';
+            referencedColumns: ['id', 'pet_id'];
+          },
+        ];
+      };
       care_task_completions: {
         Row: {
           care_log_id: string;
+          care_shift_task_id: string | null;
           completed_at: string;
           completed_by: string;
           created_at: string;
@@ -110,6 +177,13 @@ export type Database = {
             columns: ['care_log_id'];
             isOneToOne: true;
             referencedRelation: 'care_logs';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'care_task_completions_shift_task_fkey';
+            columns: ['care_shift_task_id'];
+            isOneToOne: true;
+            referencedRelation: 'care_shift_tasks';
             referencedColumns: ['id'];
           },
         ];
@@ -341,6 +415,49 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      add_care_shift_tasks: {
+        Args: { target_shift_id: string; task_items: Json };
+        Returns: Database['public']['Tables']['care_shift_tasks']['Row'][];
+      };
+      cancel_care_shift: {
+        Args: { target_shift_id: string };
+        Returns: 'canceled' | 'canceled_remaining';
+      };
+      cancel_care_shift_task: {
+        Args: { target_shift_task_id: string };
+        Returns: 'canceled';
+      };
+      claim_care_shift: {
+        Args: { target_shift_id: string };
+        Returns: Database['public']['Tables']['care_shifts']['Row'];
+      };
+      complete_care_shift_task: {
+        Args: {
+          care_log_id: string;
+          completion_duration_minutes?: number | null;
+          completion_id: string;
+          completion_note?: string | null;
+          target_shift_task_id: string;
+        };
+        Returns: {
+          completion_status: 'completed' | 'already_completed';
+          result_care_log_id: string;
+          result_completed_at: string;
+          result_completed_by: string;
+          result_completion_id: string;
+        }[];
+      };
+      create_care_shift: {
+        Args: {
+          shift_id: string;
+          shift_local_date: string;
+          shift_note: string | null;
+          target_assignee_user_id: string | null;
+          target_pet_id: string;
+          task_items: Json;
+        };
+        Returns: Database['public']['Tables']['care_shifts']['Row'];
+      };
       delete_chat_message: {
         Args: { target_message_id: string };
         Returns: boolean;
@@ -484,6 +601,39 @@ export type Database = {
           week_day: number | null;
         }[];
       };
+      get_care_schedule_range: {
+        Args: {
+          range_end: string;
+          range_start: string;
+          target_pet_id: string;
+        };
+        Returns: {
+          assignee_display_name: string | null;
+          assignee_user_id: string | null;
+          care_log_id: string | null;
+          care_task_id: string;
+          claimed_at: string | null;
+          completed_at: string | null;
+          completed_by: string | null;
+          completer_display_name: string | null;
+          completion_id: string | null;
+          local_date: string;
+          pet_id: string;
+          shift_canceled_at: string | null;
+          shift_id: string;
+          shift_note: string | null;
+          shift_status: Database['public']['Enums']['care_schedule_status'];
+          shift_task_canceled_at: string | null;
+          shift_task_id: string;
+          shift_task_status: Database['public']['Enums']['care_schedule_status'];
+          source_scheduled_for: string;
+          split_from_shift_id: string | null;
+          task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_note: string | null;
+          task_time_zone: string;
+          task_title: string;
+        }[];
+      };
       create_pet_invite: {
         Args: { target_pet_id: string };
         Returns: {
@@ -600,12 +750,21 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['care_tasks']['Row'];
       };
+      update_care_shift: {
+        Args: {
+          shift_note: string | null;
+          target_assignee_user_id: string | null;
+          target_shift_id: string;
+        };
+        Returns: Database['public']['Tables']['care_shifts']['Row'];
+      };
       undo_care_task_completion: {
         Args: { target_completion_id: string };
         Returns: 'undone' | 'not_found';
       };
     };
     Enums: {
+      care_schedule_status: 'scheduled' | 'canceled';
       care_task_schedule_type: 'once' | 'daily' | 'weekly' | 'monthly';
       care_type:
         'feeding' | 'walk' | 'medicine' | 'bath' | 'grooming' | 'other';
@@ -632,6 +791,11 @@ export type ChatMessage = Database['public']['Tables']['chat_messages']['Row'];
 export type ChatReadState =
   Database['public']['Tables']['chat_read_states']['Row'];
 export type CareLog = Database['public']['Tables']['care_logs']['Row'];
+export type CareShift = Database['public']['Tables']['care_shifts']['Row'];
+export type CareShiftTask =
+  Database['public']['Tables']['care_shift_tasks']['Row'];
+export type CareScheduleStatus =
+  Database['public']['Enums']['care_schedule_status'];
 export type CareTask = Database['public']['Tables']['care_tasks']['Row'];
 export type CareTaskCompletion =
   Database['public']['Tables']['care_task_completions']['Row'];

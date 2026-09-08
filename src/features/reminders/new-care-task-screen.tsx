@@ -1,5 +1,5 @@
 import * as Crypto from 'expo-crypto';
-import { useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -29,12 +29,14 @@ import type { CareTaskFormValues } from './care-task-schema';
 import { CareTaskForm } from './components/care-task-form';
 import { useAuth } from '../auth/auth-context';
 
-function defaultValues(): CareTaskFormValues {
+function defaultValues(requestedDate?: string): CareTaskFormValues {
   const next = new Date(Date.now() + 60 * 60_000);
   next.setMinutes(Math.ceil(next.getMinutes() / 5) * 5, 0, 0);
   return {
     careType: 'feeding',
-    date: getLocalDateOnly(next),
+    date: /^\d{4}-\d{2}-\d{2}$/u.test(requestedDate ?? '')
+      ? requestedDate!
+      : getLocalDateOnly(next),
     localTime: `${next.getHours().toString().padStart(2, '0')}:${next
       .getMinutes()
       .toString()
@@ -48,26 +50,46 @@ function defaultValues(): CareTaskFormValues {
 }
 
 export default function NewCareTaskScreen() {
+  const params = useLocalSearchParams<{
+    date?: string | string[];
+    petId?: string | string[];
+    returnTo?: string | string[];
+  }>();
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const petsState = useCurrentPet();
   const createTask = useCreateCareTask();
-  const [selectedPetId, setSelectedPetId] = useState<string | null>(
-    petsState.currentPetId,
+  const requestedPetId = Array.isArray(params.petId)
+    ? params.petId[0]
+    : params.petId;
+  const requestedDate = Array.isArray(params.date)
+    ? params.date[0]
+    : params.date;
+  const requestedReturnTo = Array.isArray(params.returnTo)
+    ? params.returnTo[0]
+    : params.returnTo;
+  const safeReturnTo =
+    requestedReturnTo && /^\/schedule(?:[/?]|$)/u.test(requestedReturnTo)
+      ? (requestedReturnTo as Href)
+      : ('/reminders' as Href);
+  const [selectedPetId, setSelectedPetId] = useState<string | null>(() =>
+    requestedPetId && petsState.pets.some((pet) => pet.id === requestedPetId)
+      ? requestedPetId
+      : petsState.currentPetId,
   );
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [timeZone] = useState(() => getDeviceTimeZone());
-  const [values] = useState(() => defaultValues());
+  const [values] = useState(() => defaultValues(requestedDate));
   const [taskId] = useState(() => Crypto.randomUUID());
   const effectivePetId = selectedPetId ?? petsState.currentPetId;
   const selectedPet =
     petsState.pets.find((pet) => pet.id === effectivePetId) ??
     petsState.currentPet;
 
-  const finish = () => router.replace('/reminders');
+  const finish = () => router.replace(safeReturnTo);
 
   const submit = async (formValues: CareTaskFormValues) => {
     if (!selectedPet) return;

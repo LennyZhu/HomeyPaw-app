@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,8 @@ import { getPetSummaryLabel } from '@/features/pets/pet-display';
 import { usePet } from '@/features/pets/pet-queries';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { useCareTaskOccurrences } from '@/features/reminders/care-task-queries';
+import { HomeScheduleCard } from '@/features/schedule/components/home-schedule-card';
+import { invalidateCareSchedule } from '@/features/schedule/care-schedule-queries';
 import { PostMediaPreview } from '@/features/posts/components/post-media-preview';
 import {
   type PostWithMedia,
@@ -34,9 +37,12 @@ import {
 } from '@/features/posts/post-queries';
 import { lightColors, radius, spacing } from '@/theme';
 import type { CareLog } from '@/types/database';
+import { useAuth } from '@/features/auth/auth-context';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { i18n, t } = useTranslation();
   const petsState = useCurrentPet();
   const petId = petsState.currentPetId;
@@ -46,6 +52,8 @@ export default function HomeScreen() {
   const authorsQuery = usePetPostAuthors(petId);
   const memoryQuery = usePetMemory(petId);
   const [localToday, setLocalToday] = useState(getLocalDateOnly);
+  const [selectedScheduleDate, setSelectedScheduleDate] =
+    useState(getLocalDateOnly);
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const reminderWindow = useMemo(() => {
     const [year = 1970, month = 1, day = 1] = localToday.split('-').map(Number);
@@ -130,14 +138,17 @@ export default function HomeScreen() {
       todayCareQuery.refetch(),
       carePerformersQuery.refetch(),
       reminderQuery.refetch(),
+      invalidateCareSchedule(queryClient, user?.id, petId),
     ]);
     setIsRefreshing(false);
   };
 
   useFocusEffect(
     useCallback(() => {
-      setLocalToday(getLocalDateOnly());
+      const today = getLocalDateOnly();
+      setLocalToday(today);
       setCurrentTime(new Date());
+      setSelectedScheduleDate((selected) => selected || today);
     }, []),
   );
 
@@ -306,6 +317,14 @@ export default function HomeScreen() {
               variant="secondary"
             />
           </HomeSection>
+
+          <HomeScheduleCard
+            onAccessLoss={petsState.refetch}
+            petId={pet.id}
+            selectedDate={selectedScheduleDate}
+            setSelectedDate={setSelectedScheduleDate}
+            today={localToday}
+          />
 
           {postsQuery.isError ||
           membersQuery.isError ||

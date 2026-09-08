@@ -104,6 +104,7 @@ function RootNavigator() {
           <Stack.Screen name="pets" />
           <Stack.Screen name="posts" />
           <Stack.Screen name="care" />
+          <Stack.Screen name="schedule" />
         </Stack.Protected>
         <Stack.Protected guard={__DEV__}>
           <Stack.Screen name="chat-preview" />
