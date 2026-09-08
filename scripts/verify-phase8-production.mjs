@@ -123,10 +123,12 @@ for (const file of sourceFiles) {
 const tabsLayout = read('src/app/(tabs)/_layout.tsx');
 const chatRoute = read('src/app/(tabs)/chat.tsx');
 const featureFlags = read('src/config/features.ts');
+const backendTarget = read('src/config/backend-target.ts');
 assert(
   tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })') &&
-    featureFlags.includes('__DEV__') &&
-    featureFlags.includes("EXPO_PUBLIC_CHAT_ENABLED === 'true'") &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
+    backendTarget.includes("['localhost', '127.0.0.1']") &&
     chatRoute.includes('if (!CHAT_ENABLED)') &&
     chatRoute.includes('<Redirect href="/" />'),
   'Chat must remain inaccessible in a production export.',

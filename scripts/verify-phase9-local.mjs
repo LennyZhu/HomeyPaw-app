@@ -65,7 +65,8 @@ assert(expo.owner === 'homeypaw', 'Unexpected EAS project owner.');
 assert(expo.slug === 'homeypaw', 'Unexpected Expo project slug.');
 assert(
   tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })') &&
-    featureFlags.includes('__DEV__') &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     chatRoute.includes('if (!CHAT_ENABLED)'),
   'Phase 10A Chat must remain hidden from the current production release.',
 );

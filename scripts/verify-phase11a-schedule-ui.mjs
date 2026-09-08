@@ -163,6 +163,8 @@ const [
   editScreen,
   queries,
   scheduleApi,
+  featureFlags,
+  backendTarget,
   enText,
   zhText,
 ] = await Promise.all([
@@ -175,6 +177,8 @@ const [
   read('src/features/schedule/edit-schedule-screen.tsx'),
   read('src/features/schedule/care-schedule-queries.ts'),
   read('src/features/schedule/care-schedule-api.ts'),
+  read('src/config/features.ts'),
+  read('src/config/backend-target.ts'),
   read('src/i18n/locales/en.json'),
   read('src/i18n/locales/zh-HK.json'),
 ]);
@@ -204,6 +208,12 @@ console.log(
 );
 
 assert(scheduleApi.includes("'complete_care_shift_task'"));
+assert(featureFlags.includes('SCHEDULE_ENABLED = LOCAL_FEATURE_PREVIEW'));
+assert(featureFlags.includes('__DEV__ && LOCAL_BACKEND'));
+assert(backendTarget.includes("['localhost', '127.0.0.1']"));
+assert(scheduleApi.includes('SCHEDULE_BACKEND_UNAVAILABLE'));
+assert(scheduleApi.includes('rpcCallsBlocked: true'));
+assert(queries.includes('retry: false'));
 assert(!scheduleScreen.includes("rpc('complete_care_task'"));
 assert(queries.includes('careTaskKeys.all'));
 assert(queries.includes('careKeys.all'));

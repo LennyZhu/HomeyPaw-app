@@ -47,6 +47,7 @@ import {
   isScheduleAccessDenied,
   type CareScheduleShift,
 } from './care-schedule-model';
+import { isScheduleBackendUnavailable } from './care-schedule-api';
 import {
   clearCareSchedulePetCache,
   useCareScheduleRange,
@@ -284,7 +285,11 @@ export default function ScheduleScreen() {
 
       {scheduleQuery.isError && !isScheduleAccessDenied(scheduleQuery.error) ? (
         <View style={styles.errorState}>
-          <AppText tone="error">{t('schedule.errors.load')}</AppText>
+          <AppText tone="error">
+            {__DEV__ && isScheduleBackendUnavailable(scheduleQuery.error)
+              ? t('schedule.errors.localBackendRequired')
+              : t('schedule.errors.load')}
+          </AppText>
           <AppButton
             label={t('common.retry')}
             onPress={() => void refresh()}

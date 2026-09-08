@@ -1,10 +1,35 @@
-import { requireSupabase } from '@/lib/supabase/client';
+import { SCHEDULE_ENABLED } from '@/config/features';
+import { logError } from '@/lib/logger';
+import { requireSupabase as requireConfiguredSupabase } from '@/lib/supabase/client';
 
 import type {
   CareScheduleItem,
   CareShiftTaskInput,
   CompleteCareShiftTaskInput,
 } from './care-schedule-types';
+
+let reportedBackendMismatch = false;
+
+function requireSupabase() {
+  if (!SCHEDULE_ENABLED) {
+    if (__DEV__ && !reportedBackendMismatch) {
+      logError(
+        'schedule_backend_target_mismatch',
+        new Error('SCHEDULE_BACKEND_UNAVAILABLE'),
+        { category: 'env', rpcCallsBlocked: true },
+      );
+      reportedBackendMismatch = true;
+    }
+    throw new Error('SCHEDULE_BACKEND_UNAVAILABLE');
+  }
+  return requireConfiguredSupabase();
+}
+
+export function isScheduleBackendUnavailable(error: unknown) {
+  return (
+    error instanceof Error && error.message === 'SCHEDULE_BACKEND_UNAVAILABLE'
+  );
+}
 
 export async function fetchCareScheduleRange(input: {
   endLocalDate: string;

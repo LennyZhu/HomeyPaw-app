@@ -25,6 +25,7 @@ import {
   clearCareSchedulePetCache,
   useCareScheduleRange,
 } from '../care-schedule-queries';
+import { isScheduleBackendUnavailable } from '../care-schedule-api';
 import { ScheduleMonthCalendar } from './schedule-month-calendar';
 
 const homeItemLimit = 6;
@@ -153,7 +154,11 @@ export function HomeScheduleCard({
           </View>
         ) : scheduleQuery.isError ? (
           <View style={styles.messageState}>
-            <AppText tone="error">{t('schedule.errors.load')}</AppText>
+            <AppText tone="error">
+              {__DEV__ && isScheduleBackendUnavailable(scheduleQuery.error)
+                ? t('schedule.errors.localBackendRequired')
+                : t('schedule.errors.load')}
+            </AppText>
             <AppButton
               label={t('common.retry')}
               onPress={() => void scheduleQuery.refetch()}

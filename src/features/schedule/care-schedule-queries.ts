@@ -70,6 +70,7 @@ export function useCareScheduleRange(input: {
 }) {
   const { user } = useAuth();
   return useQuery({
+    retry: false,
     enabled: Boolean(user && input.petId),
     queryFn: () =>
       fetchCareScheduleRange({

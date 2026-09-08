@@ -33,8 +33,9 @@ assert(
   'Production route guard does not redirect away from the preview.',
 );
 assert(
-  rootLayout.includes('<Stack.Protected guard={__DEV__}>') &&
-    rootLayout.includes('<Stack.Screen name="chat-preview" />'),
+  /<Stack\.Protected[\s\S]{0,200}__DEV__\s*&&\s*session[\s\S]{0,200}<Stack\.Screen name="chat-preview"/u.test(
+    rootLayout,
+  ) && rootLayout.includes('<Stack.Screen name="chat-preview" />'),
   'Root navigator is missing its development-only protected route.',
 );
 assert(
@@ -44,7 +45,8 @@ assert(
 );
 assert(
   featureFlags.includes('__DEV__') &&
-    featureFlags.includes("EXPO_PUBLIC_CHAT_ENABLED === 'true'") &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     liveRoute.includes('if (!CHAT_ENABLED)') &&
     liveRoute.includes('<Redirect href="/" />'),
   'The real Chat route is missing its development-only production guard.',

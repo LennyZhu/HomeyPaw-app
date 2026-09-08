@@ -652,8 +652,12 @@ export default function ChatPreviewScreen() {
   );
 
   const goBack = useCallback(() => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/');
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace('/');
   }, [router]);
 
   const requestScrollToEnd = useCallback(() => {

@@ -1008,6 +1008,7 @@
     },
     "errors": {
       "load": "We couldn't load the family schedule. Try again.",
+      "localBackendRequired": "This development preview requires the local backend.",
       "accessLost": "You no longer have access to this pet's schedule.",
       "alreadyClaimed": "Another family member has already claimed this schedule.",
       "claim": "This schedule could not be claimed. Refresh and try again.",

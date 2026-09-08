@@ -30,8 +30,13 @@ const editModal = read(
   'src/features/chat/components/chat-edit-message-modal.tsx',
 );
 const route = read('src/app/(tabs)/chat.tsx');
+const previewRoute = read('src/app/chat-preview.tsx');
+const previewScreen = read('src/features/chat/chat-preview-screen.tsx');
+const rootLayout = read('src/app/_layout.tsx');
 const tabs = read('src/app/(tabs)/_layout.tsx');
+const homeRoute = read('src/app/(tabs)/index.tsx');
 const featureFlags = read('src/config/features.ts');
+const backendTarget = read('src/config/backend-target.ts');
 const databaseTypes = read('src/types/database.ts');
 const en = JSON.parse(read('src/i18n/locales/en.json'));
 const zhHK = JSON.parse(read('src/i18n/locales/zh-HK.json'));
@@ -296,10 +301,39 @@ assert(
 );
 assert(
   featureFlags.includes('__DEV__') &&
-    featureFlags.includes("EXPO_PUBLIC_CHAT_ENABLED === 'true'") &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     route.includes('if (!CHAT_ENABLED)') &&
     tabs.includes('...(CHAT_ENABLED ? {} : { href: null })'),
   'Current production route/tab guard is incomplete.',
+);
+assert(
+  backendTarget.includes("['localhost', '127.0.0.1']") &&
+    backendTarget.includes('EXPO_PUBLIC_SUPABASE_URL') &&
+    !featureFlags.includes('EXPO_PUBLIC_CHAT_ENABLED'),
+  'Local Chat preview is not tied to the actual local Supabase URL.',
+);
+assert(
+  homeRoute.includes('@/features/home/home-screen') &&
+    tabs.includes('<Tabs.Screen\n        name="index"') &&
+    !rootLayout.includes('initialRouteName="chat-preview"') &&
+    !tabs.includes('initialRouteName="chat-preview"'),
+  'Canonical Home route is missing or Chat Preview became an initial route.',
+);
+assert(
+  /<Stack\.Protected[\s\S]{0,200}__DEV__\s*&&\s*session[\s\S]{0,200}<Stack\.Screen name="chat-preview"/u.test(
+    rootLayout,
+  ) &&
+    rootLayout.includes('<Stack.Screen name="chat-preview" />') &&
+    previewRoute.includes('if (!__DEV__)') &&
+    previewRoute.includes('<Redirect href="/" />'),
+  'Chat Preview is not fully guarded as a development-only route.',
+);
+assert(
+  previewScreen.includes('if (router.canGoBack())') &&
+    previewScreen.includes('router.back();') &&
+    previewScreen.includes("router.replace('/');"),
+  'Chat Preview back navigation is missing the canonical Home fallback.',
 );
 assert(
   databaseTypes.includes('chat_messages:') &&

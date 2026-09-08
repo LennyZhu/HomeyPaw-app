@@ -106,7 +106,14 @@ function RootNavigator() {
           <Stack.Screen name="care" />
           <Stack.Screen name="schedule" />
         </Stack.Protected>
-        <Stack.Protected guard={__DEV__}>
+        <Stack.Protected
+          guard={Boolean(
+            __DEV__ &&
+            session &&
+            !isPasswordRecovery &&
+            !isProcessingAuthCallback,
+          )}
+        >
           <Stack.Screen name="chat-preview" />
         </Stack.Protected>
         <Stack.Protected

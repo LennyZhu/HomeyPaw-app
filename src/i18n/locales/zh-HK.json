@@ -1008,6 +1008,7 @@
     },
     "errors": {
       "load": "暫時無法載入家庭排班，請再試一次。",
+      "localBackendRequired": "此開發預覽需要連接本機後端。",
       "accessLost": "你已沒有權限查看這個毛孩的排班。",
       "alreadyClaimed": "這個排班已被其他家庭成員認領。",
       "claim": "未能認領這個排班，請重新整理後再試。",
