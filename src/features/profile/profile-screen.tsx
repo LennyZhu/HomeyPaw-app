@@ -14,6 +14,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { lightColors, radius, spacing } from '@/theme';
 
 import { useProfile } from './use-profile';
+import { useProfileAvatarUrl } from './profile-avatar';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 type MenuKey =
@@ -33,6 +34,7 @@ export default function ProfileScreen() {
   const { showFeedback } = useFeedback();
   const { signOut, user } = useAuth();
   const { error, isLoading, profile, refetch } = useProfile();
+  const avatarQuery = useProfileAvatarUrl(profile?.avatar_url ?? null);
 
   useFocusEffect(
     useCallback(() => {
@@ -107,11 +109,20 @@ export default function ProfileScreen() {
 
       {profile ? (
         <>
-          <View style={styles.profileHeader}>
+          <Pressable
+            accessibilityLabel={t('profile.editProfile')}
+            accessibilityRole="button"
+            onPress={() => router.push('/edit-profile')}
+            style={({ pressed }) => [
+              styles.profileHeader,
+              pressed && styles.pressed,
+            ]}
+          >
             <Avatar
               accessibilityLabel={t('profile.avatar')}
               name={profile.display_name}
               size={82}
+              source={avatarQuery.data ? { uri: avatarQuery.data } : undefined}
             />
             <View style={styles.profileCopy}>
               <AppText variant="title2">{profile.display_name}</AppText>
@@ -124,7 +135,7 @@ export default function ProfileScreen() {
                   : t('profile.zhHK')}
               </AppText>
             </View>
-          </View>
+          </Pressable>
 
           <View style={styles.menu}>
             {menuItems.map((item) => (

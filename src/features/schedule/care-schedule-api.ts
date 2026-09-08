@@ -1,6 +1,7 @@
 import { SCHEDULE_ENABLED } from '@/config/features';
 import { logError } from '@/lib/logger';
 import { requireSupabase as requireConfiguredSupabase } from '@/lib/supabase/client';
+import { createProfileAvatarSignedUrls } from '@/features/profile/profile-avatar';
 
 import type {
   CareScheduleItem,
@@ -45,7 +46,18 @@ export async function fetchCareScheduleRange(input: {
     },
   );
   if (error) throw error;
-  return data;
+  const avatarUrls = await createProfileAvatarSignedUrls(
+    data.flatMap((item) =>
+      item.assignee_avatar_path ? [item.assignee_avatar_path] : [],
+    ),
+  ).catch(() => ({}));
+
+  return data.map((item) => ({
+    ...item,
+    assignee_avatar_url: item.assignee_avatar_path
+      ? (avatarUrls[item.assignee_avatar_path] ?? null)
+      : null,
+  }));
 }
 
 export async function createCareShift(input: {

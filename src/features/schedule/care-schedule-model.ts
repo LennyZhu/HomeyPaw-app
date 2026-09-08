@@ -4,6 +4,8 @@ import { getLocalDateInTimeZone } from './calendar-date';
 import type { CareScheduleItem } from './care-schedule-types';
 
 export type CareScheduleShift = {
+  assigneeAvatarPath: string | null;
+  assigneeAvatarUrl: string | null;
   assigneeDisplayName: string | null;
   assigneeUserId: string | null;
   claimedAt: string | null;
@@ -19,8 +21,29 @@ export type CareScheduleShift = {
 export type ScheduleDaySummary = {
   completedCount: number;
   itemCount: number;
+  members: ScheduleMemberSummary[];
   memberIds: string[];
   unassignedCount: number;
+};
+
+export type ScheduleMemberSummary = {
+  avatarPath: string | null;
+  avatarUrl: string | null;
+  displayName: string | null;
+  userId: string;
+};
+
+export type CareScheduleAssigneeGroup = {
+  assigneeAvatarPath: string | null;
+  assigneeAvatarUrl: string | null;
+  assigneeDisplayName: string | null;
+  assigneeUserId: string | null;
+  canceledCount: number;
+  completedCount: number;
+  items: CareScheduleItem[];
+  key: string;
+  pendingCount: number;
+  shifts: CareScheduleShift[];
 };
 
 export function groupCareScheduleByShift(items: CareScheduleItem[]) {
@@ -34,6 +57,8 @@ export function groupCareScheduleByShift(items: CareScheduleItem[]) {
     }
 
     shifts.set(item.shift_id, {
+      assigneeAvatarPath: item.assignee_avatar_path,
+      assigneeAvatarUrl: item.assignee_avatar_url,
       assigneeDisplayName: item.assignee_display_name,
       assigneeUserId: item.assignee_user_id,
       claimedAt: item.claimed_at,
@@ -65,19 +90,119 @@ export function scheduleItemsByDate(items: CareScheduleItem[]) {
   return result;
 }
 
+function getScheduleItemState(item: CareScheduleItem) {
+  if (
+    item.shift_status === 'canceled' ||
+    item.shift_task_status === 'canceled'
+  ) {
+    return 'canceled' as const;
+  }
+  return isCareScheduleItemCompleted(item)
+    ? ('completed' as const)
+    : ('pending' as const);
+}
+
+export function groupCareScheduleByAssignee(shifts: CareScheduleShift[]) {
+  const groups = new Map<string, CareScheduleAssigneeGroup>();
+
+  for (const shift of shifts) {
+    const key = shift.assigneeUserId ?? 'unassigned';
+    const existing = groups.get(key);
+    if (existing) {
+      existing.shifts.push(shift);
+      existing.items.push(...shift.items);
+      continue;
+    }
+
+    groups.set(key, {
+      assigneeAvatarPath: shift.assigneeAvatarPath,
+      assigneeAvatarUrl: shift.assigneeAvatarUrl,
+      assigneeDisplayName: shift.assigneeDisplayName,
+      assigneeUserId: shift.assigneeUserId,
+      canceledCount: 0,
+      completedCount: 0,
+      items: [...shift.items],
+      key,
+      pendingCount: 0,
+      shifts: [shift],
+    });
+  }
+
+  return [...groups.values()].map((group) => {
+    const counts = group.items.reduce(
+      (result, item) => {
+        result[getScheduleItemState(item)] += 1;
+        return result;
+      },
+      { canceled: 0, completed: 0, pending: 0 },
+    );
+    return {
+      ...group,
+      canceledCount: counts.canceled,
+      completedCount: counts.completed,
+      pendingCount: counts.pending,
+    };
+  });
+}
+
+export function truncateCareScheduleGroups(
+  groups: CareScheduleAssigneeGroup[],
+  limit: number,
+) {
+  let remaining = Math.max(limit, 0);
+  const visibleGroups: CareScheduleAssigneeGroup[] = [];
+
+  for (const group of groups) {
+    if (remaining === 0) break;
+    const visibleItems = group.items.slice(0, remaining);
+    if (visibleItems.length === 0) continue;
+
+    const shiftItems = new Set(visibleItems.map((item) => item.shift_task_id));
+    const shifts = group.shifts
+      .map((shift) => ({
+        ...shift,
+        items: shift.items.filter((item) => shiftItems.has(item.shift_task_id)),
+      }))
+      .filter((shift) => shift.items.length > 0);
+    const visibleGroup = groupCareScheduleByAssignee(shifts)[0];
+    if (visibleGroup) visibleGroups.push(visibleGroup);
+    remaining -= visibleItems.length;
+  }
+
+  const totalItems = groups.reduce(
+    (total, group) => total + group.items.length,
+    0,
+  );
+  return {
+    hiddenCount: Math.max(totalItems - Math.max(limit, 0), 0),
+    visibleGroups,
+  };
+}
+
+export function shouldExpandScheduleGroup(group: CareScheduleAssigneeGroup) {
+  return group.assigneeUserId === null || group.pendingCount > 0;
+}
+
 export function summarizeScheduleDay(
   items: CareScheduleItem[],
 ): ScheduleDaySummary {
+  const members = new Map<string, ScheduleMemberSummary>();
+  for (const item of items) {
+    if (item.assignee_user_id && !members.has(item.assignee_user_id)) {
+      members.set(item.assignee_user_id, {
+        avatarPath: item.assignee_avatar_path,
+        avatarUrl: item.assignee_avatar_url,
+        displayName: item.assignee_display_name,
+        userId: item.assignee_user_id,
+      });
+    }
+  }
+
   return {
     completedCount: items.filter(isCareScheduleItemCompleted).length,
     itemCount: items.length,
-    memberIds: [
-      ...new Set(
-        items
-          .map((item) => item.assignee_user_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ],
+    members: [...members.values()],
+    memberIds: [...members.keys()],
     unassignedCount: items.filter(
       (item) => !item.assignee_user_id && item.shift_status === 'scheduled',
     ).length,

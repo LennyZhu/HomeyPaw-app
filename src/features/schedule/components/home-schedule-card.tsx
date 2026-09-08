@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
+import { Avatar } from '@/components/avatar';
 import { useAuth } from '@/features/auth/auth-context';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -16,10 +17,11 @@ import {
   getCalendarMonthRange,
 } from '../calendar-date';
 import {
+  groupCareScheduleByAssignee,
   groupCareScheduleByShift,
   isCareScheduleItemCompleted,
   isScheduleAccessDenied,
-  type CareScheduleShift,
+  truncateCareScheduleGroups,
 } from '../care-schedule-model';
 import {
   clearCareSchedulePetCache,
@@ -28,7 +30,7 @@ import {
 import { isScheduleBackendUnavailable } from '../care-schedule-api';
 import { ScheduleMonthCalendar } from './schedule-month-calendar';
 
-const homeItemLimit = 6;
+const homeItemLimit = 4;
 
 type Props = {
   onAccessLoss: () => void;
@@ -66,28 +68,13 @@ export function HomeScheduleCard({
       ),
     [scheduleQuery.data, selectedDate],
   );
-  const visibleShiftItems = useMemo(() => {
-    return selectedShifts.reduce<{
-      remaining: number;
-      shifts: CareScheduleShift[];
-    }>(
-      (result, shift) => {
-        const items = shift.items.slice(0, result.remaining);
-        return {
-          remaining: result.remaining - items.length,
-          shifts:
-            items.length > 0
-              ? [...result.shifts, { ...shift, items }]
-              : result.shifts,
-        };
-      },
-      { remaining: homeItemLimit, shifts: [] },
-    ).shifts;
-  }, [selectedShifts]);
-  const totalItems = selectedShifts.reduce(
-    (count, shift) => count + shift.items.length,
-    0,
+  const selectedGroups = useMemo(
+    () => groupCareScheduleByAssignee(selectedShifts),
+    [selectedShifts],
   );
+  const homeSummary = useMemo(() => {
+    return truncateCareScheduleGroups(selectedGroups, homeItemLimit);
+  }, [selectedGroups]);
 
   useEffect(() => {
     const previous = previousPetId.current;
@@ -132,6 +119,7 @@ export function HomeScheduleCard({
 
       <View style={styles.calendarCard}>
         <ScheduleMonthCalendar
+          fixedSixWeeks
           items={scheduleQuery.data ?? []}
           month={range.start}
           onSelectDate={setSelectedDate}
@@ -165,7 +153,7 @@ export function HomeScheduleCard({
               variant="secondary"
             />
           </View>
-        ) : visibleShiftItems.length === 0 ? (
+        ) : homeSummary.visibleGroups.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons
               color={lightColors.textTertiary}
@@ -176,35 +164,42 @@ export function HomeScheduleCard({
           </View>
         ) : (
           <View style={styles.shiftList}>
-            {visibleShiftItems.map((shift) => {
-              const name = !shift.assigneeUserId
+            {homeSummary.visibleGroups.map((group) => {
+              const name = !group.assigneeUserId
                 ? t('schedule.unassigned')
-                : (shift.assigneeDisplayName ??
+                : (group.assigneeDisplayName ??
                   t('family.members.formerMember'));
               return (
-                <View key={shift.shiftId} style={styles.shiftSummary}>
+                <View key={group.key} style={styles.shiftSummary}>
                   <View style={styles.shiftHeading}>
-                    <View style={styles.avatar}>
-                      {!shift.assigneeUserId ? (
+                    {!group.assigneeUserId ? (
+                      <View style={[styles.avatar, styles.unassignedAvatar]}>
                         <Ionicons
                           color={lightColors.warning}
                           name="hand-left-outline"
                           size={16}
                         />
-                      ) : (
-                        <AppText variant="caption">
-                          {name.trim().charAt(0).toUpperCase() || '?'}
-                        </AppText>
-                      )}
-                    </View>
+                      </View>
+                    ) : (
+                      <Avatar
+                        accessibilityLabel={name}
+                        name={name}
+                        size={30}
+                        source={
+                          group.assigneeAvatarUrl
+                            ? { uri: group.assigneeAvatarUrl }
+                            : undefined
+                        }
+                      />
+                    )}
                     <AppText style={styles.shiftName} variant="headline">
                       {name}
                     </AppText>
                   </View>
-                  {shift.items.map((item) => {
+                  {group.items.map((item) => {
                     const completed = isCareScheduleItemCompleted(item);
                     const canceled =
-                      shift.status === 'canceled' ||
+                      item.shift_status === 'canceled' ||
                       item.shift_task_status === 'canceled';
                     return (
                       <View key={item.shift_task_id} style={styles.itemRow}>
@@ -215,16 +210,28 @@ export function HomeScheduleCard({
                             i18n.language,
                           )}
                         </AppText>
-                        <AppText
-                          numberOfLines={2}
-                          style={[
-                            styles.taskTitle,
-                            canceled && styles.canceled,
-                          ]}
-                          variant="subheadline"
-                        >
-                          {item.task_title}
-                        </AppText>
+                        <View style={styles.taskCopy}>
+                          <AppText
+                            numberOfLines={2}
+                            style={canceled && styles.canceled}
+                            variant="subheadline"
+                          >
+                            {item.task_title}
+                          </AppText>
+                          {completed ? (
+                            <AppText
+                              numberOfLines={1}
+                              tone="tertiary"
+                              variant="caption"
+                            >
+                              {t('schedule.completedBy', {
+                                name:
+                                  item.completer_display_name ??
+                                  t('family.members.formerMember'),
+                              })}
+                            </AppText>
+                          ) : null}
+                        </View>
                         <View style={styles.state}>
                           <Ionicons
                             color={
@@ -269,14 +276,34 @@ export function HomeScheduleCard({
           </View>
         )}
 
-        {totalItems > homeItemLimit ? (
-          <AppButton
-            label={t('schedule.remainingItems', {
-              count: totalItems - homeItemLimit,
-            })}
+        {homeSummary.hiddenCount > 0 ? (
+          <Pressable
+            accessibilityLabel={`${t('schedule.overflowCount', {
+              count: homeSummary.hiddenCount,
+            })}. ${t('schedule.seeAll')}`}
+            accessibilityRole="button"
             onPress={() => openSchedule()}
-            variant="ghost"
-          />
+            style={({ pressed }) => [
+              styles.overflowAction,
+              pressed && styles.pressed,
+            ]}
+          >
+            <AppText style={styles.overflowCopy} tone="secondary">
+              {t('schedule.overflowCount', {
+                count: homeSummary.hiddenCount,
+              })}
+            </AppText>
+            <View style={styles.overflowLink}>
+              <AppText tone="brand" variant="headline">
+                {t('schedule.seeAll')}
+              </AppText>
+              <Ionicons
+                color={lightColors.primary}
+                name="chevron-forward"
+                size={18}
+              />
+            </View>
+          </Pressable>
         ) : null}
       </View>
     </View>
@@ -326,6 +353,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     justifyContent: 'center',
   },
+  unassignedAvatar: {
+    backgroundColor: '#FFF4DD',
+    borderColor: lightColors.warning,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   shiftName: { flex: 1 },
   itemRow: {
     minHeight: 44,
@@ -335,7 +367,24 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.xs,
   },
   time: { fontVariant: ['tabular-nums'], fontWeight: '600', minWidth: 48 },
-  taskTitle: { flex: 1 },
+  taskCopy: { flex: 1, gap: spacing.xxs },
   canceled: { textDecorationLine: 'line-through' },
   state: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  overflowAction: {
+    minHeight: 52,
+    alignItems: 'center',
+    borderTopColor: lightColors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between',
+    paddingTop: spacing.sm,
+  },
+  overflowCopy: { flex: 1 },
+  overflowLink: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xxs,
+  },
+  pressed: { opacity: 0.66 },
 });

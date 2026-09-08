@@ -214,6 +214,17 @@ Deno.serve(async (request) => {
       user.id,
     );
     await removeStorageFiles(adminClient, 'pet-avatars', avatarPaths);
+
+    const profileAvatarPaths = await listStorageFiles(
+      adminClient,
+      'profile-avatars',
+      user.id,
+    );
+    await removeStorageFiles(
+      adminClient,
+      'profile-avatars',
+      profileAvatarPaths,
+    );
   } catch (error) {
     console.error('Account Storage cleanup failed.', {
       statusCode:

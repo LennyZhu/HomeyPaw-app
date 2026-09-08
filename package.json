@@ -78,7 +78,8 @@
     "verify:phase10a-chat-rls": "node scripts/verify-phase10a-chat-rls.mjs",
     "verify:phase11a-schedule": "node scripts/verify-phase11a-schedule.mjs",
     "verify:phase11a-schedule-rls": "node scripts/verify-phase11a-schedule-rls.mjs",
-    "verify:phase11a-schedule-ui": "node --experimental-strip-types scripts/verify-phase11a-schedule-ui.mjs"
+    "verify:phase11a-schedule-ui": "node --experimental-strip-types scripts/verify-phase11a-schedule-ui.mjs",
+    "verify:user-avatar-rls": "node scripts/verify-user-profile-avatar-rls.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

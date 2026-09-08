@@ -1,7 +1,9 @@
 import type { Database } from '@/types/database';
 
 export type CareScheduleItem =
-  Database['public']['Functions']['get_care_schedule_range']['Returns'][number];
+  Database['public']['Functions']['get_care_schedule_range']['Returns'][number] & {
+    assignee_avatar_url: string | null;
+  };
 
 export type CareShiftTaskInput = {
   care_task_id: string;

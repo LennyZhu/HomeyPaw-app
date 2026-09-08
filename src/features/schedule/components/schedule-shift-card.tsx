@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
+import { Avatar } from '@/components/avatar';
+import { IconButton } from '@/components/icon-button';
 import type { PetMemberSummary } from '@/features/family/family-queries';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -20,23 +22,27 @@ import type { CareScheduleItem } from '../care-schedule-types';
 type Props = {
   currentRole: PetMemberSummary['role'] | null;
   currentUserId: string | undefined;
+  embedded?: boolean;
   isClaiming?: boolean;
   isCompletingId?: string | null;
   onClaim: (shift: CareScheduleShift) => void;
   onComplete: (item: CareScheduleItem) => void;
   onEdit: (shift: CareScheduleShift) => void;
   shift: CareScheduleShift;
+  showAssigneeHeader?: boolean;
 };
 
 export function ScheduleShiftCard({
   currentRole,
   currentUserId,
+  embedded = false,
   isClaiming = false,
   isCompletingId = null,
   onClaim,
   onComplete,
   onEdit,
   shift,
+  showAssigneeHeader = true,
 }: Props) {
   const { i18n, t } = useTranslation();
   const isUnassigned = !shift.assigneeUserId;
@@ -55,44 +61,54 @@ export function ScheduleShiftCard({
     (currentRole === 'owner' || currentRole === 'member');
 
   return (
-    <View style={styles.card}>
-      <View style={styles.header}>
-        <View style={[styles.avatar, isUnassigned && styles.unassignedAvatar]}>
+    <View style={[styles.card, embedded && styles.embeddedCard]}>
+      {showAssigneeHeader ? (
+        <View style={styles.header}>
           {isUnassigned ? (
-            <Ionicons
-              color={lightColors.warning}
-              name="hand-left-outline"
-              size={20}
-            />
+            <View style={[styles.avatar, styles.unassignedAvatar]}>
+              <Ionicons
+                color={lightColors.warning}
+                name="hand-left-outline"
+                size={20}
+              />
+            </View>
           ) : (
-            <AppText variant="headline">
-              {assigneeName.trim().charAt(0).toUpperCase() || '?'}
-            </AppText>
+            <Avatar
+              accessibilityLabel={assigneeName}
+              name={assigneeName}
+              size={44}
+              source={
+                shift.assigneeAvatarUrl
+                  ? { uri: shift.assigneeAvatarUrl }
+                  : undefined
+              }
+            />
           )}
+          <View style={styles.headerCopy}>
+            <AppText style={styles.assigneeName} variant="headline">
+              {assigneeName}
+            </AppText>
+            <AppText tone="secondary" variant="footnote">
+              {shift.status === 'canceled'
+                ? t('schedule.canceled')
+                : isUnassigned
+                  ? t('schedule.claimable')
+                  : shift.claimedAt
+                    ? t('schedule.claimed')
+                    : t('schedule.assigned')}
+            </AppText>
+          </View>
+          {canManage ? (
+            <IconButton
+              accessibilityLabel={t('schedule.edit')}
+              color={lightColors.textSecondary}
+              icon="pencil-outline"
+              onPress={() => onEdit(shift)}
+              style={styles.editAction}
+            />
+          ) : null}
         </View>
-        <View style={styles.headerCopy}>
-          <AppText style={styles.assigneeName} variant="headline">
-            {assigneeName}
-          </AppText>
-          <AppText tone="secondary" variant="footnote">
-            {shift.status === 'canceled'
-              ? t('schedule.canceled')
-              : isUnassigned
-                ? t('schedule.claimable')
-                : shift.claimedAt
-                  ? t('schedule.claimed')
-                  : t('schedule.assigned')}
-          </AppText>
-        </View>
-        {canManage ? (
-          <AppButton
-            label={t('schedule.edit')}
-            onPress={() => onEdit(shift)}
-            style={styles.smallAction}
-            variant="ghost"
-          />
-        ) : null}
-      </View>
+      ) : null}
 
       {shift.note ? (
         <View style={styles.note}>
@@ -108,7 +124,7 @@ export function ScheduleShiftCard({
       ) : null}
 
       <View style={styles.items}>
-        {shift.items.map((item) => {
+        {shift.items.map((item, index) => {
           const completed = isCareScheduleItemCompleted(item);
           const canceled =
             shift.status === 'canceled' ||
@@ -179,6 +195,15 @@ export function ScheduleShiftCard({
                   </AppText>
                 ) : null}
               </View>
+              {!showAssigneeHeader && canManage && index === 0 ? (
+                <IconButton
+                  accessibilityLabel={t('schedule.edit')}
+                  color={lightColors.textSecondary}
+                  icon="pencil-outline"
+                  onPress={() => onEdit(shift)}
+                  style={styles.editAction}
+                />
+              ) : null}
               {canComplete ? (
                 <AppButton
                   label={t('schedule.complete')}
@@ -218,6 +243,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.lg,
   },
+  embeddedCard: {
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+  },
   header: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   avatar: {
     width: 44,
@@ -234,7 +263,7 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flex: 1, gap: spacing.xxs },
   assigneeName: { flexShrink: 1 },
-  smallAction: { minHeight: 44, paddingHorizontal: spacing.md },
+  editAction: { backgroundColor: 'transparent' },
   note: {
     alignItems: 'flex-start',
     backgroundColor: lightColors.surfaceSecondary,

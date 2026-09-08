@@ -5,6 +5,8 @@ import { useAuth } from '@/features/auth/auth-context';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { Profile, ProfileUpdate } from '@/types/database';
 
+import { profileAvatarKeys } from './profile-avatar';
+
 export function useProfile() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -79,6 +81,15 @@ export function useProfile() {
       await queryClient.invalidateQueries({
         queryKey: ['family', user.id],
       });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['chat', user.id] }),
+        queryClient.invalidateQueries({
+          queryKey: ['care-schedule', user.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: profileAvatarKeys.all(user.id),
+        }),
+      ]);
       return data;
     },
     [queryClient, user],

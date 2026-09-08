@@ -42,9 +42,12 @@ import {
 } from './calendar-date';
 import {
   getScheduleRole,
+  groupCareScheduleByAssignee,
   groupCareScheduleByShift,
   isCareShiftAlreadyClaimed,
   isScheduleAccessDenied,
+  shouldExpandScheduleGroup,
+  type CareScheduleAssigneeGroup,
   type CareScheduleShift,
 } from './care-schedule-model';
 import { isScheduleBackendUnavailable } from './care-schedule-api';
@@ -55,8 +58,8 @@ import {
   useCompleteCareShiftTask,
 } from './care-schedule-queries';
 import type { CareScheduleItem } from './care-schedule-types';
+import { ScheduleAssigneeGroup } from './components/schedule-assignee-group';
 import { ScheduleMonthCalendar } from './components/schedule-month-calendar';
-import { ScheduleShiftCard } from './components/schedule-shift-card';
 
 function validInitialDate(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value;
@@ -82,6 +85,9 @@ export default function ScheduleScreen() {
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [completionTarget, setCompletionTarget] =
     useState<CareScheduleItem | null>(null);
+  const [groupExpansion, setGroupExpansion] = useState<Record<string, boolean>>(
+    {},
+  );
   const range = useMemo(() => getSixWeekCalendarRange(month), [month]);
   const scheduleQuery = useCareScheduleRange({
     endLocalDate: range.end,
@@ -103,6 +109,31 @@ export default function ScheduleScreen() {
         ),
       ),
     [scheduleQuery.data, selectedDate],
+  );
+  const selectedGroups = useMemo(
+    () => groupCareScheduleByAssignee(selectedShifts),
+    [selectedShifts],
+  );
+
+  const expansionKey = useCallback(
+    (group: CareScheduleAssigneeGroup) =>
+      `${petId ?? 'no-pet'}:${selectedDate}:${group.key}`,
+    [petId, selectedDate],
+  );
+  const isGroupExpanded = useCallback(
+    (group: CareScheduleAssigneeGroup) =>
+      groupExpansion[expansionKey(group)] ?? shouldExpandScheduleGroup(group),
+    [expansionKey, groupExpansion],
+  );
+  const toggleGroup = useCallback(
+    (group: CareScheduleAssigneeGroup) => {
+      const key = expansionKey(group);
+      setGroupExpansion((current) => ({
+        ...current,
+        [key]: !(current[key] ?? shouldExpandScheduleGroup(group)),
+      }));
+    },
+    [expansionKey],
   );
 
   const handleAccessLoss = useCallback(async () => {
@@ -192,10 +223,16 @@ export default function ScheduleScreen() {
           onPress={() => router.back()}
         />
         <View style={styles.titleCopy}>
-          <AppText accessibilityRole="header" variant="largeTitle">
+          <AppText
+            accessibilityRole="header"
+            maxFontSizeMultiplier={1.5}
+            variant="largeTitle"
+          >
             {t('schedule.title')}
           </AppText>
-          <AppText tone="secondary">{t('schedule.subtitle')}</AppText>
+          <AppText maxFontSizeMultiplier={1.6} tone="secondary">
+            {t('schedule.subtitle')}
+          </AppText>
         </View>
         {pet ? (
           <IconButton
@@ -227,8 +264,14 @@ export default function ScheduleScreen() {
             size={46}
           />
           <View style={styles.petCopy}>
-            <AppText variant="headline">{pet.name}</AppText>
-            <AppText tone="secondary" variant="footnote">
+            <AppText maxFontSizeMultiplier={1.5} variant="headline">
+              {pet.name}
+            </AppText>
+            <AppText
+              maxFontSizeMultiplier={1.5}
+              tone="secondary"
+              variant="footnote"
+            >
               {t('schedule.petFamily')}
             </AppText>
           </View>
@@ -263,8 +306,8 @@ export default function ScheduleScreen() {
             </AppText>
             <AppText tone="secondary" variant="footnote">
               {t('schedule.dayItemCount', {
-                count: selectedShifts.reduce(
-                  (total, shift) => total + shift.items.length,
+                count: selectedGroups.reduce(
+                  (total, group) => total + group.items.length,
                   0,
                 ),
               })}
@@ -316,8 +359,8 @@ export default function ScheduleScreen() {
       ) : (
         <FlatList
           contentContainerStyle={styles.listContent}
-          data={scheduleQuery.isError ? [] : selectedShifts}
-          keyExtractor={(shift) => shift.shiftId}
+          data={scheduleQuery.isError ? [] : selectedGroups}
+          keyExtractor={(group) => group.key}
           ListEmptyComponent={
             scheduleQuery.isPending ? (
               <View
@@ -353,11 +396,13 @@ export default function ScheduleScreen() {
             />
           }
           renderItem={({ item }) => (
-            <ScheduleShiftCard
+            <ScheduleAssigneeGroup
               currentRole={role}
               currentUserId={user?.id}
-              isClaiming={
-                claimShift.isPending && claimShift.variables === item.shiftId
+              expanded={isGroupExpanded(item)}
+              group={item}
+              isClaimingShiftId={
+                claimShift.isPending ? (claimShift.variables ?? null) : null
               }
               isCompletingId={
                 completeTask.isPending
@@ -371,7 +416,7 @@ export default function ScheduleScreen() {
                   `/schedule/${encodeURIComponent(shift.shiftId)}/edit?date=${encodeURIComponent(shift.localDate)}` as Href,
                 )
               }
-              shift={item}
+              onToggle={() => toggleGroup(item)}
             />
           )}
           showsVerticalScrollIndicator={false}

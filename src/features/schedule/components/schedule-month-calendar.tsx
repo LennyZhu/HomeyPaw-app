@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
+import { Avatar } from '@/components/avatar';
 import { IconButton } from '@/components/icon-button';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -49,6 +50,7 @@ export function ScheduleMonthCalendar({
       <View style={styles.monthHeader}>
         <AppText
           accessibilityRole="header"
+          maxFontSizeMultiplier={1.5}
           style={styles.monthTitle}
           variant="title3"
         >
@@ -73,7 +75,11 @@ export function ScheduleMonthCalendar({
       <View accessibilityRole="header" style={styles.weekdays}>
         {weekdays.map((weekday, index) => (
           <View key={`${weekday}-${index}`} style={styles.weekdayCell}>
-            <AppText tone="tertiary" variant="caption">
+            <AppText
+              maxFontSizeMultiplier={1.4}
+              tone="tertiary"
+              variant="caption"
+            >
               {weekday}
             </AppText>
           </View>
@@ -85,8 +91,8 @@ export function ScheduleMonthCalendar({
           const summary = summarizeScheduleDay(itemsByDate[cell.date] ?? []);
           const isSelected = selectedDate === cell.date;
           const isToday = today === cell.date;
-          const overflow = Math.max(summary.memberIds.length - 2, 0);
-          const disabled = !cell.inMonth && !fixedSixWeeks;
+          const overflow = Math.max(summary.members.length - 2, 0);
+          const disabled = !cell.inMonth;
           const accessibilityLabel = t('schedule.calendar.dateAccessibility', {
             completedCount: summary.completedCount,
             date: formatCalendarDate(cell.date, i18n.language),
@@ -107,13 +113,13 @@ export function ScheduleMonthCalendar({
                 onPress={() => onSelectDate(cell.date)}
                 style={({ pressed }) => [
                   styles.cell,
-                  isToday && styles.todayCell,
                   isSelected && styles.selectedCell,
                   disabled && styles.disabledCell,
                   pressed && styles.pressedCell,
                 ]}
               >
                 <AppText
+                  maxFontSizeMultiplier={1.35}
                   style={[
                     styles.dayNumber,
                     isToday && styles.todayNumber,
@@ -124,54 +130,54 @@ export function ScheduleMonthCalendar({
                 >
                   {cell.day}
                 </AppText>
-                {summary.itemCount > 0 ? (
-                  <View
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    style={styles.markers}
-                  >
-                    {summary.memberIds.slice(0, 2).map((memberId, index) => (
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={styles.markerArea}
+                >
+                  <View style={styles.memberCluster}>
+                    {summary.members.slice(0, 2).map((member, index) => (
                       <View
-                        key={memberId}
+                        key={member.userId}
                         style={[
-                          styles.memberMarker,
-                          index === 1 && styles.overlapMarker,
-                          isSelected && styles.selectedMarker,
+                          styles.avatarRing,
+                          index > 0 && styles.overlapAvatar,
+                          isSelected && styles.selectedAvatarRing,
                         ]}
-                      />
+                      >
+                        <Avatar
+                          accessibilityLabel={member.displayName ?? ''}
+                          name={member.displayName ?? ''}
+                          size={18}
+                          source={
+                            member.avatarUrl
+                              ? { uri: member.avatarUrl }
+                              : undefined
+                          }
+                        />
+                      </View>
                     ))}
                     {overflow > 0 ? (
                       <AppText
-                        style={isSelected && styles.selectedMarkerText}
+                        allowFontScaling
+                        maxFontSizeMultiplier={1.15}
+                        style={styles.overflowCount}
                         variant="caption"
                       >
                         +{overflow}
                       </AppText>
                     ) : null}
-                    {summary.unassignedCount > 0 ? (
-                      <Ionicons
-                        color={
-                          isSelected
-                            ? lightColors.onPrimary
-                            : lightColors.warning
-                        }
-                        name="hand-left-outline"
-                        size={11}
-                      />
-                    ) : null}
-                    {summary.completedCount > 0 ? (
-                      <Ionicons
-                        color={
-                          isSelected
-                            ? lightColors.onPrimary
-                            : lightColors.success
-                        }
-                        name="checkmark-circle"
-                        size={11}
-                      />
-                    ) : null}
                   </View>
-                ) : null}
+                  {summary.unassignedCount > 0 ? (
+                    <View style={styles.unassignedMarker}>
+                      <Ionicons
+                        color={lightColors.warning}
+                        name="hand-left-outline"
+                        size={10}
+                      />
+                    </View>
+                  ) : null}
+                </View>
               </Pressable>
             </View>
           );
@@ -196,7 +202,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cellFrame: { padding: 2, width: `${100 / 7}%` },
   cell: {
-    minHeight: 52,
+    height: 58,
     alignItems: 'center',
     borderColor: 'transparent',
     borderRadius: radius.md,
@@ -206,35 +212,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 1,
     paddingVertical: 3,
   },
-  todayCell: { borderColor: lightColors.secondary },
   selectedCell: {
-    backgroundColor: lightColors.primary,
+    backgroundColor: lightColors.primarySoft,
     borderColor: lightColors.primary,
   },
   disabledCell: { opacity: 0.3 },
   pressedCell: { opacity: 0.62 },
   dayNumber: { fontVariant: ['tabular-nums'], fontWeight: '600' },
   todayNumber: { textDecorationLine: 'underline' },
-  selectedNumber: { color: lightColors.onPrimary },
+  selectedNumber: { color: lightColors.primary, fontWeight: '700' },
   outsideNumber: { color: lightColors.textTertiary },
-  markers: {
-    minHeight: 12,
+  markerArea: {
+    width: '100%',
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  memberCluster: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  memberMarker: {
-    width: 9,
-    height: 9,
-    backgroundColor: lightColors.secondary,
+  avatarRing: {
     borderColor: lightColors.surface,
     borderRadius: radius.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
-  overlapMarker: { marginLeft: -2 },
-  selectedMarker: {
-    backgroundColor: lightColors.onPrimary,
+  overlapAvatar: { marginLeft: -4 },
+  selectedAvatarRing: {
     borderColor: lightColors.primary,
   },
-  selectedMarkerText: { color: lightColors.onPrimary },
+  overflowCount: {
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
+    marginLeft: 1,
+  },
+  unassignedMarker: {
+    width: 14,
+    height: 14,
+    alignItems: 'center',
+    backgroundColor: '#FFF4DD',
+    borderColor: lightColors.warning,
+    borderRadius: radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 0,
+    top: -22,
+  },
 });

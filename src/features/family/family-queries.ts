@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
 import { petKeys } from '@/features/pets/pet-queries';
+import { createProfileAvatarSignedUrls } from '@/features/profile/profile-avatar';
 import { requireSupabase } from '@/lib/supabase/client';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
 import type { PetInvite, PetMemberRole, PetSpecies } from '@/types/database';
 
 export type PetMemberSummary = {
+  avatarPath: string | null;
+  avatarUrl: string | null;
   displayName: string;
   joinedAt: string;
   role: PetMemberRole;
@@ -65,7 +68,18 @@ async function fetchPetMembers(petId: string): Promise<PetMemberSummary[]> {
     throw error;
   }
 
+  const avatarPaths = data.flatMap((member) =>
+    member.member_avatar_path ? [member.member_avatar_path] : [],
+  );
+  const signedUrls = await createProfileAvatarSignedUrls(avatarPaths).catch(
+    () => ({}),
+  );
+
   return data.map((member) => ({
+    avatarPath: member.member_avatar_path,
+    avatarUrl: member.member_avatar_path
+      ? (signedUrls[member.member_avatar_path] ?? null)
+      : null,
     displayName: member.member_display_name,
     joinedAt: member.member_joined_at,
     role: member.member_role,

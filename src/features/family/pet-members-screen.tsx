@@ -196,6 +196,7 @@ export default function PetMembersScreen() {
               })}
               name={member.displayName}
               size={52}
+              source={member.avatarUrl ? { uri: member.avatarUrl } : undefined}
             />
             <View style={styles.memberCopy}>
               <AppText variant="headline">{member.displayName}</AppText>

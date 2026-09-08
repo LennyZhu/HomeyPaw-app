@@ -313,7 +313,28 @@ async function main() {
       ownerBundleItems.length === 2,
       'Owner bundle did not contain two task items.',
     );
+    const memberAvatarPath = `${member.id}/${randomUUID()}.jpg`;
+    const avatarUpdate = await member.client
+      .from('profiles')
+      .update({ avatar_url: memberAvatarPath })
+      .eq('id', member.id);
+    expect(!avatarUpdate.error, 'Member avatar path setup failed.');
+    const avatarRange = await owner.client.rpc('get_care_schedule_range', {
+      range_end: addDays(localDate, 1),
+      range_start: localDate,
+      target_pet_id: petId,
+    });
+    expect(
+      !avatarRange.error &&
+        avatarRange.data.some(
+          (item) =>
+            item.shift_id === ownerBundle.data.id &&
+            item.assignee_avatar_path === memberAvatarPath,
+        ),
+      'Schedule range did not project the assignee avatar path.',
+    );
     console.log('PASS: Owner assigned a two-item Shift bundle to Member B.');
+    console.log('PASS: Schedule range projects one safe assignee avatar path.');
 
     const memberSelf = await createShift(member.client, {
       assigneeUserId: member.id,

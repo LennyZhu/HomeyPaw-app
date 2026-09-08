@@ -609,6 +609,7 @@ export type Database = {
         };
         Returns: {
           assignee_display_name: string | null;
+          assignee_avatar_path: string | null;
           assignee_user_id: string | null;
           care_log_id: string | null;
           care_task_id: string;
@@ -660,6 +661,7 @@ export type Database = {
       get_pet_members: {
         Args: { target_pet_id: string };
         Returns: {
+          member_avatar_path: string | null;
           member_display_name: string;
           member_joined_at: string;
           member_role: Database['public']['Enums']['pet_member_role'];

@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
+import { createProfileAvatarSignedUrls } from '@/features/profile/profile-avatar';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { ChatMessage, PetMemberRole } from '@/types/database';
 
@@ -27,6 +28,7 @@ export type { ChatListMessage, ChatPage } from './chat-cache';
 export const CHAT_PAGE_SIZE = 30;
 
 export type ChatMemberSummary = {
+  avatarPath: string | null;
   avatarUrl: string | null;
   displayName: string;
   joinedAt: string;
@@ -111,8 +113,18 @@ async function fetchChatMembers(petId: string): Promise<ChatMemberSummary[]> {
   });
 
   if (error) throw error;
+  const avatarPaths = data.flatMap((member) =>
+    member.member_avatar_url ? [member.member_avatar_url] : [],
+  );
+  const signedUrls = await createProfileAvatarSignedUrls(avatarPaths).catch(
+    () => ({}),
+  );
+
   return data.map((member) => ({
-    avatarUrl: member.member_avatar_url,
+    avatarPath: member.member_avatar_url,
+    avatarUrl: member.member_avatar_url
+      ? (signedUrls[member.member_avatar_url] ?? null)
+      : null,
     displayName: member.member_display_name,
     joinedAt: member.member_joined_at,
     role: member.member_role,

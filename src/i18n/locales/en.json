@@ -1,6 +1,6 @@
 {
   "common": {
-    "seeAll": "See all",
+    "seeAll": "View all",
     "comingSoon": "This feature will be available in a later phase.",
     "loading": "Loading…",
     "back": "Back",
@@ -739,7 +739,15 @@
     "signOutConfirmBody": "You'll need your email and password to access private content again.",
     "edit": {
       "title": "Edit profile",
-      "subtitle": "Your display name and language are stored in your private profile.",
+      "subtitle": "Update your profile picture, display name and language.",
+      "avatarTitle": "Profile picture",
+      "changePhoto": "Change photo",
+      "removePhoto": "Remove photo",
+      "avatarLoading": "Loading profile picture…",
+      "avatarLoadError": "We couldn't securely load your profile picture. Try again shortly.",
+      "avatarPermissionDenied": "Photo access was not granted. You can allow HomeyPaw to access photos in system settings.",
+      "avatarPrepareError": "We couldn't process that photo. Please choose another one.",
+      "openSettings": "Open system settings",
       "saved": "Your profile has been updated.",
       "saveError": "We couldn't save your profile. Try again shortly."
     }
@@ -951,6 +959,12 @@
     "dayItemCount_other": "{{count}} care items",
     "remainingItems_one": "See {{count}} more item",
     "remainingItems_other": "See {{count}} more items",
+    "overflowCount_one": "{{count}} more scheduled item",
+    "overflowCount_other": "{{count}} more scheduled items",
+    "groupItemCount_one": "{{count}} item",
+    "groupItemCount_other": "{{count}} items",
+    "groupStatusCount": "{{count}} {{status}}",
+    "groupStatusSeparator": " · ",
     "emptyDate": "No schedule",
     "emptyDateBody": "Nothing is assigned for this date yet.",
     "loading": "Loading family schedule…",
