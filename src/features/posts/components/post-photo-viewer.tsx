@@ -4,7 +4,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Linking,
   Modal,
   Pressable,
   StyleSheet,
@@ -19,7 +21,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
@@ -28,6 +33,11 @@ import { lightColors, layout, radius, spacing } from '@/theme';
 import type { PostMedia } from '@/types/database';
 
 import { clampPhotoViewerIndex } from '../photo-viewer-state';
+import {
+  canSavePostPhotoToLibrary,
+  postPhotoSaveDependencies,
+} from '../post-photo-save-adapter';
+import { createPostPhotoSaver, getCurrentPostPhoto } from '../post-photo-save';
 
 type PostPhotoViewerProps = {
   hasLoadError?: boolean;
@@ -52,9 +62,20 @@ export function PostPhotoViewer({
 }: PostPhotoViewerProps) {
   const { t } = useTranslation();
   const { width } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<PostMedia>>(null);
   const [currentIndex, setCurrentIndex] = useState(() =>
     clampPhotoViewerIndex(initialIndex, media.length),
+  );
+  const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<{
+    message: string;
+    tone: 'error' | 'success';
+  } | null>(null);
+  const saveInFlight = useRef(false);
+  const saveFeedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [savePhoto] = useState(() =>
+    createPostPhotoSaver(postPhotoSaveDependencies),
   );
 
   useEffect(() => {
@@ -66,6 +87,15 @@ export function PostPhotoViewer({
     });
     return () => cancelAnimationFrame(frame);
   }, [initialIndex, media.length, visible]);
+
+  useEffect(
+    () => () => {
+      if (saveFeedbackTimer.current) {
+        clearTimeout(saveFeedbackTimer.current);
+      }
+    },
+    [],
+  );
 
   if (!visible) return null;
 
@@ -81,6 +111,49 @@ export function PostPhotoViewer({
         media.length,
       ),
     );
+  };
+  const currentPhoto = getCurrentPostPhoto(media, mediaUrls, currentIndex);
+  const showSaveFeedback = (message: string, tone: 'error' | 'success') => {
+    if (saveFeedbackTimer.current) clearTimeout(saveFeedbackTimer.current);
+    setSaveFeedback({ message, tone });
+    saveFeedbackTimer.current = setTimeout(
+      () => {
+        setSaveFeedback(null);
+        saveFeedbackTimer.current = null;
+      },
+      tone === 'error' ? 4500 : 2800,
+    );
+  };
+  const handleSavePhoto = async () => {
+    if (!currentPhoto || saveInFlight.current) return;
+
+    saveInFlight.current = true;
+    setSaveFeedback(null);
+    setIsSavingPhoto(true);
+    const result = await savePhoto(currentPhoto).finally(() => {
+      saveInFlight.current = false;
+      setIsSavingPhoto(false);
+    });
+
+    if (result === 'saved') {
+      showSaveFeedback(t('posts.photos.saveSuccess'), 'success');
+    } else if (result === 'permission-denied') {
+      showSaveFeedback(t('posts.photos.savePermissionDenied'), 'error');
+    } else if (result === 'permission-blocked') {
+      Alert.alert(
+        t('posts.photos.savePermissionTitle'),
+        t('posts.photos.savePermissionBlocked'),
+        [
+          { style: 'cancel', text: t('common.cancel') },
+          {
+            onPress: () => void Linking.openSettings(),
+            text: t('posts.photos.openSettings'),
+          },
+        ],
+      );
+    } else if (result === 'failed') {
+      showSaveFeedback(t('posts.photos.saveError'), 'error');
+    }
   };
 
   return (
@@ -101,8 +174,42 @@ export function PostPhotoViewer({
           color={lightColors.onPrimary}
           icon="close"
           onPress={onClose}
-          style={styles.closeButton}
+          style={[styles.closeButton, { top: insets.top + spacing.md }]}
         />
+        {canSavePostPhotoToLibrary && currentPhoto ? (
+          <Pressable
+            accessibilityLabel={
+              isSavingPhoto
+                ? t('posts.photos.saveLoadingAccessibility')
+                : t('posts.photos.saveAccessibility')
+            }
+            accessibilityRole="button"
+            accessibilityState={{
+              busy: isSavingPhoto,
+              disabled: isSavingPhoto,
+            }}
+            disabled={isSavingPhoto}
+            onPress={() => void handleSavePhoto()}
+            style={({ pressed }) => [
+              styles.saveButton,
+              { top: insets.top + spacing.md },
+              pressed && styles.pressedButton,
+            ]}
+          >
+            {isSavingPhoto ? (
+              <ActivityIndicator color={lightColors.onPrimary} size="small" />
+            ) : (
+              <Ionicons
+                color={lightColors.onPrimary}
+                name="download-outline"
+                size={20}
+              />
+            )}
+            <AppText tone="onPrimary" variant="subheadline">
+              {t('posts.photos.save')}
+            </AppText>
+          </Pressable>
+        ) : null}
 
         <FlatList
           data={media}
@@ -162,6 +269,25 @@ export function PostPhotoViewer({
               label={t('posts.photos.next')}
               onPress={() => goToIndex(currentIndex + 1)}
             />
+          </View>
+        ) : null}
+        {saveFeedback ? (
+          <View
+            accessibilityLiveRegion="polite"
+            accessibilityRole="alert"
+            style={[
+              styles.saveFeedback,
+              saveFeedback.tone === 'error'
+                ? styles.saveFeedbackError
+                : styles.saveFeedbackSuccess,
+            ]}
+          >
+            <AppText
+              tone={saveFeedback.tone === 'error' ? 'onPrimary' : 'primary'}
+              variant="subheadline"
+            >
+              {saveFeedback.message}
+            </AppText>
           </View>
         ) : null}
       </SafeAreaView>
@@ -302,9 +428,21 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     right: spacing.xl,
-    top: spacing.md,
     zIndex: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
+  },
+  saveButton: {
+    position: 'absolute',
+    left: spacing.xl,
+    zIndex: 3,
+    minHeight: layout.minimumTouchTarget,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderRadius: radius.full,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
   },
   pages: { flex: 1 },
   page: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -326,6 +464,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  saveFeedback: {
+    position: 'absolute',
+    right: spacing.xl,
+    bottom: spacing.md + layout.minimumTouchTarget + spacing.md,
+    left: spacing.xl,
+    zIndex: 4,
+    alignItems: 'center',
+    alignSelf: 'center',
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  saveFeedbackSuccess: { backgroundColor: lightColors.secondarySoft },
+  saveFeedbackError: { backgroundColor: lightColors.error },
   navigationButton: {
     width: layout.minimumTouchTarget,
     height: layout.minimumTouchTarget,

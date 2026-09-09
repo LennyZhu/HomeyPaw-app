@@ -15,6 +15,7 @@
     "expo-constants": "~57.0.17",
     "expo-crypto": "~57.0.2",
     "expo-dev-client": "~57.0.18",
+    "expo-file-system": "~57.0.6",
     "expo-font": "~57.0.3",
     "expo-haptics": "~57.0.2",
     "expo-image": "~57.0.4",
@@ -22,6 +23,7 @@
     "expo-image-picker": "~57.0.16",
     "expo-linking": "~57.0.9",
     "expo-localization": "~57.0.1",
+    "expo-media-library": "~57.0.4",
     "expo-notifications": "~57.0.17",
     "expo-router": "~57.0.19",
     "expo-splash-screen": "~57.0.8",
@@ -82,7 +84,8 @@
     "verify:user-avatar-rls": "node scripts/verify-user-profile-avatar-rls.mjs",
     "verify:user-feedback-client": "node --experimental-strip-types scripts/verify-user-feedback-client.mjs",
     "verify:family-member-cap": "node scripts/verify-family-member-cap.mjs",
-    "verify:health-yearly-rls": "node scripts/verify-health-yearly-rls.mjs"
+    "verify:health-yearly-rls": "node scripts/verify-health-yearly-rls.mjs",
+    "verify:save-photo": "node --experimental-strip-types scripts/verify-save-photo.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

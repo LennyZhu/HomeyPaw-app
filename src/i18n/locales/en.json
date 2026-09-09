@@ -230,7 +230,15 @@
       "previous": "Previous photo",
       "next": "Next photo",
       "viewerPosition": "{{position}} / {{total}}",
-      "viewerLoadError": "This photo couldn't be loaded. Close the viewer and try again."
+      "viewerLoadError": "This photo couldn't be loaded. Close the viewer and try again.",
+      "save": "Save to Photos",
+      "saveAccessibility": "Save current photo to Photos",
+      "saveLoadingAccessibility": "Saving current photo to Photos",
+      "saveSuccess": "Saved to Photos",
+      "saveError": "Unable to save the photo. Please try again.",
+      "savePermissionTitle": "Allow photo saving?",
+      "savePermissionDenied": "Photo saving permission was not granted.",
+      "savePermissionBlocked": "Allow HomeyPaw to add photos in system settings, then try again."
     },
     "progress": {
       "processing": "Processing photo {{completed}} / {{total}}…",

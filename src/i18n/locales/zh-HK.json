@@ -230,7 +230,15 @@
       "previous": "上一張相片",
       "next": "下一張相片",
       "viewerPosition": "{{position}} / {{total}}",
-      "viewerLoadError": "暫時無法載入這張相片，請關閉查看器後再試。"
+      "viewerLoadError": "暫時無法載入這張相片，請關閉查看器後再試。",
+      "save": "儲存到相片",
+      "saveAccessibility": "儲存目前相片到相片圖庫",
+      "saveLoadingAccessibility": "正在儲存目前相片到相片圖庫",
+      "saveSuccess": "已儲存到相片",
+      "saveError": "無法儲存相片，請稍後再試。",
+      "savePermissionTitle": "允許儲存相片？",
+      "savePermissionDenied": "未取得儲存相片權限。",
+      "savePermissionBlocked": "請在系統設定中允許 HomeyPaw 加入相片，然後再試。"
     },
     "progress": {
       "processing": "正在處理相片 {{completed}} / {{total}}…",
