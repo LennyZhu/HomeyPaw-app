@@ -147,6 +147,22 @@
     "yesterday": "昨天",
     "readMore": "閱讀更多",
     "morePhotos": "還有 {{count}} 張相片",
+    "filter": {
+      "title": "篩選日記",
+      "subtitle": "按本地日期範圍查看建立的日記。",
+      "all": "全部日記",
+      "lastSevenDays": "最近 7 天",
+      "lastThirtyDays": "最近 30 天",
+      "custom": "自訂範圍",
+      "startDate": "開始日期",
+      "endDate": "結束日期",
+      "apply": "套用日期範圍",
+      "clear": "清除日期篩選",
+      "accessibility": "按日期篩選日記。目前範圍：{{range}}",
+      "invalidRange": "請選擇有效日期，開始日期不可遲於結束日期。",
+      "emptyTitle": "此日期範圍沒有日記",
+      "emptyBody": "{{range}} 期間沒有建立日記。"
+    },
     "entries": {
       "walk": {
         "date": "2026年8月18日",

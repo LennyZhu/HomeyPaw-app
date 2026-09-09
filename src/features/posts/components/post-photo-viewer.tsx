@@ -21,6 +21,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -32,7 +33,12 @@ import { IconButton } from '@/components/icon-button';
 import { lightColors, layout, radius, spacing } from '@/theme';
 import type { PostMedia } from '@/types/database';
 
-import { clampPhotoViewerIndex } from '../photo-viewer-state';
+import {
+  clampPhotoViewerIndex,
+  clampZoomedPhotoOffset,
+  getPhotoViewerIndexFromOffset,
+  shouldCaptureZoomedPhotoPan,
+} from '../photo-viewer-state';
 import {
   canSavePostPhotoToLibrary,
   postPhotoSaveDependencies,
@@ -61,13 +67,14 @@ export function PostPhotoViewer({
   visible,
 }: PostPhotoViewerProps) {
   const { t } = useTranslation();
-  const { width } = useWindowDimensions();
+  const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<PostMedia>>(null);
   const [currentIndex, setCurrentIndex] = useState(() =>
     clampPhotoViewerIndex(initialIndex, media.length),
   );
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
+  const [isCurrentPhotoZoomed, setIsCurrentPhotoZoomed] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{
     message: string;
     tone: 'error' | 'success';
@@ -83,6 +90,7 @@ export function PostPhotoViewer({
     const nextIndex = clampPhotoViewerIndex(initialIndex, media.length);
     const frame = requestAnimationFrame(() => {
       setCurrentIndex(nextIndex);
+      setIsCurrentPhotoZoomed(false);
       listRef.current?.scrollToIndex({ animated: false, index: nextIndex });
     });
     return () => cancelAnimationFrame(frame);
@@ -102,15 +110,19 @@ export function PostPhotoViewer({
   const goToIndex = (index: number) => {
     const nextIndex = clampPhotoViewerIndex(index, media.length);
     setCurrentIndex(nextIndex);
+    setIsCurrentPhotoZoomed(false);
+    setSaveFeedback(null);
     listRef.current?.scrollToIndex({ animated: true, index: nextIndex });
   };
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setCurrentIndex(
-      clampPhotoViewerIndex(
-        Math.round(event.nativeEvent.contentOffset.x / Math.max(width, 1)),
-        media.length,
-      ),
+    const nextIndex = getPhotoViewerIndexFromOffset(
+      event.nativeEvent.contentOffset.x,
+      width,
+      media.length,
     );
+    setCurrentIndex(nextIndex);
+    setIsCurrentPhotoZoomed(false);
+    setSaveFeedback(null);
   };
   const currentPhoto = getCurrentPostPhoto(media, mediaUrls, currentIndex);
   const showSaveFeedback = (message: string, tone: 'error' | 'success') => {
@@ -214,7 +226,7 @@ export function PostPhotoViewer({
         <FlatList
           data={media}
           decelerationRate="fast"
-          extraData={mediaUrls}
+          extraData={{ currentIndex, mediaUrls }}
           getItemLayout={(_, index) => ({
             index,
             length: width,
@@ -234,12 +246,17 @@ export function PostPhotoViewer({
               isLoading={isLoading}
               item={item}
               onImageError={onImageError}
+              onZoomChange={
+                index === currentIndex ? setIsCurrentPhotoZoomed : undefined
+              }
               total={media.length}
               uri={mediaUrls[item.storage_path]}
+              viewportHeight={height}
               width={width}
             />
           )}
           showsHorizontalScrollIndicator={false}
+          scrollEnabled={!isCurrentPhotoZoomed}
           style={styles.pages}
         />
 
@@ -301,8 +318,10 @@ function ZoomablePostPhoto({
   isLoading,
   item,
   onImageError,
+  onZoomChange,
   total,
   uri,
+  viewportHeight,
   width,
 }: {
   hasLoadError: boolean;
@@ -310,17 +329,28 @@ function ZoomablePostPhoto({
   isLoading: boolean;
   item: PostMedia;
   onImageError: (() => void) | undefined;
+  onZoomChange: ((isZoomed: boolean) => void) | undefined;
   total: number;
   uri: string | undefined;
+  viewportHeight: number;
   width: number;
 }) {
   const { t } = useTranslation();
   const scale = useSharedValue(1);
   const startScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const startTranslateX = useSharedValue(0);
+  const startTranslateY = useSharedValue(0);
   const [failedUri, setFailedUri] = useState<string | null>(null);
   const [loadedUri, setLoadedUri] = useState<string | null>(null);
+  const [isZoomed, setIsZoomed] = useState(false);
   const canShowImage = Boolean(uri && failedUri !== uri);
   const imageLoading = canShowImage && loadedUri !== uri;
+  const reportZoomChange = (nextIsZoomed: boolean) => {
+    setIsZoomed(nextIsZoomed);
+    onZoomChange?.(nextIsZoomed);
+  };
 
   const pinch = Gesture.Pinch()
     .onStart(() => {
@@ -331,6 +361,38 @@ function ZoomablePostPhoto({
     })
     .onEnd(() => {
       startScale.value = scale.value;
+      translateX.value = clampZoomedPhotoOffset(
+        translateX.value,
+        width,
+        scale.value,
+      );
+      scheduleOnRN(reportZoomChange, shouldCaptureZoomedPhotoPan(scale.value));
+      translateY.value = clampZoomedPhotoOffset(
+        translateY.value,
+        viewportHeight * 0.78,
+        scale.value,
+      );
+    });
+  const zoomedPan = Gesture.Pan()
+    .onStart(() => {
+      startTranslateX.value = translateX.value;
+      startTranslateY.value = translateY.value;
+    })
+    .onUpdate((event) => {
+      translateX.value = clampZoomedPhotoOffset(
+        startTranslateX.value + event.translationX,
+        width,
+        scale.value,
+      );
+      translateY.value = clampZoomedPhotoOffset(
+        startTranslateY.value + event.translationY,
+        viewportHeight * 0.78,
+        scale.value,
+      );
+    })
+    .onEnd(() => {
+      startTranslateX.value = translateX.value;
+      startTranslateY.value = translateY.value;
     });
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
@@ -339,10 +401,21 @@ function ZoomablePostPhoto({
       const nextScale = scale.value > 1.05 ? 1 : 2.5;
       scale.value = withTiming(nextScale);
       startScale.value = nextScale;
+      translateX.value = withTiming(0);
+      translateY.value = withTiming(0);
+      startTranslateX.value = 0;
+      startTranslateY.value = 0;
+      scheduleOnRN(reportZoomChange, shouldCaptureZoomedPhotoPan(nextScale));
     });
-  const zoomGesture = Gesture.Simultaneous(pinch, doubleTap);
+  const zoomGesture = isZoomed
+    ? Gesture.Simultaneous(pinch, zoomedPan, doubleTap)
+    : Gesture.Simultaneous(pinch, doubleTap);
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [
+      { scale: scale.value },
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+    ],
   }));
 
   return (

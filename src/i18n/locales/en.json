@@ -147,6 +147,22 @@
     "yesterday": "Yesterday",
     "readMore": "Read more",
     "morePhotos": "{{count}} more photos",
+    "filter": {
+      "title": "Filter journal",
+      "subtitle": "Show entries created within a local date range.",
+      "all": "All entries",
+      "lastSevenDays": "Last 7 days",
+      "lastThirtyDays": "Last 30 days",
+      "custom": "Custom range",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "apply": "Apply range",
+      "clear": "Clear date filter",
+      "accessibility": "Filter journal by date. Current range: {{range}}",
+      "invalidRange": "Choose a valid start date no later than the end date.",
+      "emptyTitle": "No entries in this range",
+      "emptyBody": "No journal entries were created during {{range}}."
+    },
     "entries": {
       "walk": {
         "date": "18 August 2026",

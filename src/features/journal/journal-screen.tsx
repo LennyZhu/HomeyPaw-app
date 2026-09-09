@@ -17,6 +17,7 @@ import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { EmptyState } from '@/components/empty-state';
 import { LoadingView } from '@/components/loading-view';
+import { useAuth } from '@/features/auth/auth-context';
 import { usePetPostAuthors } from '@/features/family/family-queries';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { parseDateOnly } from '@/features/pets/pet-dates';
@@ -31,6 +32,16 @@ import {
 } from '@/features/posts/post-queries';
 import { lightColors, layout, radius, spacing } from '@/theme';
 
+import { JournalDateFilterModal } from './components/journal-date-filter-modal';
+import {
+  createJournalContextKey,
+  createJournalListStateKey,
+  getJournalScrollOffset,
+  setJournalScrollOffset,
+  type JournalDateRange,
+} from './journal-browsing';
+import { useJournalFilterStore } from './journal-browsing-state';
+
 type TimelineItem =
   | { id: string; kind: 'year'; label: string }
   | { id: string; kind: 'month'; label: string }
@@ -40,11 +51,20 @@ type TimelineItem =
 export default function JournalScreen() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
+  const { user } = useAuth();
   const petsState = useCurrentPet();
   const petId = petsState.currentPetId;
-  const postsQuery = usePosts(petId);
+  const journalContextKey = createJournalContextKey(user?.id, petId);
+  const dateRange = useJournalFilterStore(
+    (state) => state.filters[journalContextKey],
+  );
+  const setDateRange = useJournalFilterStore((state) => state.setFilter);
+  const listStateKey = createJournalListStateKey(user?.id, petId, dateRange);
+  const initialScrollOffset = getJournalScrollOffset(listStateKey);
+  const postsQuery = usePosts(petId, dateRange);
   const authorsQuery = usePetPostAuthors(petId);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   const [photoViewer, setPhotoViewer] = useState<{
     initialIndex: number;
     media: PostWithMedia['post_media'];
@@ -83,6 +103,9 @@ export default function JournalScreen() {
   );
   const isRefreshing =
     postsQuery.isRefetching && !postsQuery.isFetchingNextPage;
+  const dateRangeLabel = dateRange
+    ? formatJournalDateRange(dateRange, i18n.language)
+    : t('journal.filter.all');
 
   if (petsState.isPending) {
     return <LoadingView label={t('pets.loading.list')} />;
@@ -103,6 +126,23 @@ export default function JournalScreen() {
                   void authorsQuery.refetch();
                 }}
                 variant="secondary"
+              />
+            </View>
+          ) : postsQuery.isPending || authorsQuery.isPending ? (
+            <ActivityIndicator
+              color={lightColors.primary}
+              style={styles.emptyLoader}
+            />
+          ) : petsState.currentPet && dateRange ? (
+            <View style={styles.emptyState}>
+              <EmptyState
+                actionLabel={t('journal.filter.clear')}
+                body={t('journal.filter.emptyBody', {
+                  range: dateRangeLabel,
+                })}
+                icon="calendar-outline"
+                onActionPress={() => setDateRange(journalContextKey, undefined)}
+                title={t('journal.filter.emptyTitle')}
               />
             </View>
           ) : petsState.currentPet ? (
@@ -162,39 +202,93 @@ export default function JournalScreen() {
             </View>
 
             {petsState.currentPet ? (
-              <Pressable
-                accessibilityLabel={t('home.changePet')}
-                accessibilityRole="button"
-                onPress={() => setIsSwitcherOpen(true)}
-                style={({ pressed }) => [
-                  styles.petSelector,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Ionicons
-                  color={lightColors.secondary}
-                  name="paw-outline"
-                  size={20}
-                />
-                <AppText style={styles.petName} variant="headline">
-                  {petsState.currentPet.name}
-                </AppText>
-                <Ionicons
-                  color={lightColors.textSecondary}
-                  name="chevron-down"
-                  size={18}
-                />
-              </Pressable>
+              <View style={styles.browseControls}>
+                <Pressable
+                  accessibilityLabel={t('home.changePet')}
+                  accessibilityRole="button"
+                  onPress={() => setIsSwitcherOpen(true)}
+                  style={({ pressed }) => [
+                    styles.petSelector,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Ionicons
+                    color={lightColors.secondary}
+                    name="paw-outline"
+                    size={20}
+                  />
+                  <AppText style={styles.petName} variant="headline">
+                    {petsState.currentPet.name}
+                  </AppText>
+                  <Ionicons
+                    color={lightColors.textSecondary}
+                    name="chevron-down"
+                    size={18}
+                  />
+                </Pressable>
+                <View style={styles.filterRow}>
+                  <Pressable
+                    accessibilityLabel={t('journal.filter.accessibility', {
+                      range: dateRangeLabel,
+                    })}
+                    accessibilityRole="button"
+                    onPress={() => setIsDateFilterOpen(true)}
+                    style={({ pressed }) => [
+                      styles.filterButton,
+                      dateRange && styles.filterButtonActive,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Ionicons
+                      color={lightColors.primary}
+                      name="calendar-outline"
+                      size={18}
+                    />
+                    <AppText
+                      numberOfLines={1}
+                      style={styles.filterLabel}
+                      tone={dateRange ? 'brand' : 'secondary'}
+                      variant="subheadline"
+                    >
+                      {dateRangeLabel}
+                    </AppText>
+                    <Ionicons
+                      color={lightColors.textSecondary}
+                      name="chevron-down"
+                      size={16}
+                    />
+                  </Pressable>
+                  {dateRange ? (
+                    <Pressable
+                      accessibilityLabel={t('journal.filter.clear')}
+                      accessibilityRole="button"
+                      onPress={() => setDateRange(journalContextKey, undefined)}
+                      style={({ pressed }) => [
+                        styles.clearFilterButton,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <Ionicons
+                        color={lightColors.textSecondary}
+                        name="close"
+                        size={20}
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
+              </View>
             ) : null}
           </View>
         }
         contentContainerStyle={styles.listContent}
+        contentOffset={{ x: 0, y: initialScrollOffset }}
         data={authorsQuery.isError ? [] : timeline}
         extraData={mediaUrlsQuery.data}
         initialNumToRender={8}
         keyboardDismissMode="on-drag"
-        key={petId ?? 'no-pet'}
+        key={listStateKey}
         keyExtractor={(item) => item.id}
+        maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         maxToRenderPerBatch={8}
         onEndReached={() => {
           if (postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
@@ -202,6 +296,12 @@ export default function JournalScreen() {
           }
         }}
         onEndReachedThreshold={0.35}
+        onScroll={(event) =>
+          setJournalScrollOffset(
+            listStateKey,
+            event.nativeEvent.contentOffset.y,
+          )
+        }
         refreshControl={
           <RefreshControl
             onRefresh={() => {
@@ -252,6 +352,7 @@ export default function JournalScreen() {
           );
         }}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={100}
         style={styles.list}
         updateCellsBatchingPeriod={50}
         windowSize={7}
@@ -271,6 +372,14 @@ export default function JournalScreen() {
         pets={petsState.pets}
         visible={isSwitcherOpen}
       />
+      {isDateFilterOpen ? (
+        <JournalDateFilterModal
+          onApply={(range) => setDateRange(journalContextKey, range)}
+          onClose={() => setIsDateFilterOpen(false)}
+          range={dateRange}
+          visible
+        />
+      ) : null}
       {photoViewer ? (
         <PostPhotoViewer
           hasLoadError={mediaUrlsQuery.isError}
@@ -285,6 +394,25 @@ export default function JournalScreen() {
       ) : null}
     </SafeAreaView>
   );
+}
+
+function formatJournalDateRange(range: JournalDateRange, locale: string) {
+  const start = parseDateOnly(range.startDate);
+  const end = parseDateOnly(range.endDate);
+  if (!start || !end) return `${range.startDate} – ${range.endDate}`;
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: start.getFullYear() === end.getFullYear() ? undefined : 'numeric',
+  });
+  const endFormatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: start.getFullYear() === end.getFullYear() ? undefined : 'numeric',
+  });
+
+  return `${formatter.format(start)} – ${endFormatter.format(end)}`;
 }
 
 function createTimelineItems(
@@ -463,6 +591,7 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flex: 1, gap: spacing.xs },
   addButton: { minHeight: 44, paddingHorizontal: spacing.lg },
+  browseControls: { gap: spacing.sm },
   petSelector: {
     minHeight: 52,
     alignItems: 'center',
@@ -475,6 +604,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   petName: { flex: 1 },
+  filterRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
+  filterButton: {
+    minHeight: 44,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: lightColors.surface,
+    borderColor: lightColors.border,
+    borderRadius: radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    flexShrink: 1,
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  filterButtonActive: {
+    backgroundColor: lightColors.primarySoft,
+    borderColor: lightColors.primarySoft,
+  },
+  filterLabel: { flexShrink: 1 },
+  clearFilterButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    backgroundColor: lightColors.surfaceSecondary,
+    borderRadius: radius.full,
+    justifyContent: 'center',
+  },
   year: { marginBottom: spacing.md, marginTop: spacing.xl },
   month: { marginBottom: spacing.lg, marginTop: spacing.xs },
   dayRow: {
@@ -527,6 +683,7 @@ const styles = StyleSheet.create({
   },
   locationRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   emptyState: { minHeight: 420, flex: 1 },
+  emptyLoader: { paddingTop: spacing.huge },
   messageState: {
     alignItems: 'flex-start',
     gap: spacing.lg,

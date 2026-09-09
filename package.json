@@ -85,7 +85,8 @@
     "verify:user-feedback-client": "node --experimental-strip-types scripts/verify-user-feedback-client.mjs",
     "verify:family-member-cap": "node scripts/verify-family-member-cap.mjs",
     "verify:health-yearly-rls": "node scripts/verify-health-yearly-rls.mjs",
-    "verify:save-photo": "node --experimental-strip-types scripts/verify-save-photo.mjs"
+    "verify:save-photo": "node --experimental-strip-types scripts/verify-save-photo.mjs",
+    "verify:journal-browsing": "node --experimental-strip-types scripts/verify-journal-browsing.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

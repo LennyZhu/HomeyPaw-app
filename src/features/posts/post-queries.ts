@@ -8,6 +8,11 @@ import {
 
 import { useAuth } from '@/features/auth/auth-context';
 import { familyKeys } from '@/features/family/family-queries';
+import {
+  createJournalDateRangeKey,
+  toJournalCreatedAtBounds,
+  type JournalDateRange,
+} from '@/features/journal/journal-browsing';
 import { toDateOnly } from '@/features/pets/pet-dates';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { Post, PostMedia } from '@/types/database';
@@ -40,8 +45,20 @@ export const postKeys = {
   all: (userId: string | undefined) => ['posts', userId] as const,
   detail: (userId: string | undefined, postId: string) =>
     ['posts', userId, 'detail', postId] as const,
-  list: (userId: string | undefined, petId: string | null) =>
+  listRoot: (userId: string | undefined, petId: string | null) =>
     ['posts', userId, 'list', petId] as const,
+  list: (
+    userId: string | undefined,
+    petId: string | null,
+    dateRange?: JournalDateRange,
+  ) =>
+    [
+      'posts',
+      userId,
+      'list',
+      petId,
+      createJournalDateRangeKey(dateRange),
+    ] as const,
   memory: (
     userId: string | undefined,
     petId: string | null,
@@ -77,6 +94,7 @@ async function fetchPetMemory(
 async function fetchPostPage(
   petId: string,
   cursor: PostCursor | null,
+  dateRange: JournalDateRange | undefined,
 ): Promise<PostPage> {
   let query = requireSupabase()
     .from('posts')
@@ -87,6 +105,13 @@ async function fetchPostPage(
     .order('id', { ascending: false })
     .order('position', { ascending: true, referencedTable: 'post_media' })
     .limit(postPageSize + 1);
+
+  const createdAtBounds = toJournalCreatedAtBounds(dateRange);
+  if (createdAtBounds) {
+    query = query
+      .gte('created_at', createdAtBounds.startUtc)
+      .lt('created_at', createdAtBounds.endExclusiveUtc);
+  }
 
   if (cursor) {
     query = query.or(
@@ -144,7 +169,7 @@ async function deletePost(postId: string) {
   return data;
 }
 
-export function usePosts(petId: string | null) {
+export function usePosts(petId: string | null, dateRange?: JournalDateRange) {
   const { user } = useAuth();
 
   return useInfiniteQuery<
@@ -157,8 +182,8 @@ export function usePosts(petId: string | null) {
     enabled: Boolean(user && petId),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as PostCursor | null,
-    queryFn: ({ pageParam }) => fetchPostPage(petId!, pageParam),
-    queryKey: postKeys.list(user?.id, petId),
+    queryFn: ({ pageParam }) => fetchPostPage(petId!, pageParam, dateRange),
+    queryKey: postKeys.list(user?.id, petId, dateRange),
   });
 }
 
@@ -217,7 +242,7 @@ export function useCreatePost() {
     },
     onSuccess: (post) => {
       void queryClient.invalidateQueries({
-        queryKey: postKeys.list(user?.id, post.pet_id),
+        queryKey: postKeys.listRoot(user?.id, post.pet_id),
       });
       void queryClient.invalidateQueries({
         queryKey: familyKeys.postAuthors(user?.id, post.pet_id),
@@ -250,7 +275,7 @@ export function useUpdatePost() {
     onSuccess: ({ post }) => {
       void Promise.all([
         queryClient.invalidateQueries({
-          queryKey: postKeys.list(user?.id, post.pet_id),
+          queryKey: postKeys.listRoot(user?.id, post.pet_id),
         }),
         queryClient.invalidateQueries({
           queryKey: postKeys.detail(user?.id, post.id),

@@ -42,14 +42,20 @@ export default function PostDetailScreen() {
   const post = postQuery.data;
   const membersQuery = usePetMembers(post?.pet_id ?? null);
   const authorsQuery = usePetPostAuthors(post?.pet_id ?? null);
-  const leaveDetail = () => router.replace('/journal');
+  const leaveDetail = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/journal');
+    }
+  };
 
   const performDelete = async () => {
     setDeleteError(null);
 
     try {
       await deletePost.mutateAsync(id);
-      router.replace('/journal');
+      leaveDetail();
     } catch {
       setDeleteError(t('posts.errors.delete'));
     }
