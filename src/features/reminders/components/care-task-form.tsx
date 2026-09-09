@@ -16,6 +16,7 @@ import {
   type CareTaskFormValues,
   type CareTaskKind,
 } from '../care-task-schema';
+import { getYearlyOccurrenceDate } from '../care-task-recurrence';
 import { TaskDateTimeFields } from './task-date-time-fields';
 
 type Props = {
@@ -39,6 +40,7 @@ const scheduleTypes: CareTaskScheduleType[] = [
   'daily',
   'weekly',
   'monthly',
+  'yearly',
 ];
 const weekDays = [1, 2, 3, 4, 5, 6, 7];
 
@@ -59,11 +61,18 @@ export function CareTaskForm({
     formState: { errors, isSubmitting },
     handleSubmit,
     reset,
+    setValue,
   } = useForm<CareTaskFormValues>({
     defaultValues: initialValues,
     resolver: zodResolver(schema),
   });
   const scheduleType = useWatch({ control, name: 'scheduleType' });
+  const category = useWatch({ control, name: 'category' });
+  const date = useWatch({ control, name: 'date' });
+  const leapFallback =
+    scheduleType === 'yearly' && date.endsWith('-02-29')
+      ? getYearlyOccurrenceDate(Number(date.slice(0, 4)) + 1, date)
+      : null;
 
   useEffect(() => reset(initialValues), [initialValues, reset]);
   const submit = handleSubmit(onSubmit);
@@ -71,6 +80,33 @@ export function CareTaskForm({
   return (
     <View style={styles.form}>
       {submitError ? <AppText tone="error">{submitError}</AppText> : null}
+
+      <Controller
+        control={control}
+        name="category"
+        render={({ field }) => (
+          <Field label={t('reminders.fields.category')}>
+            <View style={styles.chips}>
+              <ChoiceChip
+                icon="list-outline"
+                label={t('reminders.categories.standard')}
+                onPress={() => field.onChange('standard')}
+                selected={field.value === 'standard'}
+              />
+              <ChoiceChip
+                icon="gift-outline"
+                label={t('reminders.categories.birthday')}
+                onPress={() => {
+                  field.onChange('birthday');
+                  if (category !== 'birthday')
+                    setValue('scheduleType', 'yearly');
+                }}
+                selected={field.value === 'birthday'}
+              />
+            </View>
+          </Field>
+        )}
+      />
 
       <Controller
         control={control}
@@ -211,6 +247,14 @@ export function CareTaskForm({
             </Field>
           )}
         />
+      ) : null}
+
+      {scheduleType === 'yearly' ? (
+        <AppText tone="tertiary" variant="footnote">
+          {leapFallback
+            ? t('reminders.form.yearlyLeapHint', { date: leapFallback })
+            : t('reminders.form.yearlyHint')}
+        </AppText>
       ) : null}
 
       <Controller

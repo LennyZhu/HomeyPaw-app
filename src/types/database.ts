@@ -56,6 +56,8 @@ export type Database = {
           care_type: Database['public']['Enums']['care_type'];
           created_at: string;
           duration_minutes: number | null;
+          health_subtype:
+            Database['public']['Enums']['health_observation_type'] | null;
           id: string;
           local_date: string;
           note: string | null;
@@ -201,6 +203,7 @@ export type Database = {
           note: string | null;
           pet_id: string;
           schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          task_category: Database['public']['Enums']['care_task_category'];
           scheduled_at: string | null;
           starts_on: string | null;
           time_zone: string;
@@ -526,6 +529,7 @@ export type Database = {
         Args: {
           target_pet_id: string;
           task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_category?: Database['public']['Enums']['care_task_category'];
           task_id: string;
           task_local_time: string | null;
           task_month_day: number | null;
@@ -557,6 +561,8 @@ export type Database = {
           care_duration_minutes?: number | null;
           care_id: string;
           care_kind: Database['public']['Enums']['care_type'];
+          care_health_subtype?:
+            Database['public']['Enums']['health_observation_type'] | null;
           care_note?: string | null;
           care_occurred_at: string;
           care_time_zone: string;
@@ -589,6 +595,7 @@ export type Database = {
           local_time: string | null;
           month_day: number | null;
           note: string | null;
+          task_category: Database['public']['Enums']['care_task_category'];
           pet_id: string;
           pet_name: string;
           schedule_type: Database['public']['Enums']['care_task_schedule_type'];
@@ -630,6 +637,8 @@ export type Database = {
           source_scheduled_for: string;
           split_from_shift_id: string | null;
           task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_category?:
+            Database['public']['Enums']['care_task_category'] | null;
           task_note: string | null;
           task_time_zone: string;
           task_title: string;
@@ -767,9 +776,18 @@ export type Database = {
     };
     Enums: {
       care_schedule_status: 'scheduled' | 'canceled';
-      care_task_schedule_type: 'once' | 'daily' | 'weekly' | 'monthly';
+      care_task_category: 'standard' | 'birthday';
+      care_task_schedule_type:
+        'once' | 'daily' | 'weekly' | 'monthly' | 'yearly';
       care_type:
-        'feeding' | 'walk' | 'medicine' | 'bath' | 'grooming' | 'other';
+        | 'feeding'
+        | 'walk'
+        | 'medicine'
+        | 'bath'
+        | 'grooming'
+        | 'other'
+        | 'health';
+      health_observation_type: 'stool' | 'vomiting' | 'energy';
       pet_gender: 'male' | 'female' | 'unknown';
       pet_member_role: 'owner' | 'member' | 'viewer';
       pet_species: 'dog' | 'cat' | 'other';
@@ -803,7 +821,11 @@ export type CareTaskCompletion =
   Database['public']['Tables']['care_task_completions']['Row'];
 export type CareTaskScheduleType =
   Database['public']['Enums']['care_task_schedule_type'];
+export type CareTaskCategory =
+  Database['public']['Enums']['care_task_category'];
 export type CareType = Database['public']['Enums']['care_type'];
+export type HealthObservationType =
+  Database['public']['Enums']['health_observation_type'];
 export type ProfileUpdate = Database['public']['Tables']['profiles']['Update'];
 export type PetInvite = Database['public']['Tables']['pet_invites']['Row'];
 export type Pet = Database['public']['Tables']['pets']['Row'];

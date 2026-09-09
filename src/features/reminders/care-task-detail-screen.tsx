@@ -223,6 +223,21 @@ export default function CareTaskDetailScreen() {
           />
         </View>
         <AppText variant="title2">{taskKindLabel(task.care_type, t)}</AppText>
+        {task.task_category === 'birthday' ? (
+          <View
+            accessibilityLabel={t('reminders.categories.birthday')}
+            style={styles.categoryBadge}
+          >
+            <Ionicons
+              color={lightColors.primary}
+              name="gift-outline"
+              size={16}
+            />
+            <AppText tone="brand" variant="footnote">
+              {t('reminders.categories.birthday')}
+            </AppText>
+          </View>
+        ) : null}
         {status ? (
           <View style={styles.status}>
             <AppText tone="brand" variant="footnote">
@@ -335,6 +350,15 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.surface,
     borderRadius: radius.lg,
     padding: spacing.xl,
+  },
+  categoryBadge: {
+    minHeight: 28,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    backgroundColor: lightColors.primarySoft,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.md,
   },
   icon: {
     width: 64,

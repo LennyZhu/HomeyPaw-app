@@ -380,13 +380,16 @@
       "weekDay": "星期幾",
       "monthDay": "每月日期",
       "note": "備註（選填）",
-      "timeZone": "排程時區"
+      "timeZone": "排程時區",
+      "category": "類別"
     },
     "form": {
       "titlePlaceholder": "例如：晚上吃藥",
       "notePlaceholder": "劑量、準備事項或家庭備註",
       "monthDayHint": "如果該月沒有這一天，會跳過該月。",
-      "timeZone": "固定家庭排程：{{timeZone}}"
+      "timeZone": "固定家庭排程：{{timeZone}}",
+      "yearlyHint": "按此本地日期和時間每年重複；非閏年的 2 月 29 日會在 2 月 28 日提醒。",
+      "yearlyLeapHint": "每年重複；下一個非閏年會在 {{date}} 提醒。"
     },
     "types": {
       "custom": "自訂"
@@ -395,12 +398,14 @@
       "once": "單次",
       "daily": "每天",
       "weekly": "每週",
-      "monthly": "每月"
+      "monthly": "每月",
+      "yearly": "每年"
     },
     "scheduleLabel": {
       "daily": "每天 {{time}}",
       "weekly": "每逢{{day}} {{time}}",
-      "monthly": "每月 {{day}} 日 {{time}}"
+      "monthly": "每月 {{day}} 日 {{time}}",
+      "yearly": "每年 {{date}} {{time}}"
     },
     "weekDays": {
       "1": "週一",
@@ -469,7 +474,11 @@
       "notFound": "這個提醒不存在，或你已失去存取權。"
     },
     "badgeAccessibility": "提醒，有 {{count}} 個任務需要處理",
-    "rowAccessibility": "{{petName}}，{{title}}，{{time}}，{{status}}"
+    "rowAccessibility": "{{petName}}，{{title}}，{{time}}，{{status}}",
+    "categories": {
+      "standard": "一般提醒",
+      "birthday": "生日"
+    }
   },
   "chat": {
     "title": "家庭聊天",
@@ -875,12 +884,14 @@
       "medicine": "用藥",
       "bath": "洗澡",
       "grooming": "梳毛美容",
-      "other": "其他照顧"
+      "other": "其他照顧",
+      "health": "健康狀況"
     },
     "quick": {
       "title": "想記錄甚麼？",
       "subtitle": "為{{name}}新增生活片段或已完成的照顧。",
-      "journal": "相片日記"
+      "journal": "相片日記",
+      "dailyCare": "日常照顧"
     },
     "fields": {
       "occurredAt": "日期與時間",
@@ -901,7 +912,10 @@
       "submit": "儲存照顧記錄",
       "saved": "照顧記錄已儲存。"
     },
-    "edit": { "title": "編輯照顧記錄", "saved": "照顧記錄已更新。" },
+    "edit": {
+      "title": "編輯照顧記錄",
+      "saved": "照顧記錄已更新。"
+    },
     "home": {
       "title": "今日照顧",
       "empty": "今天還沒有照顧記錄。",
@@ -933,7 +947,9 @@
       "otherNoteRequired": "請填寫備註說明這項照顧。",
       "durationInvalid": "請輸入 1 至 1,440 之間的整數分鐘。"
     },
-    "loading": { "edit": "正在載入照顧記錄…" },
+    "loading": {
+      "edit": "正在載入照顧記錄…"
+    },
     "errors": {
       "invalidType": "請選擇有效的照顧類型。",
       "load": "暫時無法載入照顧記錄，請稍後再試。",
@@ -941,6 +957,16 @@
       "update": "儲存失敗，原有照顧記錄沒有被取代。",
       "delete": "照顧記錄未能刪除，請稍後再試。",
       "authorOnly": "只有記錄這項照顧的人可以編輯。"
+    },
+    "health": {
+      "title": "健康狀況",
+      "record": "記錄健康狀況",
+      "titleWithSubtype": "健康狀況 · {{subtype}}",
+      "subtypes": {
+        "stool": "便便",
+        "vomiting": "嘔吐",
+        "energy": "精神狀態"
+      }
     }
   },
   "schedule": {

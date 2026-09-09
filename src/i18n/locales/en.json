@@ -380,13 +380,16 @@
       "weekDay": "Day of week",
       "monthDay": "Day of month",
       "note": "Note (optional)",
-      "timeZone": "Schedule time zone"
+      "timeZone": "Schedule time zone",
+      "category": "Category"
     },
     "form": {
       "titlePlaceholder": "For example, evening medicine",
       "notePlaceholder": "Dose, preparation or family note",
       "monthDayHint": "Months without this date are skipped.",
-      "timeZone": "Fixed family schedule: {{timeZone}}"
+      "timeZone": "Fixed family schedule: {{timeZone}}",
+      "yearlyHint": "Repeats yearly on this local date and time. Feb 29 falls on Feb 28 in non-leap years.",
+      "yearlyLeapHint": "Repeats yearly. The next non-leap occurrence is {{date}}."
     },
     "types": {
       "custom": "Custom"
@@ -395,12 +398,14 @@
       "once": "Once",
       "daily": "Daily",
       "weekly": "Weekly",
-      "monthly": "Monthly"
+      "monthly": "Monthly",
+      "yearly": "Yearly"
     },
     "scheduleLabel": {
       "daily": "Every day at {{time}}",
       "weekly": "Every {{day}} at {{time}}",
-      "monthly": "Day {{day}} of each month at {{time}}"
+      "monthly": "Day {{day}} of each month at {{time}}",
+      "yearly": "Every year on {{date}} at {{time}}"
     },
     "weekDays": {
       "1": "Mon",
@@ -469,7 +474,11 @@
       "notFound": "This reminder doesn't exist or you no longer have access."
     },
     "badgeAccessibility": "Reminders, {{count}} tasks need attention",
-    "rowAccessibility": "{{petName}}, {{title}}, {{time}}, {{status}}"
+    "rowAccessibility": "{{petName}}, {{title}}, {{time}}, {{status}}",
+    "categories": {
+      "standard": "Reminder",
+      "birthday": "Birthday"
+    }
   },
   "chat": {
     "title": "Family chat",
@@ -875,12 +884,14 @@
       "medicine": "Medicine",
       "bath": "Bath",
       "grooming": "Grooming",
-      "other": "Other care"
+      "other": "Other care",
+      "health": "Health"
     },
     "quick": {
       "title": "What would you like to record?",
       "subtitle": "Add a moment or completed care for {{name}}.",
-      "journal": "Photo journal"
+      "journal": "Photo journal",
+      "dailyCare": "Daily care"
     },
     "fields": {
       "occurredAt": "Date and time",
@@ -901,7 +912,10 @@
       "submit": "Save care record",
       "saved": "Care record saved."
     },
-    "edit": { "title": "Edit care record", "saved": "Care record updated." },
+    "edit": {
+      "title": "Edit care record",
+      "saved": "Care record updated."
+    },
     "home": {
       "title": "Today's care",
       "empty": "No care has been recorded today yet.",
@@ -933,7 +947,9 @@
       "otherNoteRequired": "Add a note describing this care.",
       "durationInvalid": "Enter a whole number from 1 to 1,440 minutes."
     },
-    "loading": { "edit": "Loading care record…" },
+    "loading": {
+      "edit": "Loading care record…"
+    },
     "errors": {
       "invalidType": "Choose a valid care type.",
       "load": "We couldn't load care records. Try again shortly.",
@@ -941,6 +957,16 @@
       "update": "Saving failed. The original care record was not replaced.",
       "delete": "The care record was not deleted. Try again shortly.",
       "authorOnly": "Only the person who recorded this care can edit it."
+    },
+    "health": {
+      "title": "Health",
+      "record": "Record health observation",
+      "titleWithSubtype": "Health · {{subtype}}",
+      "subtypes": {
+        "stool": "Stool",
+        "vomiting": "Vomiting",
+        "energy": "Energy"
+      }
     }
   },
   "schedule": {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 
 import {
   expandCareTaskOccurrences,
+  getYearlyOccurrenceDate,
   localDateTimeToInstant,
 } from '../src/features/reminders/care-task-recurrence.ts';
 
@@ -83,6 +84,54 @@ assert.deepEqual(monthly31, [
   '2026-03-31T01:00:00.000Z',
 ]);
 
+const yearly = isoList(
+  {
+    localTime: '09:00',
+    monthDay: null,
+    scheduleType: 'yearly',
+    scheduledAt: null,
+    startsOn: '2026-10-15',
+    timeZone: 'Asia/Hong_Kong',
+    weekDay: null,
+  },
+  '2027-10-14T16:00:00.000Z',
+  '2027-10-16T16:00:00.000Z',
+);
+assert.deepEqual(yearly, ['2027-10-15T01:00:00.000Z']);
+
+const yearlyDecember = isoList(
+  {
+    localTime: '09:00',
+    monthDay: null,
+    scheduleType: 'yearly',
+    scheduledAt: null,
+    startsOn: '2026-12-31',
+    timeZone: 'Asia/Hong_Kong',
+    weekDay: null,
+  },
+  '2027-12-30T16:00:00.000Z',
+  '2028-01-01T16:00:00.000Z',
+);
+assert.deepEqual(yearlyDecember, ['2027-12-31T01:00:00.000Z']);
+
+const yearlyDst = isoList(
+  {
+    localTime: '09:00',
+    monthDay: null,
+    scheduleType: 'yearly',
+    scheduledAt: null,
+    startsOn: '2026-07-04',
+    timeZone: 'America/Los_Angeles',
+    weekDay: null,
+  },
+  '2027-07-04T00:00:00.000Z',
+  '2027-07-05T00:00:00.000Z',
+);
+assert.deepEqual(yearlyDst, ['2027-07-04T16:00:00.000Z']);
+assert.equal(getYearlyOccurrenceDate(2029, '2028-02-29'), '2029-02-28');
+assert.equal(getYearlyOccurrenceDate(2030, '2028-02-29'), '2030-02-28');
+assert.equal(getYearlyOccurrenceDate(2032, '2028-02-29'), '2032-02-29');
+
 assert.equal(
   localDateTimeToInstant('2026-03-08', '02:30', 'America/Los_Angeles'),
   null,
@@ -105,4 +154,8 @@ console.log(
   'PASS: Hong Kong year-boundary occurrences preserve wall-clock time.',
 );
 console.log('PASS: Monthly day 31 skips months without that date.');
+console.log(
+  'PASS: Yearly recurrence preserves local month/day/time across zones.',
+);
+console.log('PASS: Feb 29 yearly recurrence falls back to Feb 28 when needed.');
 console.log('PASS: Los Angeles DST gap and overlap are handled safely.');

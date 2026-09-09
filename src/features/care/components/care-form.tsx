@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { lightColors, radius, spacing, typography } from '@/theme';
-import type { CareType } from '@/types/database';
+import type { CareType, HealthObservationType } from '@/types/database';
 
 import { createCareFormSchema, type CareFormValues } from '../care-schema';
 import { careTypeIcons } from '../care-types';
@@ -16,6 +16,7 @@ import { CareDateTimeField } from './care-date-time-field';
 
 type Props = {
   careType: CareType;
+  healthSubtype?: HealthObservationType | null;
   initialValues: CareFormValues;
   onSubmit: (values: CareFormValues) => Promise<void>;
   petName: string;
@@ -27,6 +28,7 @@ const durationShortcuts = [15, 30, 45, 60];
 
 export function CareForm({
   careType,
+  healthSubtype,
   initialValues,
   onSubmit,
   petName,
@@ -62,7 +64,13 @@ export function CareForm({
           />
         </View>
         <View style={styles.summaryCopy}>
-          <AppText variant="title2">{t(`care.types.${careType}`)}</AppText>
+          <AppText variant="title2">
+            {careType === 'health' && healthSubtype
+              ? t('care.health.titleWithSubtype', {
+                  subtype: t(`care.health.subtypes.${healthSubtype}`),
+                })
+              : t(`care.types.${careType}`)}
+          </AppText>
           <AppText tone="secondary" variant="footnote">
             {petName}
           </AppText>

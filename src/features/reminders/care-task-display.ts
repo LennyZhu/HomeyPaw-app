@@ -94,6 +94,7 @@ export function getScheduleLabel(
     | 'month_day'
     | 'schedule_type'
     | 'scheduled_at'
+    | 'starts_on'
     | 'time_zone'
     | 'week_day'
   >,
@@ -117,6 +118,15 @@ export function getScheduleLabel(
       day: task.month_day,
       time,
     });
+  }
+  if (task.schedule_type === 'yearly' && task.starts_on) {
+    const [, month = '1', day = '1'] = task.starts_on.split('-');
+    const date = new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'long',
+      timeZone: 'UTC',
+    }).format(new Date(Date.UTC(2028, Number(month) - 1, Number(day))));
+    return t('reminders.scheduleLabel.yearly', { date, time });
   }
   return t('reminders.scheduleLabel.daily', { time });
 }

@@ -75,6 +75,7 @@ export default function EditCareScreen() {
       </View>
       <CareForm
         careType={log.care_type}
+        healthSubtype={log.health_subtype}
         initialValues={initialValues}
         onSubmit={async (values) => {
           setSubmitError(null);

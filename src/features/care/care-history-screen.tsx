@@ -32,7 +32,7 @@ import {
   useCarePerformers,
   useDeleteCareLog,
 } from './care-queries';
-import { careTypeIcons } from './care-types';
+import { careLogLabel, careTypeIcons } from './care-types';
 
 type TimelineItem =
   | { id: string; kind: 'header'; label: string }
@@ -282,9 +282,7 @@ function CareRow({
       </View>
       <View style={styles.logCopy}>
         <View style={styles.logTitleRow}>
-          <AppText variant="headline">
-            {t(`care.types.${log.care_type}`)}
-          </AppText>
+          <AppText variant="headline">{careLogLabel(log, t)}</AppText>
           <AppText tone="tertiary" variant="footnote">
             {formatCareTime(log.occurred_at, log.time_zone, i18n.language)}
           </AppText>

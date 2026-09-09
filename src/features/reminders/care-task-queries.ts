@@ -42,6 +42,7 @@ function valuesToTaskRpc(values: CareTaskFormValues, timeZone: string) {
   if (isOnce && !scheduledAt) throw new Error('INVALID_LOCAL_TASK_TIME');
 
   return {
+    task_category: values.category,
     task_care_type: values.careType === 'custom' ? null : values.careType,
     task_local_time: isOnce ? null : `${values.localTime}:00`,
     task_month_day:

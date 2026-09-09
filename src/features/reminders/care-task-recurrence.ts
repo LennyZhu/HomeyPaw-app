@@ -133,6 +133,22 @@ function getMonthDay(dateOnly: string) {
   return Number(dateOnly.slice(8, 10));
 }
 
+function isLeapYear(year: number) {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+}
+
+export function getYearlyOccurrenceDate(year: number, startsOn: string) {
+  const match = dateOnlyPattern.exec(startsOn);
+  if (!match) return null;
+  const month = Number(match[2]);
+  const anchorDay = Number(match[3]);
+  const day =
+    month === 2 && anchorDay === 29 && !isLeapYear(year) ? 28 : anchorDay;
+  return `${year.toString().padStart(4, '0')}-${month
+    .toString()
+    .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+}
+
 export function expandCareTaskOccurrences(
   schedule: CareTaskSchedule,
   windowStart: Date,
@@ -163,7 +179,12 @@ export function expandCareTaskOccurrences(
       (schedule.scheduleType === 'weekly' &&
         getIsoWeekDay(dateOnly) === schedule.weekDay) ||
       (schedule.scheduleType === 'monthly' &&
-        getMonthDay(dateOnly) === schedule.monthDay);
+        getMonthDay(dateOnly) === schedule.monthDay) ||
+      (schedule.scheduleType === 'yearly' &&
+        getYearlyOccurrenceDate(
+          Number(dateOnly.slice(0, 4)),
+          schedule.startsOn,
+        ) === dateOnly);
     if (isOnOrAfterStart && matchesSchedule) {
       const instant = localDateTimeToInstant(
         dateOnly,

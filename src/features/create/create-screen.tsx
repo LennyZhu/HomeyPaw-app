@@ -12,7 +12,11 @@ import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { Screen } from '@/components/screen';
-import { careTypes, careTypeIcons } from '@/features/care/care-types';
+import {
+  careTypes,
+  careTypeIcons,
+  healthObservationTypes,
+} from '@/features/care/care-types';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { lightColors, radius, shadows, spacing } from '@/theme';
 
@@ -99,6 +103,13 @@ export default function CreateScreen() {
                       primary
                     />
                   ) : null}
+                  <AppText
+                    style={styles.sectionLabel}
+                    tone="secondary"
+                    variant="footnote"
+                  >
+                    {t('care.quick.dailyCare')}
+                  </AppText>
                   {careTypes.map((careType) => (
                     <QuickOption
                       icon={careTypeIcons[careType]}
@@ -108,6 +119,26 @@ export default function CreateScreen() {
                         open({
                           pathname: '/care/new',
                           params: { type: careType },
+                        })
+                      }
+                    />
+                  ))}
+                  <AppText
+                    style={styles.sectionLabel}
+                    tone="secondary"
+                    variant="footnote"
+                  >
+                    {t('care.health.title')}
+                  </AppText>
+                  {healthObservationTypes.map((subtype) => (
+                    <QuickOption
+                      icon="heart-outline"
+                      key={subtype}
+                      label={t(`care.health.subtypes.${subtype}`)}
+                      onPress={() =>
+                        open({
+                          pathname: '/care/new',
+                          params: { subtype, type: 'health' },
                         })
                       }
                     />
@@ -210,6 +241,10 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.surfaceSecondary,
   },
   options: { gap: spacing.xs },
+  sectionLabel: {
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
   option: {
     minHeight: 54,
     alignItems: 'center',

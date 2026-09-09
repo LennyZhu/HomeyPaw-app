@@ -38,9 +38,12 @@ function taskToValues(task: CareTask): CareTaskFormValues {
     : '';
   return {
     careType:
-      task.care_type === null || task.care_type === 'other'
+      task.care_type === null ||
+      task.care_type === 'other' ||
+      task.care_type === 'health'
         ? 'custom'
         : task.care_type,
+    category: task.task_category,
     date: task.schedule_type === 'once' ? onceDate : (task.starts_on ?? ''),
     localTime:
       task.schedule_type === 'once' && task.scheduled_at

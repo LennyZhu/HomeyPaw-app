@@ -41,6 +41,7 @@ import {
   formatTaskDayLabel,
   formatTaskTime,
   getCareTaskStatus,
+  scheduleTypeLabel,
   taskKindLabel,
 } from './care-task-display';
 import {
@@ -480,6 +481,21 @@ function OccurrenceCard({
               </AppText>
             </View>
           </View>
+          {occurrence.task_category === 'birthday' ? (
+            <View
+              accessibilityLabel={t('reminders.categories.birthday')}
+              style={styles.categoryBadge}
+            >
+              <Ionicons
+                color={lightColors.primary}
+                name="gift-outline"
+                size={14}
+              />
+              <AppText tone="brand" variant="caption">
+                {t('reminders.categories.birthday')}
+              </AppText>
+            </View>
+          ) : null}
           <AppText tone="secondary" variant="footnote">
             {dayLabel} ·{' '}
             {formatTaskTime(
@@ -487,7 +503,8 @@ function OccurrenceCard({
               occurrence.time_zone,
               locale,
             )}{' '}
-            · {taskKindLabel(occurrence.care_type, t)}
+            · {taskKindLabel(occurrence.care_type, t)} ·{' '}
+            {scheduleTypeLabel(occurrence.schedule_type, t)}
           </AppText>
           <AppText tone="tertiary" variant="caption">
             {occurrence.completion_id
@@ -535,6 +552,16 @@ function OccurrenceCard({
 
 const styles = StyleSheet.create({
   content: { gap: spacing.xl, paddingTop: spacing.md },
+  categoryBadge: {
+    minHeight: 24,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    backgroundColor: lightColors.primarySoft,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing.sm,
+  },
   header: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
   headerCopy: { flex: 1, gap: spacing.xs },
   permissionBanner: {

@@ -18,7 +18,7 @@ import { logError } from '@/lib/logger';
 import { lightColors, radius, spacing } from '@/theme';
 
 import type { CareFormValues } from './care-schema';
-import { isCareType } from './care-types';
+import { isCareType, isHealthObservationType } from './care-types';
 import { useCreateCareLog } from './care-queries';
 import { CareForm } from './components/care-form';
 
@@ -34,7 +34,10 @@ function createCareSession() {
 }
 
 export default function NewCareScreen() {
-  const { type } = useLocalSearchParams<{ type?: string }>();
+  const { subtype, type } = useLocalSearchParams<{
+    subtype?: string;
+    type?: string;
+  }>();
   const { t } = useTranslation();
   const router = useRouter();
   const { showFeedback } = useFeedback();
@@ -54,7 +57,10 @@ export default function NewCareScreen() {
   if (petsState.isPending)
     return <LoadingView label={t('pets.loading.list')} />;
 
-  if (!isCareType(type)) {
+  if (
+    !isCareType(type) ||
+    (type === 'health' && !isHealthObservationType(subtype))
+  ) {
     return (
       <Screen contentContainerStyle={styles.empty}>
         <AppText tone="error">{t('care.errors.invalidType')}</AppText>
@@ -76,6 +82,8 @@ export default function NewCareScreen() {
       </Screen>
     );
   }
+  const healthSubtype =
+    type === 'health' && isHealthObservationType(subtype) ? subtype : null;
 
   return (
     <Screen contentContainerStyle={styles.content} scroll>
@@ -87,7 +95,9 @@ export default function NewCareScreen() {
         />
         <View style={styles.headerCopy}>
           <AppText accessibilityRole="header" variant="title1">
-            {t('care.create.title')}
+            {type === 'health'
+              ? t('care.health.record')
+              : t('care.create.title')}
           </AppText>
           <AppText tone="secondary" variant="footnote">
             {t('care.create.subtitle')}
@@ -122,6 +132,7 @@ export default function NewCareScreen() {
       ) : null}
       <CareForm
         careType={type}
+        healthSubtype={healthSubtype}
         initialValues={session.initialValues}
         key={session.careId}
         onSubmit={async (values) => {
@@ -130,6 +141,7 @@ export default function NewCareScreen() {
             await createCare.mutateAsync({
               careId: session.careId,
               careType: type,
+              healthSubtype,
               petId: petsState.currentPet!.id,
               values,
             });

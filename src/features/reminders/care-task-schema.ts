@@ -1,14 +1,19 @@
 import type { TFunction } from 'i18next';
 import { z } from 'zod';
 
-import type { CareTaskScheduleType, CareType } from '@/types/database';
+import type {
+  CareTaskCategory,
+  CareTaskScheduleType,
+  CareType,
+} from '@/types/database';
 
 import { localDateTimeToInstant } from './care-task-recurrence';
 
-export type CareTaskKind = CareType | 'custom';
+export type CareTaskKind = Exclude<CareType, 'health'> | 'custom';
 
 export type CareTaskFormValues = {
   careType: CareTaskKind;
+  category: CareTaskCategory;
   date: string;
   localTime: string;
   monthDay: string;
@@ -30,6 +35,7 @@ export function createCareTaskFormSchema(t: TFunction, timeZone: string) {
         'other',
         'custom',
       ]),
+      category: z.enum(['standard', 'birthday']),
       date: z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/u, t('reminders.validation.date')),
@@ -38,7 +44,7 @@ export function createCareTaskFormSchema(t: TFunction, timeZone: string) {
         .regex(/^([01]\d|2[0-3]):[0-5]\d$/u, t('reminders.validation.time')),
       monthDay: z.string(),
       note: z.string().trim().max(300, t('reminders.validation.note')),
-      scheduleType: z.enum(['once', 'daily', 'weekly', 'monthly']),
+      scheduleType: z.enum(['once', 'daily', 'weekly', 'monthly', 'yearly']),
       title: z
         .string()
         .trim()

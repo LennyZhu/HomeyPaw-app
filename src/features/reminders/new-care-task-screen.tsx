@@ -39,6 +39,7 @@ function defaultValues(requestedDate?: string): CareTaskFormValues {
   next.setMinutes(Math.ceil(next.getMinutes() / 5) * 5, 0, 0);
   return {
     careType: 'feeding',
+    category: 'standard',
     date: /^\d{4}-\d{2}-\d{2}$/u.test(requestedDate ?? '')
       ? requestedDate!
       : getLocalDateOnly(next),

@@ -8,7 +8,11 @@ import {
 
 import { useAuth } from '@/features/auth/auth-context';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { CareLog, CareType } from '@/types/database';
+import type {
+  CareLog,
+  CareType,
+  HealthObservationType,
+} from '@/types/database';
 
 import { getDeviceTimeZone } from './care-date';
 import type { CareFormValues } from './care-schema';
@@ -119,12 +123,14 @@ async function fetchCarePerformers(petId: string): Promise<CarePerformer[]> {
 async function createCareLog(input: {
   careId: string;
   careType: CareType;
+  healthSubtype?: HealthObservationType | null;
   petId: string;
   values: CareFormValues;
 }) {
   const { data, error } = await requireSupabase().rpc('create_care_log', {
     care_id: input.careId,
     care_kind: input.careType,
+    care_health_subtype: input.healthSubtype ?? null,
     target_pet_id: input.petId,
     ...valuesToRpc(input.values),
   });

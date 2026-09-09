@@ -13,7 +13,7 @@ import { IconButton } from '@/components/icon-button';
 import { Screen } from '@/components/screen';
 import { formatCareTime, getLocalDateOnly } from '@/features/care/care-date';
 import { useCarePerformers, useTodayCare } from '@/features/care/care-queries';
-import { careTypeIcons } from '@/features/care/care-types';
+import { careLogLabel, careTypeIcons } from '@/features/care/care-types';
 import {
   usePetMembers,
   usePetPostAuthors,
@@ -596,7 +596,7 @@ function TodayCareRow({
         />
       </View>
       <View style={styles.careCopy}>
-        <AppText variant="headline">{t(`care.types.${log.care_type}`)}</AppText>
+        <AppText variant="headline">{careLogLabel(log, t)}</AppText>
         <AppText numberOfLines={1} tone="secondary" variant="footnote">
           {t('care.home.meta', {
             name: performerName,
