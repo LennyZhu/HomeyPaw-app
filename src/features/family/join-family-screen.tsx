@@ -20,6 +20,7 @@ import {
   previewInvite,
   useJoinPet,
 } from './family-queries';
+import { isFamilyMemberLimitError } from './family-member-limit';
 
 function normalizeCode(value: string) {
   return value
@@ -102,9 +103,11 @@ export default function JoinFamilyScreen() {
       router.replace(`/pets/${result.petId}`);
     } catch (error) {
       setErrorMessage(
-        isInvalidInviteError(error)
-          ? t('family.errors.invalidInvite')
-          : t('family.errors.network'),
+        isFamilyMemberLimitError(error)
+          ? t('family.errors.memberLimit')
+          : isInvalidInviteError(error)
+            ? t('family.errors.invalidInvite')
+            : t('family.errors.network'),
       );
     }
   };

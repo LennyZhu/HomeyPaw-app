@@ -16,7 +16,7 @@
 | Photo Library         | Yes             | Choose pet avatars and journal photos |
 | Local Notifications   | Runtime request | User-enabled care reminders           |
 | Exact alarm (Android) | Yes             | Local reminder scheduling             |
-| Camera                | No              | Not implemented                       |
+| Camera                | Runtime request | Take journal photos                   |
 | Microphone            | No              | Not implemented                       |
 | Location              | No              | Location name is manual text          |
 | Contacts              | No              | Not implemented                       |
@@ -55,7 +55,7 @@ The never-opened, naturally expired recovery-link case remains a documented defe
 
 - Support, Privacy Policy, Terms, and Marketing URLs are published and verified. The support email is `lenny996@163.com`.
 - Local notifications are used only for user-created care reminders. HomeyPaw does not request remote push tokens.
-- Photo Library permission is user-triggered and has localized purpose strings. Camera, microphone, contacts, precise location, tracking, and advertising permissions are not requested.
+- Photo Library and Camera permissions are user-triggered and have localized purpose strings. Microphone, contacts, precise location, tracking, and advertising permissions are not requested.
 - Account deletion is available inside the app and deletes the user's applicable private and shared data according to the documented lifecycle.
 - Family invite access remains authenticated, expiring, capacity-limited, and protected by RLS; invite codes must not be presented as public sharing links.
 - The Chat prototype has no production tab or reachable production screen. Its static route/code is still physically present in the export behind a compiled-false navigator guard and a page-level production redirect. App Store metadata must not claim real-time chat.

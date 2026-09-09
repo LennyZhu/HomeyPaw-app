@@ -38,44 +38,117 @@ export type UploadedPostMedia = {
 };
 
 export type PhotoPermissionError =
-  'PHOTO_PERMISSION_DENIED' | 'PHOTO_PERMISSION_LIMITED';
+  | 'CAMERA_PERMISSION_BLOCKED'
+  | 'CAMERA_PERMISSION_DENIED'
+  | 'PHOTO_PERMISSION_DENIED'
+  | 'PHOTO_PERMISSION_LIMITED';
 
-export async function pickPostPhotos(remainingSlots: number) {
-  if (remainingSlots <= 0) {
-    return { accessPrivileges: null, photos: [] };
-  }
+export type PostPhotoSource = 'camera' | 'library';
 
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-  if (!permission.granted) {
-    throw new Error('PHOTO_PERMISSION_DENIED' satisfies PhotoPermissionError);
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    allowsMultipleSelection: true,
-    exif: false,
-    mediaTypes: ['images'],
-    orderedSelection: true,
-    quality: 1,
-    selectionLimit: remainingSlots,
-  });
-
-  if (result.canceled) {
-    return {
-      accessPrivileges: permission.accessPrivileges,
-      photos: [],
-    };
-  }
-
-  return {
-    accessPrivileges: permission.accessPrivileges,
-    photos: result.assets.slice(0, remainingSlots).map((asset) => ({
+function toPostMediaDrafts(
+  assets: ImagePicker.ImagePickerAsset[],
+  remainingSlots: number,
+) {
+  const photos = assets
+    .filter(
+      (asset) =>
+        (asset.type === 'image' || asset.type == null) &&
+        asset.uri.length > 0 &&
+        asset.width > 0 &&
+        asset.height > 0,
+    )
+    .slice(0, remainingSlots)
+    .map((asset) => ({
       height: asset.height,
       id: Crypto.randomUUID(),
       kind: 'new' as const,
       uri: asset.uri,
       width: asset.width,
-    })),
+    }));
+
+  if (assets.length > 0 && photos.length === 0) {
+    throw new Error('PHOTO_SELECTION_INVALID');
+  }
+
+  return photos;
+}
+
+async function getCameraPermission() {
+  const current = await ImagePicker.getCameraPermissionsAsync();
+  if (current.granted) return current;
+
+  const permission = current.canAskAgain
+    ? await ImagePicker.requestCameraPermissionsAsync()
+    : current;
+  if (!permission.granted) {
+    throw new Error(
+      permission.canAskAgain
+        ? ('CAMERA_PERMISSION_DENIED' satisfies PhotoPermissionError)
+        : ('CAMERA_PERMISSION_BLOCKED' satisfies PhotoPermissionError),
+    );
+  }
+  return permission;
+}
+
+async function getPhotoLibraryPermission() {
+  const current = await ImagePicker.getMediaLibraryPermissionsAsync();
+  if (current.granted) return current;
+
+  const permission = current.canAskAgain
+    ? await ImagePicker.requestMediaLibraryPermissionsAsync()
+    : current;
+  if (!permission.granted) {
+    throw new Error('PHOTO_PERMISSION_DENIED' satisfies PhotoPermissionError);
+  }
+  return permission;
+}
+
+export async function pickPostPhotos(
+  source: PostPhotoSource,
+  remainingSlots: number,
+) {
+  if (remainingSlots <= 0) {
+    return { accessPrivileges: null, photos: [] };
+  }
+
+  const permission =
+    source === 'camera'
+      ? await getCameraPermission()
+      : await getPhotoLibraryPermission();
+  const result =
+    source === 'camera'
+      ? await ImagePicker.launchCameraAsync({
+          allowsEditing: false,
+          cameraType: ImagePicker.CameraType.back,
+          exif: false,
+          mediaTypes: ['images'],
+          quality: 1,
+        })
+      : await ImagePicker.launchImageLibraryAsync({
+          allowsMultipleSelection: true,
+          exif: false,
+          mediaTypes: ['images'],
+          orderedSelection: true,
+          quality: 1,
+          selectionLimit: remainingSlots,
+        });
+
+  if (result.canceled) {
+    return {
+      accessPrivileges:
+        source === 'library' && 'accessPrivileges' in permission
+          ? permission.accessPrivileges
+          : null,
+      photos: [],
+    };
+  }
+
+  return {
+    accessPrivileges:
+      source === 'library' && 'accessPrivileges' in permission
+        ? permission.accessPrivileges
+        : null,
+    photos: toPostMediaDrafts(result.assets, remainingSlots),
   };
 }
 

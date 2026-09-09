@@ -7,6 +7,7 @@ import {
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { LoadingView } from '@/components/loading-view';
 import { GlobalErrorScreen } from '@/components/global-error-screen';
@@ -36,17 +37,19 @@ const navigationTheme = {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider value={navigationTheme}>
-      <AppQueryClientProvider>
-        <NetworkStatusProvider>
-          <FeedbackProvider>
-            <AuthProvider>
-              <RootNavigator />
-            </AuthProvider>
-          </FeedbackProvider>
-        </NetworkStatusProvider>
-      </AppQueryClientProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={navigationTheme}>
+        <AppQueryClientProvider>
+          <NetworkStatusProvider>
+            <FeedbackProvider>
+              <AuthProvider>
+                <RootNavigator />
+              </AuthProvider>
+            </FeedbackProvider>
+          </NetworkStatusProvider>
+        </AppQueryClientProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

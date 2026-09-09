@@ -208,7 +208,11 @@
       "contentOrPhoto": "請加入文字或至少一張相片。"
     },
     "photos": {
+      "add": "新增相片",
       "choose": "選擇相片",
+      "sourceTitle": "新增相片",
+      "takePhoto": "拍照",
+      "chooseLibrary": "從相片選擇",
       "count": "{{count}} / {{maximum}} 張",
       "preview": "第 {{position}} 張相片預覽",
       "entryPhoto": "日記的第 {{position}} 張相片",
@@ -216,6 +220,8 @@
       "moveEarlier": "向前移動",
       "moveLater": "向後移動",
       "permissionDenied": "未取得相片權限。你可以在系統設定中允許 HomeyPaw 存取相片。",
+      "cameraPermissionDenied": "未取得相機權限。你可以在系統設定中允許 HomeyPaw 使用相機。",
+      "cameraError": "暫時無法開啟相機或讀取相片，請再試一次。",
       "limitedPermission": "目前只可讀取你選擇的部分相片；你仍可繼續發布，或到系統設定改為完整存取。",
       "selectionError": "暫時無法讀取所選相片，請再試一次。",
       "openSettings": "開啟系統設定",
@@ -223,7 +229,8 @@
       "fullscreen": "全螢幕相片 {{position}}",
       "previous": "上一張相片",
       "next": "下一張相片",
-      "viewerPosition": "{{position}} / {{total}}"
+      "viewerPosition": "{{position}} / {{total}}",
+      "viewerLoadError": "暫時無法載入這張相片，請關閉查看器後再試。"
     },
     "progress": {
       "processing": "正在處理相片 {{completed}} / {{total}}…",
@@ -286,7 +293,7 @@
     },
     "members": {
       "title": "家庭成員",
-      "subtitle": "共有 {{count}} 人一起照顧{{name}}。",
+      "subtitle": "家庭成員 {{count}} / {{maximum}} · 一起照顧{{name}}。",
       "detailAction": "家庭成員 {{count}}",
       "loading": "正在載入家庭成員…",
       "avatar": "{{name}}的個人頭像預留位置",
@@ -298,7 +305,8 @@
     },
     "invite": {
       "title": "邀請家人加入照顧{{name}}",
-      "fixedRules": "7 日內有效 · 最多 5 位家庭成員",
+      "fixedRules": "7 日內有效 · 家庭最多 {{maximum}} 人",
+      "memberLimit": "家庭成員已達 {{maximum}} 人上限。",
       "loading": "正在檢查目前邀請…",
       "create": "建立邀請碼",
       "regenerate": "重新產生邀請碼",
@@ -335,7 +343,8 @@
       "createInvite": "暫時無法建立邀請，請稍後再試。",
       "revokeInvite": "暫時無法撤銷邀請，請稍後再試。",
       "loadMembers": "暫時無法載入家庭成員，或你已失去存取權。",
-      "removeMember": "暫時無法移除這位家庭成員，請稍後再試。"
+      "removeMember": "暫時無法移除這位家庭成員，請稍後再試。",
+      "memberLimit": "家庭成員已達 10 人上限。"
     }
   },
   "reminders": {

@@ -4,8 +4,11 @@ import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+  ActionSheetIOS,
+  Alert,
   Pressable,
   Linking,
+  Platform,
   StyleSheet,
   TextInput,
   View,
@@ -21,6 +24,7 @@ import { lightColors, radius, spacing, typography } from '@/theme';
 import {
   maximumPostMedia,
   pickPostPhotos,
+  type PostPhotoSource,
   type PostMediaDraft,
 } from '../post-media';
 import type { PublishProgress } from '../post-publishing';
@@ -70,14 +74,17 @@ export function PostForm({
     reset(initialValues);
   }, [initialValues, reset]);
 
-  const selectPhotos = async () => {
+  const selectPhotos = async (source: PostPhotoSource) => {
     setIsPicking(true);
     setMediaError(null);
     setPermissionNotice(null);
     setShowPhotoSettings(false);
 
     try {
-      const result = await pickPostPhotos(maximumPostMedia - media.length);
+      const result = await pickPostPhotos(
+        source,
+        maximumPostMedia - media.length,
+      );
       setMedia((current) => [...current, ...result.photos]);
 
       if (result.accessPrivileges === 'limited') {
@@ -85,17 +92,60 @@ export function PostForm({
         setShowPhotoSettings(true);
       }
     } catch (error) {
-      const permissionDenied =
-        error instanceof Error && error.message === 'PHOTO_PERMISSION_DENIED';
+      const errorCode = error instanceof Error ? error.message : '';
+      const photoPermissionDenied = errorCode === 'PHOTO_PERMISSION_DENIED';
+      const cameraPermissionDenied =
+        errorCode === 'CAMERA_PERMISSION_DENIED' ||
+        errorCode === 'CAMERA_PERMISSION_BLOCKED';
       setMediaError(
-        permissionDenied
+        photoPermissionDenied
           ? t('posts.photos.permissionDenied')
-          : t('posts.photos.selectionError'),
+          : cameraPermissionDenied
+            ? t('posts.photos.cameraPermissionDenied')
+            : source === 'camera'
+              ? t('posts.photos.cameraError')
+              : t('posts.photos.selectionError'),
       );
-      setShowPhotoSettings(permissionDenied);
+      setShowPhotoSettings(photoPermissionDenied || cameraPermissionDenied);
     } finally {
       setIsPicking(false);
     }
+  };
+
+  const showPhotoSourceMenu = () => {
+    const options = [
+      t('posts.photos.takePhoto'),
+      t('posts.photos.chooseLibrary'),
+      t('common.cancel'),
+    ];
+    const handleSelection = (index: number) => {
+      if (index === 0) void selectPhotos('camera');
+      if (index === 1) void selectPhotos('library');
+    };
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          cancelButtonIndex: 2,
+          options,
+          title: t('posts.photos.sourceTitle'),
+        },
+        handleSelection,
+      );
+      return;
+    }
+
+    Alert.alert(t('posts.photos.sourceTitle'), undefined, [
+      {
+        onPress: () => handleSelection(0),
+        text: options[0],
+      },
+      {
+        onPress: () => handleSelection(1),
+        text: options[1],
+      },
+      { style: 'cancel', text: options[2] },
+    ]);
   };
 
   const moveMedia = (index: number, direction: -1 | 1) => {
@@ -197,9 +247,9 @@ export function PostForm({
         {media.length < maximumPostMedia ? (
           <AppButton
             disabled={isSubmitting}
-            label={t('posts.photos.choose')}
+            label={t('posts.photos.add')}
             loading={isPicking}
-            onPress={() => void selectPhotos()}
+            onPress={showPhotoSourceMenu}
             variant="secondary"
           />
         ) : null}

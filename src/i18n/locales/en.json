@@ -208,7 +208,11 @@
       "contentOrPhoto": "Add a note or at least one photo."
     },
     "photos": {
+      "add": "Add photo",
       "choose": "Choose photos",
+      "sourceTitle": "Add a photo",
+      "takePhoto": "Take Photo",
+      "chooseLibrary": "Choose from Library",
       "count": "{{count}} / {{maximum}} photos",
       "preview": "Photo {{position}} preview",
       "entryPhoto": "Journal photo {{position}}",
@@ -216,6 +220,8 @@
       "moveEarlier": "Move earlier",
       "moveLater": "Move later",
       "permissionDenied": "Photo access was not granted. You can allow HomeyPaw to access photos in system settings.",
+      "cameraPermissionDenied": "Camera access was not granted. You can allow HomeyPaw to use the camera in system settings.",
+      "cameraError": "We couldn't open the camera or read that photo. Please try again.",
       "limitedPermission": "HomeyPaw can currently read only selected photos. You can still publish, or switch to full access in system settings.",
       "selectionError": "We couldn't read the selected photos. Please try again.",
       "openSettings": "Open system settings",
@@ -223,7 +229,8 @@
       "fullscreen": "Full-screen photo {{position}}",
       "previous": "Previous photo",
       "next": "Next photo",
-      "viewerPosition": "{{position}} / {{total}}"
+      "viewerPosition": "{{position}} / {{total}}",
+      "viewerLoadError": "This photo couldn't be loaded. Close the viewer and try again."
     },
     "progress": {
       "processing": "Processing photo {{completed}} / {{total}}…",
@@ -286,7 +293,7 @@
     },
     "members": {
       "title": "Family members",
-      "subtitle": "{{count}} people care for {{name}} together.",
+      "subtitle": "Family members {{count}} / {{maximum}} · caring for {{name}} together.",
       "detailAction": "Family members {{count}}",
       "loading": "Loading family members…",
       "avatar": "{{name}}'s profile placeholder",
@@ -298,7 +305,8 @@
     },
     "invite": {
       "title": "Invite family to care for {{name}}",
-      "fixedRules": "Valid for 7 days · Up to 5 family members",
+      "fixedRules": "Valid for 7 days · Family limit {{maximum}} people",
+      "memberLimit": "This family has reached its {{maximum}}-person limit.",
       "loading": "Checking the current invitation…",
       "create": "Create invite code",
       "regenerate": "Generate a new code",
@@ -335,7 +343,8 @@
       "createInvite": "We couldn't create an invitation. Try again shortly.",
       "revokeInvite": "We couldn't revoke the invitation. Try again shortly.",
       "loadMembers": "We couldn't load the family members, or you no longer have access.",
-      "removeMember": "We couldn't remove this family member. Try again shortly."
+      "removeMember": "We couldn't remove this family member. Try again shortly.",
+      "memberLimit": "This family has reached the 10-person limit."
     }
   },
   "reminders": {

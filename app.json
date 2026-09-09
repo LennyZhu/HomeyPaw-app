@@ -11,12 +11,14 @@
       "en": {
         "ios": {
           "CFBundleDisplayName": "HomeyPaw",
+          "NSCameraUsageDescription": "HomeyPaw uses your camera only when you choose to take a photo for a pet journal entry.",
           "NSPhotoLibraryUsageDescription": "HomeyPaw needs access to your photos so you can choose pet profile pictures and share memories."
         }
       },
       "zh-HK": {
         "ios": {
           "CFBundleDisplayName": "HomeyPaw",
+          "NSCameraUsageDescription": "HomeyPaw 只會在你選擇拍照時使用相機，讓你為毛孩記錄生活回憶。",
           "NSPhotoLibraryUsageDescription": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。"
         }
       }
@@ -69,7 +71,7 @@
         "expo-image-picker",
         {
           "photosPermission": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。",
-          "cameraPermission": false,
+          "cameraPermission": "HomeyPaw 只會在你選擇拍照時使用相機，讓你為毛孩記錄生活回憶。",
           "microphonePermission": false
         }
       ],

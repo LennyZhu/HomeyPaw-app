@@ -1,6 +1,6 @@
 # App Privacy Data Inventory
 
-Updated on 2026-08-28 for App Store Connect. This is a local answer sheet, not a submitted declaration.
+Updated on 2026-09-09 for App Store Connect. This is a local answer sheet, not a submitted declaration.
 
 ## Overall Answers
 
@@ -24,7 +24,7 @@ Updated on 2026-08-28 for App Store Connect. This is a local answer sheet, not a
 ## Data Types Not Collected by the App
 
 - Precise or coarse device location. A journal location is manually entered text.
-- Contacts, microphone, camera capture, health, fitness, sensitive information, purchases, financial information, browsing/search history, device ID, advertising data, or product-interaction analytics.
+- Contacts, microphone, health, fitness, sensitive information, purchases, financial information, browsing/search history, device ID, advertising data, or product-interaction analytics. Camera capture is user-triggered and produces journal photos already declared as User Content.
 - Remote push tokens. Notifications are scheduled locally on the device.
 - Developer-operated diagnostics or crash analytics. Apple may provide platform diagnostics under Apple's own terms, but HomeyPaw has no diagnostics SDK.
 

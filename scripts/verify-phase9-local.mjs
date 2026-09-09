@@ -72,8 +72,28 @@ assert(
 );
 
 const serializedAppConfig = JSON.stringify(appConfig);
+assert(
+  typeof expo.locales?.en?.ios?.NSCameraUsageDescription === 'string' &&
+    expo.locales.en.ios.NSCameraUsageDescription.length > 0 &&
+    typeof expo.locales?.['zh-HK']?.ios?.NSCameraUsageDescription ===
+      'string' &&
+    expo.locales['zh-HK'].ios.NSCameraUsageDescription.length > 0,
+  'Camera permission must have English and zh-HK purpose strings.',
+);
+const imagePickerPlugin = expo.plugins?.find(
+  (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-image-picker',
+);
+assert(
+  typeof imagePickerPlugin?.[1]?.cameraPermission === 'string' &&
+    imagePickerPlugin[1].cameraPermission.length > 0,
+  'expo-image-picker must declare a camera purpose string.',
+);
+assert(
+  imagePickerPlugin?.[1]?.microphonePermission === false,
+  'Journal camera capture must not request microphone permission.',
+);
+
 for (const forbiddenPermission of [
-  'NSCameraUsageDescription',
   'NSContactsUsageDescription',
   'NSLocationWhenInUseUsageDescription',
   'NSMicrophoneUsageDescription',

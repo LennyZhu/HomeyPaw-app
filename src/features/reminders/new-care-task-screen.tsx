@@ -25,6 +25,11 @@ import {
 import { lightColors, radius, spacing } from '@/theme';
 
 import { useCreateCareTask } from './care-task-queries';
+import {
+  getNewReminderCompletionNavigation,
+  getReminderFormCancelNavigation,
+  type ReminderCompletionNavigation,
+} from './reminder-navigation';
 import type { CareTaskFormValues } from './care-task-schema';
 import { CareTaskForm } from './components/care-task-form';
 import { useAuth } from '../auth/auth-context';
@@ -69,10 +74,6 @@ export default function NewCareTaskScreen() {
   const requestedReturnTo = Array.isArray(params.returnTo)
     ? params.returnTo[0]
     : params.returnTo;
-  const safeReturnTo =
-    requestedReturnTo && /^\/schedule(?:[/?]|$)/u.test(requestedReturnTo)
-      ? (requestedReturnTo as Href)
-      : ('/reminders' as Href);
   const [selectedPetId, setSelectedPetId] = useState<string | null>(() =>
     requestedPetId && petsState.pets.some((pet) => pet.id === requestedPetId)
       ? requestedPetId
@@ -89,7 +90,24 @@ export default function NewCareTaskScreen() {
     petsState.pets.find((pet) => pet.id === effectivePetId) ??
     petsState.currentPet;
 
-  const finish = () => router.replace(safeReturnTo);
+  const applyNavigation = (navigation: ReminderCompletionNavigation) => {
+    if (navigation.kind === 'back') {
+      router.back();
+    } else {
+      router.replace(navigation.href as Href);
+    }
+  };
+  const finish = () =>
+    applyNavigation(
+      getNewReminderCompletionNavigation({
+        canGoBack: router.canGoBack(),
+        returnTo: requestedReturnTo,
+      }),
+    );
+  const cancel = () =>
+    applyNavigation(
+      getReminderFormCancelNavigation(router.canGoBack(), '/reminders'),
+    );
 
   const submit = async (formValues: CareTaskFormValues) => {
     if (!selectedPet) return;
@@ -145,7 +163,7 @@ export default function NewCareTaskScreen() {
         <IconButton
           accessibilityLabel={t('common.back')}
           icon="chevron-back"
-          onPress={() => router.back()}
+          onPress={cancel}
         />
         <View style={styles.headerCopy}>
           <AppText accessibilityRole="header" variant="largeTitle">

@@ -23,6 +23,7 @@ import {
   useRemovePetMember,
   useRevokePetInvite,
 } from './family-queries';
+import { familyMemberLimit } from './family-member-limit';
 
 export default function PetMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,6 +34,10 @@ export default function PetMembersScreen() {
   const petQuery = usePet(id);
   const membersQuery = usePetMembers(id);
   const members = membersQuery.data ?? [];
+  const activeMemberCount = members.filter(
+    (member) => member.role === 'owner' || member.role === 'member',
+  ).length;
+  const isFamilyFull = activeMemberCount >= familyMemberLimit;
   const currentMembership = members.find(
     (member) => member.userId === user?.id,
   );
@@ -181,7 +186,8 @@ export default function PetMembersScreen() {
         </AppText>
         <AppText tone="secondary">
           {t('family.members.subtitle', {
-            count: members.length,
+            count: activeMemberCount,
+            maximum: familyMemberLimit,
             name: pet.name,
           })}
         </AppText>
@@ -232,7 +238,9 @@ export default function PetMembersScreen() {
                 {t('family.invite.title', { name: pet.name })}
               </AppText>
               <AppText tone="secondary" variant="subheadline">
-                {t('family.invite.fixedRules')}
+                {t('family.invite.fixedRules', {
+                  maximum: familyMemberLimit,
+                })}
               </AppText>
             </View>
           </View>
@@ -298,6 +306,7 @@ export default function PetMembersScreen() {
 
               <View style={styles.buttonRow}>
                 <AppButton
+                  disabled={isFamilyFull}
                   label={t('family.invite.regenerate')}
                   loading={createInvite.isPending}
                   onPress={() => void handleCreateInvite()}
@@ -315,12 +324,19 @@ export default function PetMembersScreen() {
             </View>
           ) : (
             <AppButton
+              disabled={isFamilyFull}
               label={t('family.invite.create')}
               loading={createInvite.isPending}
               onPress={() => void handleCreateInvite()}
             />
           )}
         </View>
+      ) : null}
+
+      {isOwner && isFamilyFull ? (
+        <AppText tone="warning" variant="footnote">
+          {t('family.invite.memberLimit', { maximum: familyMemberLimit })}
+        </AppText>
       ) : null}
 
       {actionError ? <AppText tone="error">{actionError}</AppText> : null}

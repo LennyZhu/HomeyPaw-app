@@ -79,7 +79,9 @@
     "verify:phase11a-schedule": "node scripts/verify-phase11a-schedule.mjs",
     "verify:phase11a-schedule-rls": "node scripts/verify-phase11a-schedule-rls.mjs",
     "verify:phase11a-schedule-ui": "node --experimental-strip-types scripts/verify-phase11a-schedule-ui.mjs",
-    "verify:user-avatar-rls": "node scripts/verify-user-profile-avatar-rls.mjs"
+    "verify:user-avatar-rls": "node scripts/verify-user-profile-avatar-rls.mjs",
+    "verify:user-feedback-client": "node --experimental-strip-types scripts/verify-user-feedback-client.mjs",
+    "verify:family-member-cap": "node scripts/verify-family-member-cap.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

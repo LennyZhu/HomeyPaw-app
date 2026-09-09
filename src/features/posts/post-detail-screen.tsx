@@ -1,18 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
@@ -27,6 +18,7 @@ import {
 import { formatDateOnly } from '@/features/pets/pet-dates';
 import { lightColors, radius, spacing } from '@/theme';
 
+import { PostPhotoViewer } from './components/post-photo-viewer';
 import { useDeletePost, usePost, usePostMediaUrls } from './post-queries';
 
 export default function PostDetailScreen() {
@@ -111,8 +103,6 @@ export default function PostDetailScreen() {
     );
   }
 
-  const viewerMedia =
-    viewerIndex === null ? null : (post.post_media[viewerIndex] ?? null);
   const authorName =
     authorsQuery.data?.find((author) => author.userId === post.author_id)
       ?.displayName ?? t('family.members.formerMember');
@@ -228,67 +218,18 @@ export default function PostDetailScreen() {
 
       {deleteError ? <AppText tone="error">{deleteError}</AppText> : null}
 
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setViewerIndex(null)}
-        transparent={false}
-        visible={viewerIndex !== null}
-      >
-        <SafeAreaView edges={['top', 'bottom']} style={styles.viewer}>
-          {viewerIndex !== null ? <StatusBar style="light" /> : null}
-          <IconButton
-            accessibilityLabel={t('common.close')}
-            color={lightColors.onPrimary}
-            icon="close"
-            onPress={() => setViewerIndex(null)}
-            style={styles.viewerClose}
-          />
-          {viewerMedia ? (
-            <Image
-              accessibilityLabel={t('posts.photos.fullscreen', {
-                position: (viewerIndex ?? 0) + 1,
-              })}
-              cachePolicy="memory-disk"
-              contentFit="contain"
-              onError={recoverMediaUrls}
-              source={urlsQuery.data?.[viewerMedia.storage_path] ?? null}
-              style={styles.viewerImage}
-            />
-          ) : null}
-          <View style={styles.viewerControls}>
-            <IconButton
-              accessibilityLabel={t('posts.photos.previous')}
-              color={lightColors.onPrimary}
-              icon="chevron-back"
-              onPress={() =>
-                setViewerIndex((current) =>
-                  current === null ? null : Math.max(0, current - 1),
-                )
-              }
-              style={styles.viewerButton}
-            />
-            <AppText tone="onPrimary">
-              {t('posts.photos.viewerPosition', {
-                position: (viewerIndex ?? 0) + 1,
-                total: post.post_media.length,
-              })}
-            </AppText>
-            <IconButton
-              accessibilityLabel={t('posts.photos.next')}
-              color={lightColors.onPrimary}
-              icon="chevron-forward"
-              onPress={() =>
-                setViewerIndex((current) =>
-                  current === null
-                    ? null
-                    : Math.min(post.post_media.length - 1, current + 1),
-                )
-              }
-              style={styles.viewerButton}
-            />
-          </View>
-        </SafeAreaView>
-      </Modal>
+      {viewerIndex !== null ? (
+        <PostPhotoViewer
+          hasLoadError={urlsQuery.isError}
+          initialIndex={viewerIndex}
+          isLoading={urlsQuery.isPending}
+          media={post.post_media}
+          mediaUrls={urlsQuery.data ?? {}}
+          onClose={() => setViewerIndex(null)}
+          onImageError={recoverMediaUrls}
+          visible
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -332,33 +273,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-  },
-  viewer: {
-    flex: 1,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-  },
-  viewerImage: {
-    width: '100%',
-    height: '78%',
-  },
-  viewerClose: {
-    position: 'absolute',
-    right: spacing.xl,
-    top: spacing.huge,
-    zIndex: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-  },
-  viewerControls: {
-    position: 'absolute',
-    right: spacing.xl,
-    bottom: spacing.huge,
-    left: spacing.xl,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  viewerButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
 });

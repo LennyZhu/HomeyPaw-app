@@ -22,6 +22,7 @@ import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal'
 import { parseDateOnly } from '@/features/pets/pet-dates';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { PostMediaPreview } from '@/features/posts/components/post-media-preview';
+import { PostPhotoViewer } from '@/features/posts/components/post-photo-viewer';
 import { getRelativeDateKind } from '@/features/posts/post-date-label';
 import {
   type PostWithMedia,
@@ -44,6 +45,10 @@ export default function JournalScreen() {
   const postsQuery = usePosts(petId);
   const authorsQuery = usePetPostAuthors(petId);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [photoViewer, setPhotoViewer] = useState<{
+    initialIndex: number;
+    media: PostWithMedia['post_media'];
+  } | null>(null);
   const posts = useMemo(
     () => postsQuery.data?.pages.flatMap((page) => page.posts) ?? [],
     [postsQuery.data],
@@ -55,7 +60,7 @@ export default function JournalScreen() {
   const previewPaths = useMemo(
     () =>
       posts.flatMap((post) =>
-        post.post_media.slice(0, 4).map((media) => media.storage_path),
+        post.post_media.map((media) => media.storage_path),
       ),
     [posts],
   );
@@ -238,6 +243,9 @@ export default function JournalScreen() {
               authorName={authorNames[item.post.author_id]}
               mediaUrls={mediaUrlsQuery.data ?? {}}
               onMediaError={recoverMediaUrls}
+              onOpenPhoto={(initialIndex) =>
+                setPhotoViewer({ initialIndex, media: item.post.post_media })
+              }
               onPress={() => router.push(`/posts/${item.post.id}` as Href)}
               post={item.post}
             />
@@ -263,6 +271,18 @@ export default function JournalScreen() {
         pets={petsState.pets}
         visible={isSwitcherOpen}
       />
+      {photoViewer ? (
+        <PostPhotoViewer
+          hasLoadError={mediaUrlsQuery.isError}
+          initialIndex={photoViewer.initialIndex}
+          isLoading={mediaUrlsQuery.isPending}
+          media={photoViewer.media}
+          mediaUrls={mediaUrlsQuery.data ?? {}}
+          onClose={() => setPhotoViewer(null)}
+          onImageError={recoverMediaUrls}
+          visible
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -340,12 +360,14 @@ function TimelinePost({
   authorName,
   mediaUrls,
   onMediaError,
+  onOpenPhoto,
   onPress,
   post,
 }: {
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
   onMediaError: () => void;
+  onOpenPhoto: (index: number) => void;
   onPress: () => void;
   post: PostWithMedia;
 }) {
@@ -380,6 +402,7 @@ function TimelinePost({
         media={post.post_media}
         mediaUrls={mediaUrls}
         onImageError={onMediaError}
+        onPhotoPress={onOpenPhoto}
       />
       {post.content ? (
         <View style={styles.contentCopy}>

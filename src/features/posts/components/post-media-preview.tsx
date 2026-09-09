@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
@@ -10,12 +10,14 @@ type PostMediaPreviewProps = {
   media: PostMedia[];
   mediaUrls: Record<string, string>;
   onImageError?: () => void;
+  onPhotoPress?: (index: number) => void;
 };
 
 export function PostMediaPreview({
   media,
   mediaUrls,
   onImageError,
+  onPhotoPress,
 }: PostMediaPreviewProps) {
   const { t } = useTranslation();
   const visible = media.slice(0, 4);
@@ -24,36 +26,65 @@ export function PostMediaPreview({
     return null;
   }
 
-  const renderImage = (item: PostMedia, index: number, style: object) => (
-    <View key={item.id} style={[styles.imageWrap, style]}>
-      <Image
-        accessibilityLabel={t('posts.photos.entryPhoto', {
+  const renderImage = (item: PostMedia, index: number, style: object) => {
+    const content = (
+      <>
+        <Image
+          accessibilityLabel={t('posts.photos.entryPhoto', {
+            position: index + 1,
+          })}
+          accessibilityRole="image"
+          accessibilityElementsHidden={Boolean(onPhotoPress)}
+          cachePolicy="memory-disk"
+          contentFit={visible.length === 1 ? 'contain' : 'cover'}
+          recyclingKey={item.id}
+          source={mediaUrls[item.storage_path] ?? null}
+          style={styles.image}
+          transition={160}
+          {...(onImageError ? { onError: onImageError } : {})}
+        />
+        {index === 3 && media.length > 4 ? (
+          <View
+            accessibilityLabel={t('journal.morePhotos', {
+              count: media.length - 4,
+            })}
+            accessibilityRole="text"
+            style={styles.moreOverlay}
+            pointerEvents="none"
+          >
+            <AppText tone="onPrimary" variant="title2">
+              +{media.length - 4}
+            </AppText>
+          </View>
+        ) : null}
+      </>
+    );
+
+    return onPhotoPress ? (
+      <Pressable
+        accessibilityLabel={t('posts.photos.openFullscreen', {
           position: index + 1,
         })}
-        accessibilityRole="image"
-        cachePolicy="memory-disk"
-        contentFit={visible.length === 1 ? 'contain' : 'cover'}
-        recyclingKey={item.id}
-        source={mediaUrls[item.storage_path] ?? null}
-        style={styles.image}
-        transition={160}
-        {...(onImageError ? { onError: onImageError } : {})}
-      />
-      {index === 3 && media.length > 4 ? (
-        <View
-          accessibilityLabel={t('journal.morePhotos', {
-            count: media.length - 4,
-          })}
-          accessibilityRole="text"
-          style={styles.moreOverlay}
-        >
-          <AppText tone="onPrimary" variant="title2">
-            +{media.length - 4}
-          </AppText>
-        </View>
-      ) : null}
-    </View>
-  );
+        accessibilityRole="button"
+        key={item.id}
+        onPress={(event) => {
+          event.stopPropagation();
+          onPhotoPress(index);
+        }}
+        style={({ pressed }) => [
+          styles.imageWrap,
+          style,
+          pressed && styles.pressed,
+        ]}
+      >
+        {content}
+      </Pressable>
+    ) : (
+      <View key={item.id} style={[styles.imageWrap, style]}>
+        {content}
+      </View>
+    );
+  };
 
   if (visible.length === 1) {
     const item = visible[0]!;
@@ -130,4 +161,5 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.overlay,
     justifyContent: 'center',
   },
+  pressed: { opacity: 0.72 },
 });

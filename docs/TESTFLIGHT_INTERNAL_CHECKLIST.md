@@ -35,6 +35,7 @@ The checklist below remains the reusable evidence template. Its unchecked boxes 
 ## Pet, Journal, and Family
 
 - [ ] Create/edit a pet and choose an avatar from Photo Library.
+- [ ] Create a journal entry by taking a photo; deny Camera once and confirm the localized recovery UI, then allow access and retry.
 - [ ] Create journal entries with 1, 3, and 9 photos; confirm detail images and list thumbnails.
 - [ ] Owner A invites Member B and both see the same pet.
 - [ ] A publishes a journal entry; B refreshes and sees it.
@@ -55,7 +56,7 @@ The checklist below remains the reusable evidence template. Its unchecked boxes 
 - [ ] No old PawDay user-facing brand text appears.
 - [ ] Support, Privacy, Terms, and Marketing links open the intended public HTTPS pages.
 - [ ] Support opens an email addressed to `lenny996@163.com`.
-- [ ] No unexpected camera, microphone, contacts, location, tracking, or remote-notification prompt appears.
+- [ ] Camera appears only after choosing Take Photo; no microphone, contacts, location, tracking, or remote-notification prompt appears unexpectedly.
 - [ ] Production errors do not reveal tokens, passwords, signed URLs, or private user content.
 - [ ] Record device model, iOS version, locale, account roles, test time, and evidence for each failure.
 

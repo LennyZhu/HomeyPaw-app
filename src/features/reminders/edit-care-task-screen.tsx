@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,10 @@ import { spacing } from '@/theme';
 import type { CareTask } from '@/types/database';
 
 import { useCareTask, useUpdateCareTask } from './care-task-queries';
+import {
+  getReminderFormCancelNavigation,
+  type ReminderCompletionNavigation,
+} from './reminder-navigation';
 import type { CareTaskFormValues } from './care-task-schema';
 import { CareTaskForm } from './components/care-task-form';
 
@@ -75,6 +79,18 @@ export default function EditCareTaskScreen() {
   }
   const task = taskQuery.data;
 
+  const applyNavigation = (navigation: ReminderCompletionNavigation) => {
+    if (navigation.kind === 'back') {
+      router.back();
+    } else {
+      router.replace(navigation.href as Href);
+    }
+  };
+  const leaveForm = () =>
+    applyNavigation(
+      getReminderFormCancelNavigation(router.canGoBack(), `/reminders/${id}`),
+    );
+
   const submit = async (values: CareTaskFormValues) => {
     setSubmitError(null);
     try {
@@ -82,7 +98,7 @@ export default function EditCareTaskScreen() {
         timeZone: task.time_zone,
         values,
       });
-      router.replace(`/reminders/${id}`);
+      leaveForm();
     } catch {
       setSubmitError(t('reminders.errors.save'));
     }
@@ -94,7 +110,7 @@ export default function EditCareTaskScreen() {
         <IconButton
           accessibilityLabel={t('common.back')}
           icon="chevron-back"
-          onPress={() => router.back()}
+          onPress={leaveForm}
         />
         <View style={styles.headerCopy}>
           <AppText accessibilityRole="header" variant="largeTitle">

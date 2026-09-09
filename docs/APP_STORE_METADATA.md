@@ -99,7 +99,7 @@ Known limitation: reminders are device-local and are not delivered across device
 - HomeyPaw is a private, invite-only family app; there is no public discovery or stranger messaging.
 - Local notifications are created only after a user enables a care reminder. No remote push token is requested.
 - “Location” in a journal is manually entered text; the app does not request device location.
-- Camera access is not requested. Users choose existing images through the Photo Library picker.
+- Camera and Photo Library access are requested only after the user chooses to take or select a journal photo. Camera capture does not request microphone access.
 - Account deletion is available at `Me → Account and security → Delete account`.
 - Medication entries are user-authored pet care records and reminders, not medical advice.
 - The production release has no Chat tab or reachable Chat screen, Realtime feature, advertising, tracking, or analytics SDK. Expo's static export may physically include the guarded Mock-only preview code, but it is not a production feature.
