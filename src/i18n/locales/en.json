@@ -5,6 +5,7 @@
     "loading": "Loading…",
     "back": "Back",
     "cancel": "Cancel",
+    "done": "Done",
     "continue": "Continue",
     "close": "Close",
     "error": "Something went wrong",
@@ -255,6 +256,26 @@
       "savePermissionTitle": "Allow photo saving?",
       "savePermissionDenied": "Photo saving permission was not granted.",
       "savePermissionBlocked": "Allow HomeyPaw to add photos in system settings, then try again."
+    },
+    "photoEditor": {
+      "title": "Edit photo",
+      "edit": "Edit photo",
+      "crop": "Crop",
+      "rotate": "Rotate",
+      "sticker": "Sticker",
+      "deleteSticker": "Delete sticker",
+      "addSticker": "Add {{sticker}} sticker",
+      "resizeCrop": "Resize free crop area",
+      "reduceCrop": "Reduce crop height",
+      "increaseCrop": "Increase crop height",
+      "dragCrop": "Drag the handle or use the buttons",
+      "aspects": {
+        "free": "Free"
+      },
+      "errors": {
+        "unsupported": "This image couldn't be opened for editing. Your original selection is unchanged.",
+        "export": "We couldn't finish this edit. Your original selection is still available."
+      }
     },
     "progress": {
       "processing": "Processing photo {{completed}} / {{total}}…",

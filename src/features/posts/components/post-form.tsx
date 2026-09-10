@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { zodResolver } from '@hookform/resolvers/zod';
+import * as Crypto from 'expo-crypto';
 import { Image } from 'expo-image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   ActionSheetIOS,
@@ -22,17 +23,23 @@ import { PetDateField } from '@/features/pets/components/pet-date-field';
 import { lightColors, radius, spacing, typography } from '@/theme';
 
 import {
+  createEditedPostMediaDraft,
+  type EditedPhotoResult,
+} from '../photo-editor-state';
+import {
   maximumPostMedia,
   pickPostPhotos,
   type PostPhotoSource,
   type PostMediaDraft,
 } from '../post-media';
+import { removePostPhotoEditTemp } from '../post-photo-edit-files';
 import type { PublishProgress } from '../post-publishing';
 import {
   createPostFormSchema,
   postTags,
   type PostFormValues,
 } from '../post-schema';
+import { PostPhotoEditor } from './post-photo-editor';
 
 type PostFormProps = {
   initialMedia?: PostMediaDraft[];
@@ -60,6 +67,9 @@ export function PostForm({
   const [permissionNotice, setPermissionNotice] = useState<string | null>(null);
   const [showPhotoSettings, setShowPhotoSettings] = useState(false);
   const [isPicking, setIsPicking] = useState(false);
+  const [editorDraft, setEditorDraft] = useState<PostMediaDraft | null>(null);
+  const mediaRef = useRef(media);
+  const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const {
     control,
     handleSubmit,
@@ -73,6 +83,27 @@ export function PostForm({
   useEffect(() => {
     reset(initialValues);
   }, [initialValues, reset]);
+
+  useEffect(() => {
+    mediaRef.current = media;
+  }, [media]);
+
+  useEffect(() => {
+    if (cleanupTimerRef.current) {
+      clearTimeout(cleanupTimerRef.current);
+      cleanupTimerRef.current = null;
+    }
+
+    return () => {
+      cleanupTimerRef.current = setTimeout(() => {
+        for (const item of mediaRef.current) {
+          if (item.kind === 'new') {
+            removePostPhotoEditTemp(item.editTempUri);
+          }
+        }
+      }, 0);
+    };
+  }, []);
 
   const selectPhotos = async (source: PostPhotoSource) => {
     setIsPicking(true);
@@ -170,6 +201,31 @@ export function PostForm({
     });
   };
 
+  const removeMedia = (item: PostMediaDraft) => {
+    if (item.kind === 'new') {
+      removePostPhotoEditTemp(item.editTempUri);
+    }
+    setMedia((current) =>
+      current.filter((candidate) => candidate.id !== item.id),
+    );
+  };
+
+  const applyPhotoEdit = (result: EditedPhotoResult) => {
+    const editedItem = editorDraft;
+    if (!editedItem) return;
+    if (editedItem.kind === 'new') {
+      removePostPhotoEditTemp(editedItem.editTempUri);
+    }
+
+    setMedia((current) =>
+      current.map((item) => {
+        if (item.id !== editedItem.id) return item;
+        return createEditedPostMediaDraft(item, result, Crypto.randomUUID());
+      }),
+    );
+    setEditorDraft(null);
+  };
+
   const submit = handleSubmit(async (values) => {
     if (!values.content.trim() && media.length === 0) {
       setMediaError(t('posts.validation.contentOrPhoto'));
@@ -217,6 +273,12 @@ export function PostForm({
                 </View>
                 <View style={styles.photoActions}>
                   <PhotoAction
+                    disabled={isBusy}
+                    icon="create-outline"
+                    label={t('posts.photoEditor.edit')}
+                    onPress={() => setEditorDraft(item)}
+                  />
+                  <PhotoAction
                     disabled={index === 0 || isBusy}
                     icon="chevron-back"
                     label={t('posts.photos.moveEarlier')}
@@ -232,11 +294,7 @@ export function PostForm({
                     disabled={isBusy}
                     icon="trash-outline"
                     label={t('posts.photos.remove')}
-                    onPress={() =>
-                      setMedia((current) =>
-                        current.filter((candidate) => candidate.id !== item.id),
-                      )
-                    }
+                    onPress={() => removeMedia(item)}
                   />
                 </View>
               </View>
@@ -368,6 +426,14 @@ export function PostForm({
         loading={isSubmitting}
         onPress={() => void submit()}
       />
+
+      {editorDraft ? (
+        <PostPhotoEditor
+          draft={editorDraft}
+          onCancel={() => setEditorDraft(null)}
+          onDone={applyPhotoEdit}
+        />
+      ) : null}
     </View>
   );
 }
@@ -469,7 +535,7 @@ const styles = StyleSheet.create({
     padding: spacing.xs,
   },
   photoAction: {
-    width: 40,
+    width: 36,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',

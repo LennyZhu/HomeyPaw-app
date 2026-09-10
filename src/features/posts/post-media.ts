@@ -10,6 +10,7 @@ export const postMediaBucket = 'post-media';
 export const maximumPostMedia = 9;
 
 export type NewPostMediaDraft = {
+  editTempUri: string | null;
   height: number;
   id: string;
   kind: 'new';
@@ -59,6 +60,7 @@ function toPostMediaDrafts(
     )
     .slice(0, remainingSlots)
     .map((asset) => ({
+      editTempUri: null,
       height: asset.height,
       id: Crypto.randomUUID(),
       kind: 'new' as const,
