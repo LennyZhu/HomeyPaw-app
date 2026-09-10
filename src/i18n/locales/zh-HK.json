@@ -151,7 +151,7 @@
     "filter": {
       "title": "篩選日記",
       "subtitle": "按本地日期範圍查看建立的日記。",
-      "all": "全部日記",
+      "all": "全部",
       "lastSevenDays": "最近 7 天",
       "lastThirtyDays": "最近 30 天",
       "custom": "自訂範圍",
@@ -160,6 +160,7 @@
       "apply": "套用日期範圍",
       "clear": "清除日期篩選",
       "accessibility": "按日期篩選日記。目前範圍：{{range}}",
+      "petAccessibility": "按毛孩篩選日記。目前毛孩：{{name}}",
       "invalidRange": "請選擇有效日期，開始日期不可遲於結束日期。",
       "emptyTitle": "此日期範圍沒有日記",
       "emptyBody": "{{range}} 期間沒有建立日記。"
@@ -192,7 +193,14 @@
     "subtitle": "留住今天和毛孩相處的小片段。",
     "emptyTitle": "從一張相片開始",
     "emptyBody": "之後可以加入相片、文字、日期和標籤。Phase 1 暫時只展示流程入口。",
-    "choosePhoto": "選擇相片"
+    "choosePhoto": "選擇相片",
+    "menu": {
+      "title": "新增",
+      "journal": "記錄日記",
+      "care": "記錄照顧",
+      "reminder": "新增提醒",
+      "schedule": "新增排班"
+    }
   },
   "posts": {
     "authorWithDate": "{{author}} · {{date}} · {{time}}",

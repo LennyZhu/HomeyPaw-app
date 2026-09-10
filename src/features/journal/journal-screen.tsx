@@ -37,9 +37,10 @@ import { JournalDateFilterModal } from './components/journal-date-filter-modal';
 import {
   createJournalContextKey,
   createJournalListStateKey,
+  formatAccessibleJournalDateRange,
+  formatCompactJournalDateRange,
   getJournalScrollOffset,
   setJournalScrollOffset,
-  type JournalDateRange,
 } from './journal-browsing';
 import { useJournalFilterStore } from './journal-browsing-state';
 
@@ -105,7 +106,10 @@ export default function JournalScreen() {
   const isRefreshing =
     postsQuery.isRefetching && !postsQuery.isFetchingNextPage;
   const dateRangeLabel = dateRange
-    ? formatJournalDateRange(dateRange, i18n.language)
+    ? formatCompactJournalDateRange(dateRange, i18n.language)
+    : t('journal.filter.all');
+  const accessibleDateRangeLabel = dateRange
+    ? formatAccessibleJournalDateRange(dateRange, i18n.language)
     : t('journal.filter.all');
 
   if (petsState.isPending) {
@@ -139,7 +143,7 @@ export default function JournalScreen() {
               <EmptyState
                 actionLabel={t('journal.filter.clear')}
                 body={t('journal.filter.emptyBody', {
-                  range: dateRangeLabel,
+                  range: accessibleDateRangeLabel,
                 })}
                 icon="calendar-outline"
                 onActionPress={() => setDateRange(journalContextKey, undefined)}
@@ -154,7 +158,7 @@ export default function JournalScreen() {
                   name: petsState.currentPet.name,
                 })}
                 icon="book-outline"
-                onActionPress={() => router.push('/create')}
+                onActionPress={() => router.push('/posts/new')}
                 title={t('posts.empty.title')}
               />
             </View>
@@ -180,32 +184,16 @@ export default function JournalScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <View style={styles.headerTopRow}>
-              <View style={styles.headerCopy}>
-                <AppText accessibilityRole="header" variant="largeTitle">
-                  {t('journal.title')}
-                </AppText>
-                <AppText tone="secondary" variant="subheadline">
-                  {petsState.currentPet
-                    ? t('journal.timelineSubtitle', {
-                        name: petsState.currentPet.name,
-                      })
-                    : t('posts.list.noPetSubtitle')}
-                </AppText>
-              </View>
-              {petsState.currentPet ? (
-                <AppButton
-                  label={t('posts.list.add')}
-                  onPress={() => router.push('/create')}
-                  style={styles.addButton}
-                />
-              ) : null}
-            </View>
+            <AppText accessibilityRole="header" variant="largeTitle">
+              {t('journal.title')}
+            </AppText>
 
             {petsState.currentPet ? (
               <View style={styles.browseControls}>
                 <Pressable
-                  accessibilityLabel={t('home.changePet')}
+                  accessibilityLabel={t('journal.filter.petAccessibility', {
+                    name: petsState.currentPet.name,
+                  })}
                   accessibilityRole="button"
                   onPress={() => setIsSwitcherOpen(true)}
                   style={({ pressed }) => [
@@ -218,7 +206,12 @@ export default function JournalScreen() {
                     name="paw-outline"
                     size={20}
                   />
-                  <AppText style={styles.petName} variant="headline">
+                  <AppText
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                    style={styles.petName}
+                    variant="headline"
+                  >
                     {petsState.currentPet.name}
                   </AppText>
                   <Ionicons
@@ -227,56 +220,38 @@ export default function JournalScreen() {
                     size={18}
                   />
                 </Pressable>
-                <View style={styles.filterRow}>
-                  <Pressable
-                    accessibilityLabel={t('journal.filter.accessibility', {
-                      range: dateRangeLabel,
-                    })}
-                    accessibilityRole="button"
-                    onPress={() => setIsDateFilterOpen(true)}
-                    style={({ pressed }) => [
-                      styles.filterButton,
-                      dateRange && styles.filterButtonActive,
-                      pressed && styles.pressed,
-                    ]}
+                <Pressable
+                  accessibilityLabel={t('journal.filter.accessibility', {
+                    range: accessibleDateRangeLabel,
+                  })}
+                  accessibilityRole="button"
+                  onPress={() => setIsDateFilterOpen(true)}
+                  style={({ pressed }) => [
+                    styles.filterButton,
+                    dateRange && styles.filterButtonActive,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Ionicons
+                    color={lightColors.primary}
+                    name="calendar-outline"
+                    size={18}
+                  />
+                  <AppText
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                    style={styles.filterLabel}
+                    tone={dateRange ? 'brand' : 'secondary'}
+                    variant="subheadline"
                   >
-                    <Ionicons
-                      color={lightColors.primary}
-                      name="calendar-outline"
-                      size={18}
-                    />
-                    <AppText
-                      numberOfLines={1}
-                      style={styles.filterLabel}
-                      tone={dateRange ? 'brand' : 'secondary'}
-                      variant="subheadline"
-                    >
-                      {dateRangeLabel}
-                    </AppText>
-                    <Ionicons
-                      color={lightColors.textSecondary}
-                      name="chevron-down"
-                      size={16}
-                    />
-                  </Pressable>
-                  {dateRange ? (
-                    <Pressable
-                      accessibilityLabel={t('journal.filter.clear')}
-                      accessibilityRole="button"
-                      onPress={() => setDateRange(journalContextKey, undefined)}
-                      style={({ pressed }) => [
-                        styles.clearFilterButton,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Ionicons
-                        color={lightColors.textSecondary}
-                        name="close"
-                        size={20}
-                      />
-                    </Pressable>
-                  ) : null}
-                </View>
+                    {dateRangeLabel}
+                  </AppText>
+                  <Ionicons
+                    color={lightColors.textSecondary}
+                    name="chevron-down"
+                    size={16}
+                  />
+                </Pressable>
               </View>
             ) : null}
           </View>
@@ -395,25 +370,6 @@ export default function JournalScreen() {
       ) : null}
     </SafeAreaView>
   );
-}
-
-function formatJournalDateRange(range: JournalDateRange, locale: string) {
-  const start = parseDateOnly(range.startDate);
-  const end = parseDateOnly(range.endDate);
-  if (!start || !end) return `${range.startDate} – ${range.endDate}`;
-
-  const formatter = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: start.getFullYear() === end.getFullYear() ? undefined : 'numeric',
-  });
-  const endFormatter = new Intl.DateTimeFormat(locale, {
-    day: 'numeric',
-    month: 'short',
-    year: start.getFullYear() === end.getFullYear() ? undefined : 'numeric',
-  });
-
-  return `${formatter.format(start)} – ${endFormatter.format(end)}`;
 }
 
 function createTimelineItems(
@@ -579,57 +535,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
   },
   header: {
-    gap: spacing.lg,
-    paddingBottom: spacing.xl,
+    gap: spacing.md,
     paddingTop: spacing.md,
   },
-  headerTopRow: {
-    alignItems: 'flex-start',
+  browseControls: {
+    width: '100%',
+    maxWidth: 520,
+    alignItems: 'stretch',
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
-  headerCopy: { flex: 1, gap: spacing.xs },
-  addButton: { minHeight: 44, paddingHorizontal: spacing.lg },
-  browseControls: { gap: spacing.sm },
   petSelector: {
     minHeight: 52,
+    minWidth: 0,
+    alignItems: 'center',
+    backgroundColor: lightColors.surface,
+    borderColor: lightColors.border,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    flex: 2,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  petName: { minWidth: 0, flex: 1, flexShrink: 1 },
+  filterButton: {
+    minHeight: 52,
+    minWidth: 112,
+    maxWidth: 180,
     alignItems: 'center',
     backgroundColor: lightColors.surface,
     borderColor: lightColors.border,
     borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
-  },
-  petName: { flex: 1 },
-  filterRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
-  filterButton: {
-    minHeight: 44,
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: lightColors.surface,
-    borderColor: lightColors.border,
-    borderRadius: radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
+    flex: 1,
     flexShrink: 1,
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   filterButtonActive: {
     backgroundColor: lightColors.primarySoft,
     borderColor: lightColors.primarySoft,
   },
-  filterLabel: { flexShrink: 1 },
-  clearFilterButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    backgroundColor: lightColors.surfaceSecondary,
-    borderRadius: radius.full,
-    justifyContent: 'center',
-  },
+  filterLabel: { minWidth: 0, flex: 1, flexShrink: 1 },
   year: { marginBottom: spacing.md, marginTop: spacing.xl },
   month: { marginBottom: spacing.lg, marginTop: spacing.xs },
   dayRow: {

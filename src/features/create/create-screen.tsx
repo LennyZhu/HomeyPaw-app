@@ -21,7 +21,10 @@ import {
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { lightColors, radius, shadows, spacing } from '@/theme';
 
+import { primaryCreateActions } from './create-menu-model';
+
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
+type CreateMenu = 'care' | 'root';
 
 export default function CreateScreen() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
@@ -29,11 +32,15 @@ export default function CreateScreen() {
   const router = useRouter();
   const petsState = useCurrentPet();
   const [visible, setVisible] = useState(true);
+  const [activeMenu, setActiveMenu] = useState<CreateMenu>(() =>
+    mode === 'care' ? 'care' : 'root',
+  );
 
   useFocusEffect(
     useCallback(() => {
       setVisible(true);
-    }, []),
+      setActiveMenu(mode === 'care' ? 'care' : 'root');
+    }, [mode]),
   );
 
   const close = () => {
@@ -42,7 +49,8 @@ export default function CreateScreen() {
   };
   const open = (href: Href) => {
     setVisible(false);
-    router.push(href);
+    router.replace('/');
+    requestAnimationFrame(() => router.push(href));
   };
 
   return (
@@ -53,35 +61,44 @@ export default function CreateScreen() {
         transparent
         visible={visible}
       >
-        <Pressable
-          accessibilityRole="button"
-          onPress={close}
-          style={styles.overlay}
-        >
+        <Pressable accessible={false} onPress={close} style={styles.overlay}>
           <SafeAreaView edges={['bottom']} style={styles.sheetSafeArea}>
             <Pressable
+              accessibilityViewIsModal
+              accessible={false}
               onPress={(event) => event.stopPropagation()}
               style={styles.sheet}
             >
               <View style={styles.handle} />
               <View style={styles.headingRow}>
-                <View style={styles.headingCopy}>
-                  <AppText accessibilityRole="header" variant="title1">
-                    {t('care.quick.title')}
-                  </AppText>
-                  <AppText tone="secondary" variant="footnote">
-                    {petsState.currentPet
-                      ? t('care.quick.subtitle', {
-                          name: petsState.currentPet.name,
-                        })
-                      : t('care.empty.noPetBody')}
-                  </AppText>
-                </View>
+                {activeMenu === 'care' ? (
+                  <Pressable
+                    accessibilityLabel={t('common.back')}
+                    accessibilityRole="button"
+                    onPress={() => setActiveMenu('root')}
+                    style={styles.headerAction}
+                  >
+                    <Ionicons
+                      color={lightColors.textSecondary}
+                      name="chevron-back"
+                      size={24}
+                    />
+                  </Pressable>
+                ) : null}
+                <AppText
+                  accessibilityRole="header"
+                  style={styles.headingTitle}
+                  variant="title1"
+                >
+                  {activeMenu === 'care'
+                    ? t('create.menu.care')
+                    : t('create.menu.title')}
+                </AppText>
                 <Pressable
                   accessibilityLabel={t('common.close')}
                   accessibilityRole="button"
                   onPress={close}
-                  style={styles.close}
+                  style={styles.headerAction}
                 >
                   <Ionicons
                     color={lightColors.textSecondary}
@@ -91,19 +108,11 @@ export default function CreateScreen() {
                 </Pressable>
               </View>
 
-              {petsState.currentPet ? (
+              {activeMenu === 'care' && petsState.currentPet ? (
                 <ScrollView
                   contentContainerStyle={styles.options}
                   showsVerticalScrollIndicator={false}
                 >
-                  {mode !== 'care' ? (
-                    <QuickOption
-                      icon="images-outline"
-                      label={t('care.quick.journal')}
-                      onPress={() => open('/posts/new')}
-                      primary
-                    />
-                  ) : null}
                   <AppText
                     style={styles.sectionLabel}
                     tone="secondary"
@@ -145,13 +154,25 @@ export default function CreateScreen() {
                     />
                   ))}
                 </ScrollView>
-              ) : (
+              ) : activeMenu === 'care' ? (
                 <QuickOption
                   icon="paw-outline"
                   label={t('pets.empty.action')}
                   onPress={() => open('/pets/new')}
                   primary
                 />
+              ) : (
+                <View style={styles.options}>
+                  {primaryCreateActions.map((action) => (
+                    <QuickOption
+                      icon={action.icon}
+                      key={action.id}
+                      label={t(action.labelKey)}
+                      onPress={() => open(action.destination.href)}
+                      primary={action.id === 'journal'}
+                    />
+                  ))}
+                </View>
               )}
             </Pressable>
           </SafeAreaView>
@@ -174,6 +195,7 @@ function QuickOption({
 }) {
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [
@@ -229,12 +251,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   headingRow: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.md,
   },
-  headingCopy: { flex: 1, gap: spacing.xs },
-  close: {
+  headingTitle: { flex: 1 },
+  headerAction: {
     width: 44,
     height: 44,
     alignItems: 'center',
@@ -248,12 +270,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   option: {
-    minHeight: 54,
+    minHeight: 56,
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.md,
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   primaryOption: { backgroundColor: lightColors.primarySoft },
   optionIcon: {

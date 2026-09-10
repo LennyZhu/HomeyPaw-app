@@ -103,3 +103,38 @@ export function toJournalCreatedAtBounds(range: JournalDateRange | undefined) {
 export function isValidJournalDateRange(range: JournalDateRange) {
   return toJournalCreatedAtBounds(range) !== null;
 }
+
+export function formatCompactJournalDateRange(
+  range: JournalDateRange,
+  locale: string,
+) {
+  const start = parseLocalDate(range.startDate);
+  const end = parseLocalDate(range.endDate);
+  if (!start || !end) return `${range.startDate}–${range.endDate}`;
+
+  const options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'numeric',
+    year: start.getFullYear() === end.getFullYear() ? undefined : '2-digit',
+  };
+  const formatter = new Intl.DateTimeFormat(locale, options);
+
+  return `${formatter.format(start)}–${formatter.format(end)}`;
+}
+
+export function formatAccessibleJournalDateRange(
+  range: JournalDateRange,
+  locale: string,
+) {
+  const start = parseLocalDate(range.startDate);
+  const end = parseLocalDate(range.endDate);
+  if (!start || !end) return `${range.startDate} – ${range.endDate}`;
+
+  const formatter = new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return `${formatter.format(start)} – ${formatter.format(end)}`;
+}

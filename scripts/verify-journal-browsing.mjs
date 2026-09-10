@@ -56,6 +56,31 @@ assert.deepEqual(
   browsing.getRecentJournalDateRange(7, new Date(2026, 8, 9, 23, 30)),
   { startDate: '2026-09-03', endDate: '2026-09-09' },
 );
+assert.deepEqual(
+  browsing.getRecentJournalDateRange(30, new Date(2026, 8, 9, 23, 30)),
+  { startDate: '2026-08-11', endDate: '2026-09-09' },
+);
+assert.equal(
+  browsing.formatCompactJournalDateRange(
+    { startDate: '2026-09-01', endDate: '2026-09-10' },
+    'en',
+  ),
+  '9/1–9/10',
+);
+assert.equal(
+  browsing.formatCompactJournalDateRange(
+    { startDate: '2026-09-01', endDate: '2026-09-10' },
+    'zh-HK',
+  ),
+  '1/9–10/9',
+);
+assert.equal(
+  browsing.formatAccessibleJournalDateRange(
+    { startDate: '2026-09-01', endDate: '2026-09-10' },
+    'en',
+  ),
+  'September 1, 2026 – September 10, 2026',
+);
 console.log(
   'PASS: Local same-day, multi-day, month/year boundary, inclusive start, exclusive end, quick range, and clear semantics.',
 );
@@ -126,8 +151,14 @@ assert(modal.includes('applyPreset(7)'));
 assert(modal.includes('applyPreset(30)'));
 assert(modal.includes('<JournalDateField'));
 assert(journal.includes("t('journal.filter.emptyTitle')"));
+assert(journal.includes('styles.browseControls'));
+assert(journal.includes('ellipsizeMode="tail"'));
+assert(journal.includes('numberOfLines={1}'));
+assert(journal.includes("t('journal.filter.petAccessibility'"));
 assert(en.includes('Filter journal by date. Current range: {{range}}'));
 assert(zh.includes('按日期篩選日記。目前範圍：{{range}}'));
+assert(en.includes('"all": "All"'));
+assert(zh.includes('"all": "全部"'));
 console.log(
   'PASS: Detail back preserves the mounted list; cached pagination, range query, filtered empty state, and keyed offsets are wired.',
 );

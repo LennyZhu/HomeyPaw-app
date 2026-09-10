@@ -151,7 +151,7 @@
     "filter": {
       "title": "Filter journal",
       "subtitle": "Show entries created within a local date range.",
-      "all": "All entries",
+      "all": "All",
       "lastSevenDays": "Last 7 days",
       "lastThirtyDays": "Last 30 days",
       "custom": "Custom range",
@@ -160,6 +160,7 @@
       "apply": "Apply range",
       "clear": "Clear date filter",
       "accessibility": "Filter journal by date. Current range: {{range}}",
+      "petAccessibility": "Filter journal by pet. Current pet: {{name}}",
       "invalidRange": "Choose a valid start date no later than the end date.",
       "emptyTitle": "No entries in this range",
       "emptyBody": "No journal entries were created during {{range}}."
@@ -192,7 +193,14 @@
     "subtitle": "Keep a little piece of today with your pet.",
     "emptyTitle": "Start with a photo",
     "emptyBody": "You will be able to add photos, notes, a date and tags. Phase 1 only previews this entry point.",
-    "choosePhoto": "Choose photos"
+    "choosePhoto": "Choose photos",
+    "menu": {
+      "title": "New",
+      "journal": "New Journal",
+      "care": "Record Care",
+      "reminder": "New Reminder",
+      "schedule": "New Schedule"
+    }
   },
   "posts": {
     "authorWithDate": "{{author}} · {{date}} · {{time}}",
