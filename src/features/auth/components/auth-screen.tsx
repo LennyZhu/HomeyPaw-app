@@ -1,3 +1,4 @@
+import { contentStyles } from '@/components/content-container';
 import type { PropsWithChildren, ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -66,9 +67,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    width: '100%',
-    maxWidth: Math.min(layout.contentMaxWidth, 520),
-    alignSelf: 'center',
+    ...contentStyles.auth,
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: layout.screenPadding,

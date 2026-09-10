@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, StyleSheet, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ModalScreen } from '@/components/modal-screen';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
@@ -57,61 +57,57 @@ export function TaskCompletionModal({
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.content}>
-          <AppText accessibilityRole="header" variant="title1">
-            {t('reminders.complete.title')}
-          </AppText>
-          <AppText tone="secondary">{title}</AppText>
+      <ModalScreen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="title1">
+          {t('reminders.complete.title')}
+        </AppText>
+        <AppText tone="secondary">{title}</AppText>
 
-          {careType === 'walk' ? (
-            <View style={styles.field}>
-              <AppText variant="subheadline">
-                {t('care.fields.duration')}
-              </AppText>
-              <TextInput
-                keyboardType="number-pad"
-                maxLength={4}
-                onChangeText={setDuration}
-                placeholder={t('care.form.durationPlaceholder')}
-                placeholderTextColor={lightColors.textTertiary}
-                style={styles.input}
-                value={duration}
-              />
-            </View>
-          ) : null}
-
+        {careType === 'walk' ? (
           <View style={styles.field}>
-            <AppText variant="subheadline">
-              {t('reminders.complete.note')}
-            </AppText>
+            <AppText variant="subheadline">{t('care.fields.duration')}</AppText>
             <TextInput
-              maxLength={200}
-              multiline
-              onChangeText={setNote}
-              placeholder={t('reminders.complete.notePlaceholder')}
+              keyboardType="number-pad"
+              maxLength={4}
+              onChangeText={setDuration}
+              placeholder={t('care.form.durationPlaceholder')}
               placeholderTextColor={lightColors.textTertiary}
-              style={[styles.input, styles.note]}
-              textAlignVertical="top"
-              value={note}
+              style={styles.input}
+              value={duration}
             />
           </View>
+        ) : null}
 
-          <View style={styles.actions}>
-            <AppButton
-              disabled={isCompleting}
-              label={t('common.cancel')}
-              onPress={onClose}
-              variant="secondary"
-            />
-            <AppButton
-              label={t('reminders.complete.action')}
-              loading={isCompleting}
-              onPress={() => void submit()}
-            />
-          </View>
+        <View style={styles.field}>
+          <AppText variant="subheadline">
+            {t('reminders.complete.note')}
+          </AppText>
+          <TextInput
+            maxLength={200}
+            multiline
+            onChangeText={setNote}
+            placeholder={t('reminders.complete.notePlaceholder')}
+            placeholderTextColor={lightColors.textTertiary}
+            style={[styles.input, styles.note]}
+            textAlignVertical="top"
+            value={note}
+          />
         </View>
-      </SafeAreaView>
+
+        <View style={styles.actions}>
+          <AppButton
+            disabled={isCompleting}
+            label={t('common.cancel')}
+            onPress={onClose}
+            variant="secondary"
+          />
+          <AppButton
+            label={t('reminders.complete.action')}
+            loading={isCompleting}
+            onPress={() => void submit()}
+          />
+        </View>
+      </ModalScreen>
     </Modal>
   );
 }

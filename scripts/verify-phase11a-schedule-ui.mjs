@@ -380,7 +380,8 @@ assert(
   calendar.includes('const overflow = Math.max(summary.members.length - 2, 0)'),
 );
 assert(calendar.includes('name="hand-left-outline"'));
-assert(calendar.includes('height: 58'));
+assert(calendar.includes('minHeight: 58')); // grows for Dynamic Type
+assert(calendar.includes('wideCell: { minHeight: 72 }'));
 assert(!calendar.includes('styles.todayCell'));
 assert(calendar.includes('isToday && styles.todayNumber'));
 assert(calendar.includes("todayNumber: { textDecorationLine: 'underline' }"));

@@ -1,3 +1,4 @@
+import { useContentLayout } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +42,7 @@ export function ScheduleMonthCalendar({
   today,
 }: Props) {
   const { i18n, t } = useTranslation();
+  const { isWide } = useContentLayout();
   const cells = buildCalendarMonth(month, { fixedSixWeeks });
   const weekdays = getCalendarWeekdayLabels(i18n.language);
   const itemsByDate = scheduleItemsByDate(items);
@@ -113,6 +115,7 @@ export function ScheduleMonthCalendar({
                 onPress={() => onSelectDate(cell.date)}
                 style={({ pressed }) => [
                   styles.cell,
+                  isWide && styles.wideCell,
                   isSelected && styles.selectedCell,
                   disabled && styles.disabledCell,
                   pressed && styles.pressedCell,
@@ -202,7 +205,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cellFrame: { padding: 2, width: `${100 / 7}%` },
   cell: {
-    height: 58,
+    minHeight: 58,
     alignItems: 'center',
     borderColor: 'transparent',
     borderRadius: radius.md,
@@ -212,6 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 1,
     paddingVertical: 3,
   },
+  wideCell: { minHeight: 72 },
   selectedCell: {
     backgroundColor: lightColors.primarySoft,
     borderColor: lightColors.primary,

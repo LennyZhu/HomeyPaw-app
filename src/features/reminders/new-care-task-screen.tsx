@@ -1,3 +1,4 @@
+import { contentStyles } from '@/components/content-container';
 import * as Crypto from 'expo-crypto';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -277,6 +278,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   permissionCard: {
+    ...contentStyles.modal,
     gap: spacing.lg,
     backgroundColor: lightColors.surface,
     borderRadius: radius.xl,

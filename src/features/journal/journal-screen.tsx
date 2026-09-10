@@ -1,3 +1,4 @@
+import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { type Href, useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
@@ -572,9 +573,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: lightColors.background },
   list: { flex: 1, width: '100%' },
   listContent: {
-    width: '100%',
-    maxWidth: layout.contentMaxWidth,
-    alignSelf: 'center',
+    ...contentStyles.readable,
     flexGrow: 1,
     paddingBottom: spacing.huge,
     paddingHorizontal: layout.screenPadding,

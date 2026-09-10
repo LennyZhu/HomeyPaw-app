@@ -1,13 +1,6 @@
 import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Modal, StyleSheet, TextInput, View } from 'react-native';
+import { ModalScreen } from '@/components/modal-screen';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
@@ -34,7 +27,6 @@ export function ChatEditMessageModal({
   onSave,
 }: ChatEditMessageModalProps) {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const [body, setBody] = useState(message.body);
   const normalizedBody = body.trim();
   const canSave =
@@ -49,71 +41,58 @@ export function ChatEditMessageModal({
       presentationStyle="pageSheet"
       visible
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flex}
-      >
-        <View
-          style={[
-            styles.container,
-            {
-              paddingBottom: Math.max(insets.bottom, spacing.xl),
-              paddingTop: Math.max(insets.top, spacing.xl),
-            },
-          ]}
-        >
-          <View style={styles.header}>
-            <AppText accessibilityRole="header" variant="title2">
-              {t('chat.live.edit.title')}
-            </AppText>
-            <AppText tone="secondary" variant="footnote">
-              {t('chat.live.edit.body')}
-            </AppText>
-          </View>
-
-          <TextInput
-            accessibilityLabel={t('chat.live.edit.inputLabel')}
-            autoFocus
-            editable={!isSaving}
-            maxLength={messageLimit}
-            multiline
-            onChangeText={setBody}
-            style={styles.input}
-            textAlignVertical="top"
-            value={body}
-          />
-
-          <AppText
-            accessibilityLiveRegion="polite"
-            style={styles.characterCount}
-            tone={error ? 'error' : 'tertiary'}
-            variant="caption"
-          >
-            {error
-              ? t('chat.live.edit.failed')
-              : t('chat.live.edit.charactersRemaining', {
-                  count: messageLimit - body.length,
-                })}
+      <ModalScreen contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <AppText accessibilityRole="header" variant="title2">
+            {t('chat.live.edit.title')}
           </AppText>
-
-          <View style={styles.actions}>
-            <AppButton
-              disabled={isSaving}
-              label={t('common.cancel')}
-              onPress={onClose}
-              style={styles.action}
-              variant="secondary"
-            />
-            <AppButton
-              disabled={!canSave}
-              label={t('chat.live.edit.save')}
-              loading={isSaving}
-              onPress={() => onSave(normalizedBody)}
-              style={styles.action}
-            />
-          </View>
+          <AppText tone="secondary" variant="footnote">
+            {t('chat.live.edit.body')}
+          </AppText>
         </View>
-      </KeyboardAvoidingView>
+
+        <TextInput
+          accessibilityLabel={t('chat.live.edit.inputLabel')}
+          autoFocus
+          editable={!isSaving}
+          maxLength={messageLimit}
+          multiline
+          onChangeText={setBody}
+          style={styles.input}
+          textAlignVertical="top"
+          value={body}
+        />
+
+        <AppText
+          accessibilityLiveRegion="polite"
+          style={styles.characterCount}
+          tone={error ? 'error' : 'tertiary'}
+          variant="caption"
+        >
+          {error
+            ? t('chat.live.edit.failed')
+            : t('chat.live.edit.charactersRemaining', {
+                count: messageLimit - body.length,
+              })}
+        </AppText>
+
+        <View style={styles.actions}>
+          <AppButton
+            disabled={isSaving}
+            label={t('common.cancel')}
+            onPress={onClose}
+            style={styles.action}
+            variant="secondary"
+          />
+          <AppButton
+            disabled={!canSave}
+            label={t('chat.live.edit.save')}
+            loading={isSaving}
+            onPress={() => onSave(normalizedBody)}
+            style={styles.action}
+          />
+        </View>
+      </ModalScreen>
     </Modal>
   );
 }
@@ -121,7 +100,7 @@ export function ChatEditMessageModal({
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: {
-    flex: 1,
+    paddingTop: spacing.xl,
     backgroundColor: lightColors.background,
     gap: spacing.xl,
     paddingHorizontal: spacing.xl,

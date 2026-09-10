@@ -1,3 +1,4 @@
+import { ModalScreen } from '@/components/modal-screen';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +38,7 @@ export function PetSwitcherModal({
       transparent={false}
       visible={visible}
     >
-      <View style={styles.container}>
+      <ModalScreen contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <AppText accessibilityRole="header" variant="title2">
             {t('pets.switcher.title')}
@@ -88,14 +89,13 @@ export function PetSwitcherModal({
           onPress={onAddPet}
           style={styles.addButton}
         />
-      </View>
+      </ModalScreen>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: lightColors.background,
     padding: spacing.xl,
     paddingTop: spacing.xxxl,
@@ -116,9 +116,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
   },
-  name: {
-    flex: 1,
-  },
+  name: { flex: 1 },
   addButton: {
     marginTop: spacing.xxl,
   },

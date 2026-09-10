@@ -27,7 +27,8 @@
     },
     "ios": {
       "icon": "./assets/branding/homeypaw-app-icon.png",
-      "supportsTablet": false,
+      "supportsTablet": true,
+      "requireFullScreen": false,
       "bundleIdentifier": "com.zhushunli.homeypaw",
       "buildNumber": "1",
       "config": {

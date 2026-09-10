@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ModalScreen } from '@/components/modal-screen';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
@@ -47,84 +47,78 @@ export function JournalDateFilterModal({
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View style={styles.headerCopy}>
-              <AppText accessibilityRole="header" variant="title1">
-                {t('journal.filter.title')}
-              </AppText>
-              <AppText tone="secondary" variant="subheadline">
-                {t('journal.filter.subtitle')}
-              </AppText>
-            </View>
-            <IconButton
-              accessibilityLabel={t('common.close')}
-              icon="close"
-              onPress={onClose}
-            />
+      <ModalScreen contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <View style={styles.headerCopy}>
+            <AppText accessibilityRole="header" variant="title1">
+              {t('journal.filter.title')}
+            </AppText>
+            <AppText tone="secondary" variant="subheadline">
+              {t('journal.filter.subtitle')}
+            </AppText>
           </View>
+          <IconButton
+            accessibilityLabel={t('common.close')}
+            icon="close"
+            onPress={onClose}
+          />
+        </View>
 
-          <View style={styles.presets}>
-            <FilterPreset
-              icon="albums-outline"
-              label={t('journal.filter.all')}
-              onPress={() => {
-                onApply(undefined);
-                onClose();
-              }}
-            />
-            <FilterPreset
-              icon="calendar-outline"
-              label={t('journal.filter.lastSevenDays')}
-              onPress={() => applyPreset(7)}
-            />
-            <FilterPreset
-              icon="calendar-number-outline"
-              label={t('journal.filter.lastThirtyDays')}
-              onPress={() => applyPreset(30)}
-            />
-          </View>
-
-          <View style={styles.customSection}>
-            <AppText variant="headline">{t('journal.filter.custom')}</AppText>
-            <View style={styles.dateFields}>
-              <JournalDateField
-                label={t('journal.filter.startDate')}
-                onChange={(startDate) =>
-                  setDraft((current) => ({ ...current, startDate }))
-                }
-                value={draft.startDate}
-              />
-              <JournalDateField
-                label={t('journal.filter.endDate')}
-                onChange={(endDate) =>
-                  setDraft((current) => ({ ...current, endDate }))
-                }
-                value={draft.endDate}
-              />
-            </View>
-            {!isValid ? (
-              <AppText
-                accessibilityRole="alert"
-                tone="error"
-                variant="footnote"
-              >
-                {t('journal.filter.invalidRange')}
-              </AppText>
-            ) : null}
-          </View>
-
-          <AppButton
-            disabled={!isValid}
-            label={t('journal.filter.apply')}
+        <View style={styles.presets}>
+          <FilterPreset
+            icon="albums-outline"
+            label={t('journal.filter.all')}
             onPress={() => {
-              onApply(draft);
+              onApply(undefined);
               onClose();
             }}
           />
+          <FilterPreset
+            icon="calendar-outline"
+            label={t('journal.filter.lastSevenDays')}
+            onPress={() => applyPreset(7)}
+          />
+          <FilterPreset
+            icon="calendar-number-outline"
+            label={t('journal.filter.lastThirtyDays')}
+            onPress={() => applyPreset(30)}
+          />
         </View>
-      </SafeAreaView>
+
+        <View style={styles.customSection}>
+          <AppText variant="headline">{t('journal.filter.custom')}</AppText>
+          <View style={styles.dateFields}>
+            <JournalDateField
+              label={t('journal.filter.startDate')}
+              onChange={(startDate) =>
+                setDraft((current) => ({ ...current, startDate }))
+              }
+              value={draft.startDate}
+            />
+            <JournalDateField
+              label={t('journal.filter.endDate')}
+              onChange={(endDate) =>
+                setDraft((current) => ({ ...current, endDate }))
+              }
+              value={draft.endDate}
+            />
+          </View>
+          {!isValid ? (
+            <AppText accessibilityRole="alert" tone="error" variant="footnote">
+              {t('journal.filter.invalidRange')}
+            </AppText>
+          ) : null}
+        </View>
+
+        <AppButton
+          disabled={!isValid}
+          label={t('journal.filter.apply')}
+          onPress={() => {
+            onApply(draft);
+            onClose();
+          }}
+        />
+      </ModalScreen>
     </Modal>
   );
 }
@@ -154,10 +148,6 @@ function FilterPreset({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: lightColors.background },
   content: {
-    width: '100%',
-    maxWidth: layout.contentMaxWidth,
-    alignSelf: 'center',
-    flex: 1,
     gap: spacing.xl,
     padding: layout.screenPadding,
   },

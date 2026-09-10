@@ -10,6 +10,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { lightColors, layout, spacing } from '@/theme';
+import {
+  contentStyles,
+  useContentLayout,
+  type ContentWidth,
+} from './content-container';
 
 type ScreenProps = PropsWithChildren<{
   contentContainerStyle?: StyleProp<ViewStyle>;
@@ -17,6 +22,8 @@ type ScreenProps = PropsWithChildren<{
   style?: StyleProp<ViewStyle>;
   keyboardShouldPersistTaps?: ScrollViewProps['keyboardShouldPersistTaps'];
   refreshControl?: ScrollViewProps['refreshControl'];
+  contentWidth?: ContentWidth;
+  modal?: boolean;
 }>;
 
 export function Screen({
@@ -26,10 +33,15 @@ export function Screen({
   style,
   keyboardShouldPersistTaps = 'handled',
   refreshControl,
+  contentWidth = 'readable',
+  modal = false,
 }: ScreenProps) {
+  const { containerStyle } = useContentLayout(contentWidth);
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right']}
+      edges={
+        modal ? ['top', 'bottom', 'left', 'right'] : ['top', 'left', 'right']
+      }
       style={[styles.safeArea, style]}
     >
       <KeyboardAvoidingView
@@ -40,6 +52,8 @@ export function Screen({
           <ScrollView
             contentContainerStyle={[
               styles.contentBase,
+              contentStyles.base,
+              containerStyle,
               styles.scrollContent,
               contentContainerStyle,
             ]}
@@ -57,6 +71,8 @@ export function Screen({
           <View
             style={[
               styles.contentBase,
+              contentStyles.base,
+              containerStyle,
               styles.staticContent,
               contentContainerStyle,
             ]}
@@ -78,9 +94,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentBase: {
-    width: '100%',
-    maxWidth: layout.contentMaxWidth,
-    alignSelf: 'center',
     paddingHorizontal: layout.screenPadding,
   },
   staticContent: {

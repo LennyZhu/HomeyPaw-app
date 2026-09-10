@@ -1,3 +1,4 @@
+import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { type Href, useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
@@ -23,7 +24,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { usePetMembers } from '@/features/family/family-queries';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
-import { lightColors, layout, radius, spacing } from '@/theme';
+import { lightColors, radius, spacing } from '@/theme';
 import type { CareLog } from '@/types/database';
 
 import { formatCareDate, formatCareTime, getCareDateKind } from './care-date';
@@ -326,9 +327,7 @@ function CareRow({
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: lightColors.background },
   list: {
-    width: '100%',
-    maxWidth: layout.contentMaxWidth,
-    alignSelf: 'center',
+    ...contentStyles.readable,
   },
   content: {
     gap: spacing.md,

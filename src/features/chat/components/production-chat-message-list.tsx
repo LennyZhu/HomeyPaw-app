@@ -1,3 +1,4 @@
+import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ImageSource } from 'expo-image';
 import { forwardRef, useRef, useState } from 'react';
@@ -484,6 +485,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   actionSheet: {
+    ...contentStyles.modal,
     backgroundColor: lightColors.surface,
     borderRadius: radius.xl,
     gap: spacing.sm,

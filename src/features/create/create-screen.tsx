@@ -1,3 +1,4 @@
+import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import {
   type Href,
@@ -207,6 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.overlay,
   },
   sheetSafeArea: {
+    ...contentStyles.modal,
     backgroundColor: lightColors.surface,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,

@@ -80,7 +80,10 @@ export function AppButton({
       ) : (
         <View style={styles.content}>
           {icon}
-          <AppText style={typography.headline} tone={palette.textTone}>
+          <AppText
+            style={[typography.headline, styles.label]}
+            tone={palette.textTone}
+          >
             {label}
           </AppText>
         </View>
@@ -98,7 +101,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     borderRadius: radius.full,
   },
+  label: { flexShrink: 1, textAlign: 'center' },
   content: {
+    maxWidth: '100%',
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,

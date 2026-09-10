@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Crypto from 'expo-crypto';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -21,7 +21,9 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useTranslation } from 'react-i18next';
 
+import { contentStyles } from '@/components/content-container';
 import { AppText } from '@/components/app-text';
+import { modalSupportedOrientations } from '@/config/orientation';
 import { lightColors, layout, radius, spacing } from '@/theme';
 
 import {
@@ -29,6 +31,7 @@ import {
   clampPhotoSticker,
   getNextPhotoRotation,
   getPhotoCropHeight,
+  getPhotoEditorDisplayScale,
   photoStickerChoices,
   removePhotoSticker,
   type PhotoCropAspect,
@@ -56,21 +59,26 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
   const { height: viewportHeight, width: viewportWidth } =
     useWindowDimensions();
   const canvasRef = useRef<View>(null);
-  const canvasWidth = Math.min(
-    layout.contentMaxWidth,
-    viewportWidth - spacing.xl * 2,
+  // Keep editing coordinates stable across rotation and multitasking resize.
+  // Only the presentation shell scales; the exported canvas stays unchanged.
+  const [canvasWidth] = useState(() =>
+    Math.max(
+      1,
+      Math.min(layout.contentMaxWidth, viewportWidth - spacing.xl * 2),
+    ),
   );
+  const [stageSize, setStageSize] = useState({
+    width: viewportWidth,
+    height: viewportHeight * 0.57,
+  });
   const minimumCanvasHeight = Math.max(176, canvasWidth * 0.52);
-  const maximumCanvasHeight = Math.min(
-    viewportHeight * 0.57,
-    canvasWidth * 1.5,
-  );
+  const maximumCanvasHeight = canvasWidth * 1.5;
   const sourceHeight = Math.max(1, draft.height);
   const sourceWidth = Math.max(1, draft.width);
   const initialFreeHeight = clampPhotoEditorValue(
     canvasWidth * (sourceHeight / sourceWidth),
     minimumCanvasHeight,
-    maximumCanvasHeight,
+    Math.min(viewportHeight * 0.57, maximumCanvasHeight),
   );
   const [aspect, setAspect] = useState<PhotoCropAspect>('free');
   const [freeHeight, setFreeHeight] = useState(initialFreeHeight);
@@ -90,6 +98,12 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
     minimumHeight: minimumCanvasHeight,
     width: canvasWidth,
   });
+  const displayScale = getPhotoEditorDisplayScale(
+    canvasWidth,
+    canvasHeight,
+    stageSize.width - spacing.xl * 2,
+    stageSize.height - layout.minimumTouchTarget - spacing.md,
+  );
   const setFreeCropHeight = (nextHeight: number) => {
     const height = clampPhotoEditorValue(
       nextHeight,
@@ -110,7 +124,7 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
       scheduleOnRN(
         setFreeCropHeight,
         clampPhotoEditorValue(
-          resizeStartHeight.value + event.translationY,
+          resizeStartHeight.value + event.translationY / displayScale,
           minimumCanvasHeight,
           maximumCanvasHeight,
         ),
@@ -188,19 +202,27 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
     <Modal
       animationType="slide"
       onRequestClose={isExporting ? undefined : onCancel}
+      supportedOrientations={modalSupportedOrientations}
       presentationStyle="fullScreen"
       visible
     >
       <SafeAreaProvider>
-        <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+        <SafeAreaView
+          edges={['top', 'bottom', 'left', 'right']}
+          style={styles.safeArea}
+        >
           <StatusBar style="light" />
-          <View style={styles.topBar}>
+          <View style={[contentStyles.readable, styles.topBar]}>
             <EditorTextButton
               disabled={isExporting}
               label={t('common.cancel')}
               onPress={onCancel}
             />
-            <AppText tone="onPrimary" variant="headline">
+            <AppText
+              style={styles.editorTitle}
+              tone="onPrimary"
+              variant="headline"
+            >
               {t('posts.photoEditor.title')}
             </AppText>
             <EditorTextButton
@@ -211,49 +233,74 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
             />
           </View>
 
-          <View style={styles.stage}>
-            <View style={styles.canvasShell}>
+          <View
+            style={styles.stage}
+            onLayout={({ nativeEvent }) => setStageSize(nativeEvent.layout)}
+          >
+            <View
+              style={{
+                width: canvasWidth * displayScale,
+                height: canvasHeight * displayScale + layout.minimumTouchTarget,
+              }}
+            >
               <View
-                collapsable={false}
-                ref={canvasRef}
                 style={[
-                  styles.canvas,
-                  { height: canvasHeight, width: canvasWidth },
+                  styles.canvasShell,
+                  {
+                    width: canvasWidth,
+                    height: canvasHeight,
+                    transform: [{ scale: displayScale }],
+                    transformOrigin: 'top left',
+                  },
                 ]}
               >
-                <EditablePhotoLayer
-                  canvasHeight={canvasHeight}
-                  canvasWidth={canvasWidth}
-                  key={`${rotation}-${canvasWidth}-${canvasHeight}`}
-                  onError={() => {
-                    setIsImageReady(false);
-                    setError(t('posts.photoEditor.errors.unsupported'));
-                  }}
-                  onReady={() => setIsImageReady(true)}
-                  rotation={rotation}
-                  sourceHeight={sourceHeight}
-                  sourceWidth={sourceWidth}
-                  uri={draft.uri}
-                />
-                {stickers.map((sticker) => (
-                  <EditableSticker
+                <View
+                  collapsable={false}
+                  ref={canvasRef}
+                  style={[
+                    styles.canvas,
+                    { height: canvasHeight, width: canvasWidth },
+                  ]}
+                >
+                  <EditablePhotoLayer
                     canvasHeight={canvasHeight}
                     canvasWidth={canvasWidth}
-                    exporting={isExporting}
-                    key={sticker.id}
-                    onChange={updateSticker}
-                    onSelect={setSelectedStickerId}
-                    selected={selectedStickerId === sticker.id}
-                    sticker={sticker}
+                    displayScale={displayScale}
+                    key={`${rotation}-${canvasWidth}-${canvasHeight}`}
+                    onError={() => {
+                      setIsImageReady(false);
+                      setError(t('posts.photoEditor.errors.unsupported'));
+                    }}
+                    onReady={() => setIsImageReady(true)}
+                    rotation={rotation}
+                    sourceHeight={sourceHeight}
+                    sourceWidth={sourceWidth}
+                    uri={draft.uri}
                   />
-                ))}
+                  {stickers.map((sticker) => (
+                    <EditableSticker
+                      canvasHeight={canvasHeight}
+                      canvasWidth={canvasWidth}
+                      exporting={isExporting}
+                      displayScale={displayScale}
+                      key={sticker.id}
+                      onChange={updateSticker}
+                      onSelect={setSelectedStickerId}
+                      selected={selectedStickerId === sticker.id}
+                      sticker={sticker}
+                    />
+                  ))}
+                </View>
               </View>
               {tool === 'crop' && aspect === 'free' ? (
                 <GestureDetector gesture={resizeGesture}>
                   <View
                     accessibilityLabel={t('posts.photoEditor.resizeCrop')}
                     accessibilityRole="adjustable"
-                    style={styles.cropHandleTouch}
+                    style={[
+                      styles.cropHandleTouch,
+                      { top: canvasHeight * displayScale },
+                    ]}
                   >
                     <View style={styles.cropHandle} />
                   </View>
@@ -275,7 +322,11 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
             ) : null}
           </View>
 
-          <View style={styles.bottomPanel}>
+          <ScrollView
+            style={[contentStyles.readable, styles.bottomPanel]}
+            contentContainerStyle={styles.bottomContent}
+            bounces={false}
+          >
             {tool === 'crop' ? (
               <View style={styles.toolOptions}>
                 <View style={styles.aspectRow}>
@@ -384,7 +435,7 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
                 selected={tool === 'sticker'}
               />
             </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </SafeAreaProvider>
     </Modal>
@@ -394,6 +445,7 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
 function EditablePhotoLayer({
   canvasHeight,
   canvasWidth,
+  displayScale,
   onError,
   onReady,
   rotation,
@@ -403,6 +455,7 @@ function EditablePhotoLayer({
 }: {
   canvasHeight: number;
   canvasWidth: number;
+  displayScale: number;
   onError: () => void;
   onReady: () => void;
   rotation: 0 | 90 | 180 | 270;
@@ -446,12 +499,12 @@ function EditablePhotoLayer({
     })
     .onUpdate((event) => {
       offsetX.value = clampPhotoEditorValue(
-        startOffsetX.value + event.translationX,
+        startOffsetX.value + event.translationX / displayScale,
         -limitX(zoom.value),
         limitX(zoom.value),
       );
       offsetY.value = clampPhotoEditorValue(
-        startOffsetY.value + event.translationY,
+        startOffsetY.value + event.translationY / displayScale,
         -limitY(zoom.value),
         limitY(zoom.value),
       );
@@ -513,6 +566,7 @@ function EditableSticker({
   canvasHeight,
   canvasWidth,
   exporting,
+  displayScale,
   onChange,
   onSelect,
   selected,
@@ -521,6 +575,7 @@ function EditableSticker({
   canvasHeight: number;
   canvasWidth: number;
   exporting: boolean;
+  displayScale: number;
   onChange: (id: string, next: PhotoSticker) => void;
   onSelect: (id: string) => void;
   selected: boolean;
@@ -552,12 +607,12 @@ function EditableSticker({
     .onUpdate((event) => {
       const padding = 28 * scale.value;
       x.value = clampPhotoEditorValue(
-        startX.value + event.translationX,
+        startX.value + event.translationX / displayScale,
         padding,
         canvasWidth - padding,
       );
       y.value = clampPhotoEditorValue(
-        startY.value + event.translationY,
+        startY.value + event.translationY / displayScale,
         padding,
         canvasHeight - padding,
       );
@@ -589,6 +644,12 @@ function EditableSticker({
     if (success) scheduleOnRN(select);
   });
   const gesture = Gesture.Simultaneous(pan, pinch, rotate, tap);
+  useEffect(() => {
+    x.value = sticker.x;
+    y.value = sticker.y;
+    scale.value = sticker.scale;
+    rotation.value = sticker.rotation;
+  }, [sticker, x, y, scale, rotation]);
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: x.value - 28 },
@@ -738,6 +799,7 @@ function OptionPill({
 }
 
 const styles = StyleSheet.create({
+  editorTitle: { flexShrink: 1, textAlign: 'center' },
   safeArea: { flex: 1, backgroundColor: '#141210' },
   topBar: {
     minHeight: 56,
@@ -756,7 +818,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
+    minHeight: 80,
   },
   canvasShell: { alignItems: 'center', justifyContent: 'center' },
   canvas: {
@@ -766,7 +828,9 @@ const styles = StyleSheet.create({
   editableImage: { position: 'absolute' },
   cropHandleTouch: {
     width: 88,
-    height: 36,
+    height: layout.minimumTouchTarget,
+    position: 'absolute',
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -799,22 +863,25 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bottomPanel: {
-    minHeight: 190,
+    flexGrow: 0,
+    maxHeight: '45%',
     backgroundColor: lightColors.background,
     borderTopLeftRadius: radius.xl,
     borderTopRightRadius: radius.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
+  bottomContent: { paddingBottom: spacing.sm },
   toolOptions: { minHeight: 104, gap: spacing.sm },
   aspectRow: {
+    flexWrap: 'wrap',
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
   },
   optionPill: {
     minWidth: 56,
-    minHeight: 38,
+    minHeight: layout.minimumTouchTarget,
     alignItems: 'center',
     backgroundColor: lightColors.surfaceSecondary,
     borderRadius: radius.full,
@@ -823,6 +890,7 @@ const styles = StyleSheet.create({
   },
   optionPillSelected: { backgroundColor: lightColors.primary },
   freeCropActions: {
+    flexWrap: 'wrap',
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',

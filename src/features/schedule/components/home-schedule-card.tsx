@@ -104,7 +104,9 @@ export function HomeScheduleCard({
   return (
     <View style={styles.section}>
       <View style={styles.heading}>
-        <AppText variant="title2">{t('schedule.title')}</AppText>
+        <AppText style={styles.headingTitle} variant="title2">
+          {t('schedule.title')}
+        </AppText>
         <Pressable
           accessibilityRole="button"
           hitSlop={8}
@@ -315,8 +317,10 @@ const styles = StyleSheet.create({
   heading: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: spacing.md,
     justifyContent: 'space-between',
   },
+  headingTitle: { flex: 1 },
   seeAll: { minHeight: 44, justifyContent: 'center', paddingLeft: spacing.md },
   calendarCard: {
     backgroundColor: lightColors.surface,

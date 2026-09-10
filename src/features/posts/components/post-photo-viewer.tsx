@@ -23,6 +23,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import {
+  SafeAreaProvider,
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
@@ -30,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { IconButton } from '@/components/icon-button';
+import { modalSupportedOrientations } from '@/config/orientation';
 import { lightColors, layout, radius, spacing } from '@/theme';
 import type { PostMedia } from '@/types/database';
 
@@ -105,6 +107,15 @@ export function PostPhotoViewer({
     [],
   );
 
+  useEffect(() => {
+    if (!visible) return;
+    const frame = requestAnimationFrame(() => {
+      setIsCurrentPhotoZoomed(false);
+      listRef.current?.scrollToIndex({ animated: false, index: currentIndex });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [width, height, visible, currentIndex]);
+
   if (!visible) return null;
 
   const goToIndex = (index: number) => {
@@ -172,142 +183,150 @@ export function PostPhotoViewer({
     <Modal
       animationType="fade"
       onRequestClose={onClose}
+      supportedOrientations={modalSupportedOrientations}
       presentationStyle="fullScreen"
       visible={visible}
     >
-      <SafeAreaView
-        accessibilityViewIsModal
-        edges={['top', 'bottom']}
-        style={styles.viewer}
-      >
-        <StatusBar style="light" />
-        <IconButton
-          accessibilityLabel={t('common.close')}
-          color={lightColors.onPrimary}
-          icon="close"
-          onPress={onClose}
-          style={[styles.closeButton, { top: insets.top + spacing.md }]}
-        />
-        {canSavePostPhotoToLibrary && currentPhoto ? (
-          <Pressable
-            accessibilityLabel={
-              isSavingPhoto
-                ? t('posts.photos.saveLoadingAccessibility')
-                : t('posts.photos.saveAccessibility')
-            }
-            accessibilityRole="button"
-            accessibilityState={{
-              busy: isSavingPhoto,
-              disabled: isSavingPhoto,
-            }}
-            disabled={isSavingPhoto}
-            onPress={() => void handleSavePhoto()}
-            style={({ pressed }) => [
-              styles.saveButton,
-              { top: insets.top + spacing.md },
-              pressed && styles.pressedButton,
-            ]}
-          >
-            {isSavingPhoto ? (
-              <ActivityIndicator color={lightColors.onPrimary} size="small" />
-            ) : (
-              <Ionicons
-                color={lightColors.onPrimary}
-                name="download-outline"
-                size={20}
+      <SafeAreaProvider>
+        <SafeAreaView
+          accessibilityViewIsModal
+          edges={['top', 'bottom']}
+          style={styles.viewer}
+        >
+          <StatusBar style="light" />
+          <IconButton
+            accessibilityLabel={t('common.close')}
+            color={lightColors.onPrimary}
+            icon="close"
+            onPress={onClose}
+            style={[styles.closeButton, { top: insets.top + spacing.md }]}
+          />
+          {canSavePostPhotoToLibrary && currentPhoto ? (
+            <Pressable
+              accessibilityLabel={
+                isSavingPhoto
+                  ? t('posts.photos.saveLoadingAccessibility')
+                  : t('posts.photos.saveAccessibility')
+              }
+              accessibilityRole="button"
+              accessibilityState={{
+                busy: isSavingPhoto,
+                disabled: isSavingPhoto,
+              }}
+              disabled={isSavingPhoto}
+              onPress={() => void handleSavePhoto()}
+              style={({ pressed }) => [
+                styles.saveButton,
+                { top: insets.top + spacing.md },
+                pressed && styles.pressedButton,
+              ]}
+            >
+              {isSavingPhoto ? (
+                <ActivityIndicator color={lightColors.onPrimary} size="small" />
+              ) : (
+                <Ionicons
+                  color={lightColors.onPrimary}
+                  name="download-outline"
+                  size={20}
+                />
+              )}
+              <AppText tone="onPrimary" variant="subheadline">
+                {t('posts.photos.save')}
+              </AppText>
+            </Pressable>
+          ) : null}
+
+          <FlatList
+            data={media}
+            decelerationRate="fast"
+            extraData={{ currentIndex, mediaUrls }}
+            getItemLayout={(_, index) => ({
+              index,
+              length: width,
+              offset: width * index,
+            })}
+            horizontal
+            initialScrollIndex={clampPhotoViewerIndex(
+              initialIndex,
+              media.length,
+            )}
+            keyExtractor={(item) => item.id}
+            onMomentumScrollEnd={handleScrollEnd}
+            pagingEnabled
+            ref={listRef}
+            renderItem={({ item, index }) => (
+              <ZoomablePostPhoto
+                key={`${item.id}-${width}-${height}-${mediaUrls[item.storage_path] ?? 'pending'}`}
+                hasLoadError={hasLoadError}
+                index={index}
+                isLoading={isLoading}
+                item={item}
+                onImageError={onImageError}
+                onZoomChange={
+                  index === currentIndex ? setIsCurrentPhotoZoomed : undefined
+                }
+                total={media.length}
+                uri={mediaUrls[item.storage_path]}
+                viewportHeight={height}
+                width={width}
               />
             )}
-            <AppText tone="onPrimary" variant="subheadline">
-              {t('posts.photos.save')}
-            </AppText>
-          </Pressable>
-        ) : null}
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={!isCurrentPhotoZoomed}
+            style={styles.pages}
+          />
 
-        <FlatList
-          data={media}
-          decelerationRate="fast"
-          extraData={{ currentIndex, mediaUrls }}
-          getItemLayout={(_, index) => ({
-            index,
-            length: width,
-            offset: width * index,
-          })}
-          horizontal
-          initialScrollIndex={clampPhotoViewerIndex(initialIndex, media.length)}
-          keyExtractor={(item) => item.id}
-          onMomentumScrollEnd={handleScrollEnd}
-          pagingEnabled
-          ref={listRef}
-          renderItem={({ item, index }) => (
-            <ZoomablePostPhoto
-              key={`${item.id}-${mediaUrls[item.storage_path] ?? 'pending'}`}
-              hasLoadError={hasLoadError}
-              index={index}
-              isLoading={isLoading}
-              item={item}
-              onImageError={onImageError}
-              onZoomChange={
-                index === currentIndex ? setIsCurrentPhotoZoomed : undefined
-              }
-              total={media.length}
-              uri={mediaUrls[item.storage_path]}
-              viewportHeight={height}
-              width={width}
-            />
-          )}
-          showsHorizontalScrollIndicator={false}
-          scrollEnabled={!isCurrentPhotoZoomed}
-          style={styles.pages}
-        />
-
-        {media.length > 0 ? (
-          <View style={styles.controls}>
-            <ViewerNavigationButton
-              disabled={currentIndex === 0}
-              icon="chevron-back"
-              label={t('posts.photos.previous')}
-              onPress={() => goToIndex(currentIndex - 1)}
-            />
-            <AppText
-              accessibilityLabel={t('posts.photos.viewerPosition', {
-                position: currentIndex + 1,
-                total: media.length,
-              })}
-              tone="onPrimary"
+          {media.length > 0 ? (
+            <View
+              style={[styles.controls, { bottom: insets.bottom + spacing.md }]}
             >
-              {t('posts.photos.viewerPosition', {
-                position: currentIndex + 1,
-                total: media.length,
-              })}
-            </AppText>
-            <ViewerNavigationButton
-              disabled={currentIndex >= media.length - 1}
-              icon="chevron-forward"
-              label={t('posts.photos.next')}
-              onPress={() => goToIndex(currentIndex + 1)}
-            />
-          </View>
-        ) : null}
-        {saveFeedback ? (
-          <View
-            accessibilityLiveRegion="polite"
-            accessibilityRole="alert"
-            style={[
-              styles.saveFeedback,
-              saveFeedback.tone === 'error'
-                ? styles.saveFeedbackError
-                : styles.saveFeedbackSuccess,
-            ]}
-          >
-            <AppText
-              tone={saveFeedback.tone === 'error' ? 'onPrimary' : 'primary'}
-              variant="subheadline"
+              <ViewerNavigationButton
+                disabled={currentIndex === 0}
+                icon="chevron-back"
+                label={t('posts.photos.previous')}
+                onPress={() => goToIndex(currentIndex - 1)}
+              />
+              <AppText
+                accessibilityLabel={t('posts.photos.viewerPosition', {
+                  position: currentIndex + 1,
+                  total: media.length,
+                })}
+                tone="onPrimary"
+              >
+                {t('posts.photos.viewerPosition', {
+                  position: currentIndex + 1,
+                  total: media.length,
+                })}
+              </AppText>
+              <ViewerNavigationButton
+                disabled={currentIndex >= media.length - 1}
+                icon="chevron-forward"
+                label={t('posts.photos.next')}
+                onPress={() => goToIndex(currentIndex + 1)}
+              />
+            </View>
+          ) : null}
+          {saveFeedback ? (
+            <View
+              accessibilityLiveRegion="polite"
+              accessibilityRole="alert"
+              style={[
+                styles.saveFeedback,
+                saveFeedback.tone === 'error'
+                  ? styles.saveFeedbackError
+                  : styles.saveFeedbackSuccess,
+              ]}
             >
-              {saveFeedback.message}
-            </AppText>
-          </View>
-        ) : null}
-      </SafeAreaView>
+              <AppText
+                tone={saveFeedback.tone === 'error' ? 'onPrimary' : 'primary'}
+                variant="subheadline"
+              >
+                {saveFeedback.message}
+              </AppText>
+            </View>
+          ) : null}
+        </SafeAreaView>
+      </SafeAreaProvider>
     </Modal>
   );
 }

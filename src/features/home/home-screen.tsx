@@ -254,7 +254,9 @@ export default function HomeScreen() {
             />
             <View style={styles.petDetails}>
               <View style={styles.petNameRow}>
-                <AppText variant="title1">{pet.name}</AppText>
+                <AppText style={styles.petName} variant="title1">
+                  {pet.name}
+                </AppText>
                 <Ionicons
                   color={lightColors.textSecondary}
                   name="chevron-down"
@@ -505,7 +507,9 @@ function HomeSection({
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeading}>
-        <AppText variant="title2">{title}</AppText>
+        <AppText style={styles.sectionTitle} variant="title2">
+          {title}
+        </AppText>
         {action && onAction ? (
           <Pressable accessibilityRole="button" hitSlop={8} onPress={onAction}>
             <AppText tone="brand" variant="footnote">
@@ -685,6 +689,7 @@ const styles = StyleSheet.create({
   },
   petDetails: { flex: 1, gap: spacing.xs },
   petNameRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  petName: { flexShrink: 1 },
   companionRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -722,8 +727,10 @@ const styles = StyleSheet.create({
   sectionHeading: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: spacing.md,
     justifyContent: 'space-between',
   },
+  sectionTitle: { flex: 1 },
   partialError: { marginTop: spacing.lg },
   activityList: { gap: spacing.xs },
   activity: {

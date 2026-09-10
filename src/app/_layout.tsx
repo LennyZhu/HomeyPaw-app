@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LoadingView } from '@/components/loading-view';
 import { GlobalErrorScreen } from '@/components/global-error-screen';
 import { FeedbackProvider } from '@/components/feedback-provider';
+import { appScreenOrientation } from '@/config/orientation';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { AuthDeepLinkCoordinator } from '@/features/auth/auth-deep-link-coordinator';
 import { CareTaskNotificationCoordinator } from '@/features/reminders/care-task-notification-coordinator';
@@ -78,7 +79,12 @@ function RootNavigator() {
 
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          orientation: appScreenOrientation,
+        }}
+      >
         <Stack.Protected
           guard={Boolean(
             hasPasswordRecoveryError ||

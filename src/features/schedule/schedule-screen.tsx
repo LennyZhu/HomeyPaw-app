@@ -344,7 +344,10 @@ export default function ScheduleScreen() {
   );
 
   return (
-    <Screen contentContainerStyle={styles.screenContent}>
+    <Screen
+      contentWidth="schedule"
+      contentContainerStyle={styles.screenContent}
+    >
       {!pet && petsState.isSuccess ? (
         <View style={styles.noPetWrap}>
           {header}

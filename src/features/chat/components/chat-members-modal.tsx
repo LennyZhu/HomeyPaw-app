@@ -1,6 +1,7 @@
+import { ModalScreen } from '@/components/modal-screen';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ImageSource } from 'expo-image';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
@@ -32,7 +33,7 @@ export function ChatMembersModal({
       presentationStyle="pageSheet"
       visible={visible}
     >
-      <View style={styles.container}>
+      <ModalScreen contentContainerStyle={styles.container}>
         <View style={styles.header}>
           <View style={styles.headingCopy}>
             <AppText accessibilityRole="header" variant="title2">
@@ -52,7 +53,7 @@ export function ChatMembersModal({
           />
         </View>
 
-        <ScrollView contentContainerStyle={styles.list}>
+        <View style={styles.list}>
           {members.map((member) => (
             <View key={member.userId} style={styles.memberRow}>
               <Avatar
@@ -86,15 +87,14 @@ export function ChatMembersModal({
               ) : null}
             </View>
           ))}
-        </ScrollView>
-      </View>
+        </View>
+      </ModalScreen>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     backgroundColor: lightColors.background,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxxl,

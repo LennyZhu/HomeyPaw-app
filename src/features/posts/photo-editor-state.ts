@@ -114,3 +114,20 @@ export function getPhotoEditorExportSize(
     width: Math.max(1, Math.round(canvasWidth * scale)),
   };
 }
+
+// A stable logical canvas fits every current window without altering crop/export.
+export function getPhotoEditorDisplayScale(
+  canvasWidth: number,
+  canvasHeight: number,
+  availableWidth: number,
+  availableHeight: number,
+) {
+  return Math.max(
+    0.01,
+    Math.min(
+      1,
+      Math.max(1, availableWidth) / Math.max(1, canvasWidth),
+      Math.max(1, availableHeight) / Math.max(1, canvasHeight),
+    ),
+  );
+}

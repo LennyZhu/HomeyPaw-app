@@ -1,3 +1,4 @@
+import { useContentLayout } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
@@ -36,6 +37,7 @@ function CreateTabIcon() {
 export default function TabsLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { isWide, width, fontScale } = useContentLayout();
 
   return (
     <Tabs
@@ -44,11 +46,22 @@ export default function TabsLayout() {
         tabBarActiveTintColor: lightColors.tabActive,
         tabBarInactiveTintColor: lightColors.tabInactive,
         tabBarHideOnKeyboard: true,
+        tabBarLabelPosition: 'below-icon',
         tabBarLabelStyle: styles.label,
         tabBarStyle: [
           styles.tabBar,
           {
-            height: Math.max(60, layout.tabBarBaseHeight + insets.bottom),
+            height:
+              Math.max(60, layout.tabBarBaseHeight + insets.bottom) +
+              Math.max(0, fontScale - 1) * 14,
+            ...(isWide
+              ? {
+                  paddingHorizontal: Math.max(
+                    insets.left,
+                    (width - layout.contentMaxWidth) / 2,
+                  ),
+                }
+              : {}),
             paddingBottom: Math.max(insets.bottom, spacing.sm),
           },
         ],
