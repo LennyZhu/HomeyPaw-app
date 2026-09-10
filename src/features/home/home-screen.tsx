@@ -18,6 +18,7 @@ import {
   usePetMembers,
   usePetPostAuthors,
 } from '@/features/family/family-queries';
+import { HomeSectionHeader } from '@/features/home/components/home-section-header';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { formatDateOnly, getCompanionDays } from '@/features/pets/pet-dates';
@@ -27,11 +28,8 @@ import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { useCareTaskOccurrences } from '@/features/reminders/care-task-queries';
 import { HomeScheduleCard } from '@/features/schedule/components/home-schedule-card';
 import { invalidateCareSchedule } from '@/features/schedule/care-schedule-queries';
-import { PostMediaPreview } from '@/features/posts/components/post-media-preview';
 import {
   type PostWithMedia,
-  usePetMemory,
-  usePost,
   usePostMediaUrls,
   usePosts,
 } from '@/features/posts/post-queries';
@@ -50,7 +48,6 @@ export default function HomeScreen() {
   const postsQuery = usePosts(petId);
   const membersQuery = usePetMembers(petId);
   const authorsQuery = usePetPostAuthors(petId);
-  const memoryQuery = usePetMemory(petId);
   const [localToday, setLocalToday] = useState(getLocalDateOnly);
   const [selectedScheduleDate, setSelectedScheduleDate] =
     useState(getLocalDateOnly);
@@ -69,7 +66,6 @@ export default function HomeScreen() {
   );
   const todayCareQuery = useTodayCare(petId, localToday);
   const carePerformersQuery = useCarePerformers(petId);
-  const memoryPostQuery = usePost(memoryQuery.data?.postId ?? '');
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pet = petQuery.data ?? petsState.currentPet;
@@ -77,13 +73,12 @@ export default function HomeScreen() {
     () => postsQuery.data?.pages[0]?.posts.slice(0, 3) ?? [],
     [postsQuery.data],
   );
-  const memoryPost = memoryPostQuery.data ?? null;
   const previewPaths = useMemo(
     () =>
-      [...recentPosts, ...(memoryPost ? [memoryPost] : [])].flatMap((post) =>
+      recentPosts.flatMap((post) =>
         post.post_media.slice(0, 4).map((media) => media.storage_path),
       ),
-    [memoryPost, recentPosts],
+    [recentPosts],
   );
   const mediaUrlsQuery = usePostMediaUrls(previewPaths);
   const lastMediaRecoveryAt = useRef(0);
@@ -133,8 +128,6 @@ export default function HomeScreen() {
       postsQuery.refetch(),
       membersQuery.refetch(),
       authorsQuery.refetch(),
-      memoryQuery.refetch(),
-      memoryPostQuery.refetch(),
       todayCareQuery.refetch(),
       carePerformersQuery.refetch(),
       reminderQuery.refetch(),
@@ -169,15 +162,65 @@ export default function HomeScreen() {
       }
       scroll
     >
-      <View style={styles.topBar}>
-        <View style={styles.greetingBlock}>
-          <AppText accessibilityRole="header" variant="largeTitle">
-            {t(getGreetingKey())}
-          </AppText>
-          <AppText tone="secondary" variant="subheadline">
-            {t('home.greetingSubtitle')}
-          </AppText>
-        </View>
+      <View style={styles.petHeader}>
+        {pet ? (
+          <Pressable
+            accessibilityLabel={t('home.changePet')}
+            accessibilityRole="button"
+            onPress={() => setIsSwitcherOpen(true)}
+            style={({ pressed }) => [
+              styles.petIdentity,
+              pressed && styles.pressed,
+            ]}
+          >
+            <PetAvatar
+              accessibilityLabel={t('pets.avatar.accessibility', {
+                name: pet.name,
+              })}
+              avatarPath={pet.avatar_path}
+              name={pet.name}
+              size={82}
+            />
+            <View style={styles.petDetails}>
+              <View style={styles.petNameRow}>
+                <AppText
+                  numberOfLines={2}
+                  style={styles.petName}
+                  variant="title1"
+                >
+                  {pet.name}
+                </AppText>
+                <Ionicons
+                  color={lightColors.textSecondary}
+                  name="chevron-down"
+                  size={20}
+                  style={styles.petSwitcherIcon}
+                />
+              </View>
+              <AppText tone="secondary" variant="subheadline">
+                {getPetSummaryLabel(pet, t)}
+              </AppText>
+              {companionDays !== null && companionDays > 0 ? (
+                <View style={styles.companionRow}>
+                  <Ionicons
+                    color={lightColors.secondary}
+                    name="heart-outline"
+                    size={16}
+                  />
+                  <AppText tone="secondary" variant="footnote">
+                    {t('home.companionDays', {
+                      days: new Intl.NumberFormat(i18n.language).format(
+                        companionDays,
+                      ),
+                    })}
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
+          </Pressable>
+        ) : (
+          <View style={styles.petHeaderSpacer} />
+        )}
         <View style={styles.reminderButton}>
           <IconButton
             accessibilityLabel={
@@ -238,56 +281,6 @@ export default function HomeScreen() {
 
       {pet ? (
         <>
-          <Pressable
-            accessibilityLabel={t('home.changePet')}
-            accessibilityRole="button"
-            onPress={() => setIsSwitcherOpen(true)}
-            style={({ pressed }) => [styles.petHero, pressed && styles.pressed]}
-          >
-            <PetAvatar
-              accessibilityLabel={t('pets.avatar.accessibility', {
-                name: pet.name,
-              })}
-              avatarPath={pet.avatar_path}
-              name={pet.name}
-              size={82}
-            />
-            <View style={styles.petDetails}>
-              <View style={styles.petNameRow}>
-                <AppText style={styles.petName} variant="title1">
-                  {pet.name}
-                </AppText>
-                <Ionicons
-                  color={lightColors.textSecondary}
-                  name="chevron-down"
-                  size={20}
-                />
-              </View>
-              <AppText tone="secondary" variant="subheadline">
-                {getPetSummaryLabel(pet, t)}
-              </AppText>
-            </View>
-          </Pressable>
-
-          {companionDays !== null ? (
-            <View style={styles.companionRow}>
-              <View style={styles.companionIcon}>
-                <Ionicons
-                  color={lightColors.secondary}
-                  name="heart-outline"
-                  size={20}
-                />
-              </View>
-              <AppText variant="headline">
-                {t('home.companionDays', {
-                  days: new Intl.NumberFormat(i18n.language).format(
-                    companionDays,
-                  ),
-                })}
-              </AppText>
-            </View>
-          ) : null}
-
           <HomeSection
             action={t('common.seeAll')}
             onAction={() => router.push('/care')}
@@ -333,8 +326,7 @@ export default function HomeScreen() {
           authorsQuery.isError ||
           todayCareQuery.isError ||
           carePerformersQuery.isError ||
-          reminderQuery.isError ||
-          memoryQuery.isError ? (
+          reminderQuery.isError ? (
             <AppText
               style={styles.partialError}
               tone="error"
@@ -345,7 +337,7 @@ export default function HomeScreen() {
           ) : null}
 
           <HomeSection
-            action={recentPosts.length > 0 ? t('common.seeAll') : undefined}
+            action={t('common.seeAll')}
             onAction={() => router.push('/journal')}
             title={t('home.recentActivity')}
           >
@@ -366,53 +358,6 @@ export default function HomeScreen() {
               </View>
             ) : (
               <AppText tone="secondary">{t('home.noActivity')}</AppText>
-            )}
-          </HomeSection>
-
-          <HomeSection
-            title={
-              memoryQuery.data?.kind === 'on_this_day'
-                ? t('home.memory.onThisDay')
-                : t('home.memory.recent')
-            }
-          >
-            {memoryQuery.isPending ||
-            (memoryQuery.data && memoryPostQuery.isPending) ? (
-              <SectionSkeleton />
-            ) : memoryPost ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push(`/posts/${memoryPost.id}` as Href)}
-                style={({ pressed }) => [
-                  styles.memory,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={styles.memoryMeta}>
-                  <Ionicons
-                    color={lightColors.secondary}
-                    name="sparkles-outline"
-                    size={18}
-                  />
-                  <AppText tone="secondary" variant="footnote">
-                    {memoryQuery.data?.kind === 'on_this_day'
-                      ? t('home.memory.yearsAgo', {
-                          count: memoryQuery.data.yearsAgo ?? 1,
-                        })
-                      : formatDateOnly(memoryPost.event_date, i18n.language)}
-                  </AppText>
-                </View>
-                <PostMediaPreview
-                  media={memoryPost.post_media}
-                  mediaUrls={mediaUrlsQuery.data ?? {}}
-                  onImageError={recoverMediaUrls}
-                />
-                {memoryPost.content ? (
-                  <AppText numberOfLines={3}>{memoryPost.content}</AppText>
-                ) : null}
-              </Pressable>
-            ) : (
-              <AppText tone="secondary">{t('home.memory.empty')}</AppText>
             )}
           </HomeSection>
 
@@ -466,13 +411,6 @@ export default function HomeScreen() {
             )}
           </HomeSection>
 
-          <AppButton
-            label={t('home.viewJournal')}
-            onPress={() => router.push('/journal')}
-            style={styles.journalButton}
-            variant="secondary"
-          />
-
           <PetSwitcherModal
             currentPetId={petId}
             onAddPet={() => {
@@ -506,18 +444,7 @@ function HomeSection({
 }) {
   return (
     <View style={styles.section}>
-      <View style={styles.sectionHeading}>
-        <AppText style={styles.sectionTitle} variant="title2">
-          {title}
-        </AppText>
-        {action && onAction ? (
-          <Pressable accessibilityRole="button" hitSlop={8} onPress={onAction}>
-            <AppText tone="brand" variant="footnote">
-              {action}
-            </AppText>
-          </Pressable>
-        ) : null}
-      </View>
+      <HomeSectionHeader action={action} onAction={onAction} title={title} />
       {children}
     </View>
   );
@@ -639,21 +566,15 @@ function SectionSkeleton() {
   );
 }
 
-function getGreetingKey() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'home.greetings.morning';
-  if (hour < 18) return 'home.greetings.afternoon';
-  return 'home.greetings.evening';
-}
-
 const styles = StyleSheet.create({
-  screenContent: { paddingBottom: spacing.huge, paddingTop: spacing.md },
-  topBar: {
+  screenContent: { paddingBottom: spacing.huge, paddingTop: spacing.sm },
+  petHeader: {
     alignItems: 'center',
     flexDirection: 'row',
+    gap: spacing.md,
     justifyContent: 'space-between',
   },
-  greetingBlock: { flex: 1, gap: spacing.xs, paddingRight: spacing.md },
+  petHeaderSpacer: { flex: 1 },
   reminderButton: { position: 'relative' },
   reminderBadge: {
     minWidth: 20,
@@ -680,29 +601,26 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     marginTop: spacing.huge,
   },
-  petHero: {
+  petIdentity: {
     alignItems: 'center',
+    flex: 1,
     flexDirection: 'row',
-    gap: spacing.lg,
-    marginTop: spacing.xxxl,
+    gap: spacing.md,
     paddingVertical: spacing.sm,
   },
   petDetails: { flex: 1, gap: spacing.xs },
-  petNameRow: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
+  petNameRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: spacing.xs,
+  },
   petName: { flexShrink: 1 },
+  petSwitcherIcon: { marginTop: spacing.xs },
   companionRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.xl,
-  },
-  companionIcon: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    backgroundColor: lightColors.secondarySoft,
-    borderRadius: radius.full,
-    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingTop: spacing.xxs,
   },
   careList: { gap: spacing.xs },
   careRow: {
@@ -723,14 +641,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   careCopy: { flex: 1, gap: spacing.xxs },
-  section: { gap: spacing.md, marginTop: spacing.xxxl },
-  sectionHeading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-  },
-  sectionTitle: { flex: 1 },
+  section: { gap: spacing.md, marginTop: spacing.xxl },
   partialError: { marginTop: spacing.lg },
   activityList: { gap: spacing.xs },
   activity: {
@@ -757,13 +668,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   activityCopy: { flex: 1, gap: spacing.xs },
-  memory: {
-    backgroundColor: lightColors.surface,
-    borderRadius: radius.lg,
-    gap: spacing.md,
-    padding: spacing.md,
-  },
-  memoryMeta: { alignItems: 'center', flexDirection: 'row', gap: spacing.sm },
   familyRow: {
     minHeight: 72,
     alignItems: 'center',
@@ -785,7 +689,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   familyCopy: { flex: 1, gap: spacing.xs },
-  journalButton: { marginTop: spacing.xl },
   skeletonWrap: { gap: spacing.lg, marginTop: spacing.xxxl },
   skeleton: {
     backgroundColor: lightColors.surfaceSecondary,

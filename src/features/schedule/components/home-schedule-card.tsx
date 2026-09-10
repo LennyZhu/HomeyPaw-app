@@ -9,6 +9,7 @@ import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
 import { useAuth } from '@/features/auth/auth-context';
+import { HomeSectionHeader } from '@/features/home/components/home-section-header';
 import { lightColors, radius, spacing } from '@/theme';
 
 import {
@@ -103,25 +104,14 @@ export function HomeScheduleCard({
 
   return (
     <View style={styles.section}>
-      <View style={styles.heading}>
-        <AppText style={styles.headingTitle} variant="title2">
-          {t('schedule.title')}
-        </AppText>
-        <Pressable
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => openSchedule()}
-          style={styles.seeAll}
-        >
-          <AppText tone="brand" variant="footnote">
-            {t('schedule.seeAll')}
-          </AppText>
-        </Pressable>
-      </View>
+      <HomeSectionHeader
+        action={t('schedule.seeAll')}
+        onAction={() => openSchedule()}
+        title={t('schedule.title')}
+      />
 
       <View style={styles.calendarCard}>
         <ScheduleMonthCalendar
-          fixedSixWeeks
           items={scheduleQuery.data ?? []}
           month={range.start}
           onSelectDate={setSelectedDate}
@@ -313,15 +303,7 @@ export function HomeScheduleCard({
 }
 
 const styles = StyleSheet.create({
-  section: { gap: spacing.md, marginTop: spacing.xxxl },
-  heading: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-  },
-  headingTitle: { flex: 1 },
-  seeAll: { minHeight: 44, justifyContent: 'center', paddingLeft: spacing.md },
+  section: { gap: spacing.md, marginTop: spacing.xxl },
   calendarCard: {
     backgroundColor: lightColors.surface,
     borderRadius: radius.lg,
