@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
+import { Avatar } from '@/components/avatar';
 import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
@@ -18,6 +19,7 @@ import {
 import { formatDateOnly } from '@/features/pets/pet-dates';
 import { lightColors, radius, spacing } from '@/theme';
 
+import { PostActionsModal } from './components/post-actions-modal';
 import { PostPhotoViewer } from './components/post-photo-viewer';
 import { useDeletePost, usePost, usePostMediaUrls } from './post-queries';
 
@@ -29,6 +31,7 @@ export default function PostDetailScreen() {
   const postQuery = usePost(id);
   const deletePost = useDeletePost();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [actionsVisible, setActionsVisible] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const paths =
     postQuery.data?.post_media.map((item) => item.storage_path) ?? [];
@@ -112,6 +115,17 @@ export default function PostDetailScreen() {
   const authorName =
     authorsQuery.data?.find((author) => author.userId === post.author_id)
       ?.displayName ?? t('family.members.formerMember');
+  const authorMember = membersQuery.data?.find(
+    (member) => member.userId === post.author_id,
+  );
+  const authorDate = formatDateOnly(post.event_date, i18n.language);
+  const authorTime = new Intl.DateTimeFormat(i18n.language, {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(post.created_at));
+  const authorAvatarLabel = t('posts.actions.authorAvatar', {
+    name: authorName,
+  });
   const isAuthor = post.author_id === user?.id;
   const isOwner = membersQuery.data?.some(
     (member) => member.userId === user?.id && member.role === 'owner',
@@ -126,27 +140,7 @@ export default function PostDetailScreen() {
       }
       return;
     }
-
-    Alert.alert(t('posts.actions.title'), undefined, [
-      ...(isAuthor
-        ? [
-            {
-              onPress: () => router.push(`/posts/${post.id}/edit` as Href),
-              text: t('common.edit'),
-            },
-          ]
-        : []),
-      ...(canDelete
-        ? [
-            {
-              onPress: confirmDelete,
-              style: 'destructive' as const,
-              text: t('posts.delete.action'),
-            },
-          ]
-        : []),
-      { style: 'cancel' as const, text: t('common.cancel') },
-    ]);
+    setActionsVisible(true);
   };
 
   return (
@@ -166,30 +160,80 @@ export default function PostDetailScreen() {
         ) : null}
       </View>
 
-      <View style={styles.metaRow}>
-        <AppText tone="secondary" variant="subheadline">
-          {t('posts.authorWithDate', {
-            author: authorName,
-            date: formatDateOnly(post.event_date, i18n.language),
-            time: new Intl.DateTimeFormat(i18n.language, {
-              hour: '2-digit',
-              minute: '2-digit',
-            }).format(new Date(post.created_at)),
-          })}
-        </AppText>
+      <View style={styles.authorHeader}>
+        <View
+          accessibilityLabel={authorAvatarLabel}
+          accessibilityRole="image"
+          accessible
+        >
+          <Avatar
+            accessibilityLabel={authorAvatarLabel}
+            name={authorName}
+            size={40}
+            source={
+              authorMember?.avatarUrl
+                ? { uri: authorMember.avatarUrl }
+                : undefined
+            }
+          />
+        </View>
+        <View style={styles.authorCopy}>
+          <AppText
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            style={styles.authorName}
+            variant="headline"
+          >
+            {authorName}
+          </AppText>
+          <AppText tone="secondary" variant="footnote">
+            {authorDate} · {authorTime}
+          </AppText>
+        </View>
         {post.tag ? (
           <View style={styles.tag}>
-            <AppText tone="brand">{t(`posts.tags.${post.tag}`)}</AppText>
+            <AppText tone="brand" variant="footnote">
+              {t(`posts.tags.${post.tag}`)}
+            </AppText>
           </View>
         ) : null}
       </View>
 
-      {post.post_media.length > 0 ? (
+      {post.post_media.length === 1 ? (
+        <Pressable
+          accessibilityLabel={t('posts.photos.openFullscreenPosition', {
+            position: 1,
+            total: 1,
+          })}
+          accessibilityRole="button"
+          onPress={() => setViewerIndex(0)}
+          style={({ pressed }) => [
+            styles.singlePhotoWrap,
+            {
+              aspectRatio:
+                post.post_media[0]!.width /
+                Math.max(post.post_media[0]!.height, 1),
+            },
+            pressed && styles.photoPressed,
+          ]}
+        >
+          <Image
+            cachePolicy="memory-disk"
+            contentFit="contain"
+            onError={recoverMediaUrls}
+            recyclingKey={post.post_media[0]!.id}
+            source={urlsQuery.data?.[post.post_media[0]!.storage_path] ?? null}
+            style={styles.singlePhoto}
+            transition={180}
+          />
+        </Pressable>
+      ) : post.post_media.length > 1 ? (
         <View style={styles.photoGrid}>
           {post.post_media.map((media, index) => (
             <Pressable
-              accessibilityLabel={t('posts.photos.openFullscreen', {
+              accessibilityLabel={t('posts.photos.openFullscreenPosition', {
                 position: index + 1,
+                total: post.post_media.length,
               })}
               accessibilityRole="button"
               key={media.id}
@@ -210,7 +254,11 @@ export default function PostDetailScreen() {
         </View>
       ) : null}
 
-      {post.content ? <AppText variant="body">{post.content}</AppText> : null}
+      {post.content ? (
+        <AppText style={styles.body} variant="body">
+          {post.content}
+        </AppText>
+      ) : null}
       {post.location_name ? (
         <View style={styles.locationRow}>
           <Ionicons
@@ -223,6 +271,21 @@ export default function PostDetailScreen() {
       ) : null}
 
       {deleteError ? <AppText tone="error">{deleteError}</AppText> : null}
+
+      <PostActionsModal
+        canDelete={canDelete}
+        canEdit={isAuthor}
+        onCancel={() => setActionsVisible(false)}
+        onDelete={() => {
+          setActionsVisible(false);
+          confirmDelete();
+        }}
+        onEdit={() => {
+          setActionsVisible(false);
+          router.push(`/posts/${post.id}/edit` as Href);
+        }}
+        visible={actionsVisible}
+      />
 
       {viewerIndex !== null ? (
         <PostPhotoViewer
@@ -251,16 +314,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  metaRow: {
+  authorHeader: {
+    width: '100%',
+    maxWidth: 640,
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  authorCopy: {
+    minWidth: 0,
+    flex: 1,
+    gap: spacing.xs,
+  },
+  authorName: {
+    minWidth: 0,
+    flexShrink: 1,
   },
   tag: {
     backgroundColor: lightColors.primarySoft,
     borderRadius: radius.full,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    flexShrink: 0,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  singlePhotoWrap: {
+    width: '100%',
+    backgroundColor: lightColors.surfaceSecondary,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  singlePhoto: {
+    width: '100%',
+    height: '100%',
   },
   photoGrid: {
     flexDirection: 'row',
@@ -275,6 +360,8 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: radius.md,
   },
+  photoPressed: { opacity: 0.76 },
+  body: { width: '100%', maxWidth: 640 },
   locationRow: {
     alignItems: 'center',
     flexDirection: 'row',

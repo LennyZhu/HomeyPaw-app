@@ -251,6 +251,7 @@
       "selectionError": "We couldn't read the selected photos. Please try again.",
       "openSettings": "Open system settings",
       "openFullscreen": "View photo {{position}} full screen",
+      "openFullscreenPosition": "View photo {{position}} of {{total}} full screen",
       "fullscreen": "Full-screen photo {{position}}",
       "previous": "Previous photo",
       "next": "Next photo",
@@ -316,10 +317,13 @@
     "delete": {
       "title": "Delete this journal entry?",
       "body": "The entry and its photos will be permanently deleted. This cannot be undone.",
-      "action": "Delete entry"
+      "action": "Delete Journal"
     },
     "actions": {
-      "title": "Journal actions"
+      "title": "Journal actions",
+      "edit": "Edit Journal",
+      "authorAvatar": "{{name}}'s avatar",
+      "deleteHint": "Opens a confirmation before permanently deleting this journal entry."
     },
     "loading": {
       "detail": "Loading journal entry…",

@@ -251,6 +251,7 @@
       "selectionError": "暫時無法讀取所選相片，請再試一次。",
       "openSettings": "開啟系統設定",
       "openFullscreen": "全螢幕查看第 {{position}} 張相片",
+      "openFullscreenPosition": "全螢幕查看第 {{position}} 張相片，共 {{total}} 張",
       "fullscreen": "全螢幕相片 {{position}}",
       "previous": "上一張相片",
       "next": "下一張相片",
@@ -319,7 +320,10 @@
       "action": "刪除日記"
     },
     "actions": {
-      "title": "日記操作"
+      "title": "日記操作",
+      "edit": "編輯日記",
+      "authorAvatar": "{{name}}的頭像",
+      "deleteHint": "開啟確認提示後永久刪除這篇日記。"
     },
     "loading": {
       "detail": "正在載入日記…",
