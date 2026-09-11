@@ -62,6 +62,7 @@ function RootNavigator() {
   const {
     hasPasswordRecoveryError,
     isPasswordRecovery,
+    isProfileSetupPending,
     isProcessingAuthCallback,
     isRestoring,
     session,
@@ -99,7 +100,23 @@ function RootNavigator() {
         </Stack.Protected>
         <Stack.Protected
           guard={Boolean(
-            session && !isPasswordRecovery && !isProcessingAuthCallback,
+            session &&
+            !isPasswordRecovery &&
+            !isProcessingAuthCallback &&
+            isProfileSetupPending,
+          )}
+        >
+          <Stack.Screen
+            name="profile-setup"
+            options={{ gestureEnabled: false }}
+          />
+        </Stack.Protected>
+        <Stack.Protected
+          guard={Boolean(
+            session &&
+            !isPasswordRecovery &&
+            !isProcessingAuthCallback &&
+            !isProfileSetupPending,
           )}
         >
           <Stack.Screen name="(tabs)" />
@@ -120,7 +137,8 @@ function RootNavigator() {
             __DEV__ &&
             session &&
             !isPasswordRecovery &&
-            !isProcessingAuthCallback,
+            !isProcessingAuthCallback &&
+            !isProfileSetupPending,
           )}
         >
           <Stack.Screen name="chat-preview" />

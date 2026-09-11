@@ -13,7 +13,7 @@ import { AppText } from '@/components/app-text';
 import { lightColors, layout, spacing } from '@/theme';
 
 type AuthScreenProps = PropsWithChildren<{
-  subtitle: string;
+  subtitle?: string;
   title: string;
   footer?: ReactNode;
 }>;
@@ -45,9 +45,11 @@ export function AuthScreen({
             <AppText accessibilityRole="header" variant="largeTitle">
               {title}
             </AppText>
-            <AppText style={styles.subtitle} tone="secondary">
-              {subtitle}
-            </AppText>
+            {subtitle ? (
+              <AppText style={styles.subtitle} tone="secondary">
+                {subtitle}
+              </AppText>
+            ) : null}
           </View>
 
           <View style={styles.form}>{children}</View>

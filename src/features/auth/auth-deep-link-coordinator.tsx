@@ -53,7 +53,12 @@ async function getCallbackFingerprint(url: string) {
 
 export function AuthDeepLinkCoordinator() {
   const router = useRouter();
-  const { processAuthCallback, session, showPasswordRecoveryError } = useAuth();
+  const {
+    isProfileSetupPending,
+    processAuthCallback,
+    session,
+    showPasswordRecoveryError,
+  } = useAuth();
   const handledUrl = useRef<string | null>(null);
 
   useEffect(() => {
@@ -74,7 +79,7 @@ export function AuthDeepLinkCoordinator() {
       const fingerprint = await getCallbackFingerprint(url);
       if (getConsumedCallbacks().includes(fingerprint)) {
         if (session) {
-          router.replace('/');
+          router.replace(isProfileSetupPending ? '/profile-setup' : '/');
         } else if (isRecoveryCallback) {
           showPasswordRecoveryError();
           router.replace('/reset-password');
@@ -105,7 +110,13 @@ export function AuthDeepLinkCoordinator() {
     });
 
     return () => subscription.remove();
-  }, [processAuthCallback, router, session, showPasswordRecoveryError]);
+  }, [
+    isProfileSetupPending,
+    processAuthCallback,
+    router,
+    session,
+    showPasswordRecoveryError,
+  ]);
 
   return null;
 }

@@ -25,13 +25,23 @@ import {
   type AuthCallbackKind,
   isPasswordRecoveryCallback,
 } from './auth-callback';
+import {
+  clearPendingProfileSetup,
+  hasPendingProfileSetup,
+  markPendingProfileSetup,
+} from './profile-setup-marker';
 
 type AuthContextValue = {
   hasPasswordRecoveryError: boolean;
   isConfigured: boolean;
   isProcessingAuthCallback: boolean;
   isPasswordRecovery: boolean;
+  isProfileSetupPending: boolean;
   isRestoring: boolean;
+  beginProfileSetupSignUp: () => void;
+  cancelProfileSetupSignUp: () => void;
+  completeProfileSetup: (userId: string) => void;
+  registerPendingProfileSetup: (userId: string) => void;
   processAuthCallback: (url: string) => Promise<AuthCallbackKind>;
   completePasswordRecovery: () => void;
   showPasswordRecoveryError: () => void;
@@ -69,8 +79,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [hasPasswordRecoveryError, setHasPasswordRecoveryError] =
     useState(false);
+  const [isProfileSetupPending, setIsProfileSetupPending] = useState(false);
   const [isRestoring, setIsRestoring] = useState(Boolean(supabase));
   const latestUserId = useRef<string | null>(null);
+  const profileSetupSignUpIntent = useRef(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -90,6 +102,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
 
       latestUserId.current = nextUserId;
+      const isProfileSetupSignUpSession = Boolean(
+        nextUserId && profileSetupSignUpIntent.current,
+      );
+      if (nextUserId && isProfileSetupSignUpSession) {
+        markPendingProfileSetup(nextUserId);
+        profileSetupSignUpIntent.current = false;
+      }
+      setIsProfileSetupPending(
+        Boolean(
+          nextUserId &&
+          (isProfileSetupSignUpSession || hasPendingProfileSetup(nextUserId)),
+        ),
+      );
       setSession(nextSession);
 
       if (event === 'PASSWORD_RECOVERY') {
@@ -98,6 +123,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       } else if (event === 'SIGNED_OUT') {
         setHasPasswordRecoveryError(false);
         setIsPasswordRecovery(false);
+        setIsProfileSetupPending(false);
       }
 
       if (event === 'INITIAL_SESSION') {
@@ -157,6 +183,31 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, [queryClient]);
 
+  const beginProfileSetupSignUp = useCallback(() => {
+    profileSetupSignUpIntent.current = true;
+  }, []);
+
+  const cancelProfileSetupSignUp = useCallback(() => {
+    profileSetupSignUpIntent.current = false;
+    const userId = latestUserId.current;
+    setIsProfileSetupPending(Boolean(userId && hasPendingProfileSetup(userId)));
+  }, []);
+
+  const registerPendingProfileSetup = useCallback((userId: string) => {
+    markPendingProfileSetup(userId);
+    profileSetupSignUpIntent.current = false;
+    if (latestUserId.current === userId) {
+      setIsProfileSetupPending(true);
+    }
+  }, []);
+
+  const completeProfileSetup = useCallback((userId: string) => {
+    clearPendingProfileSetup(userId);
+    if (latestUserId.current === userId) {
+      setIsProfileSetupPending(false);
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     const client = requireSupabase();
     const departingUserId = latestUserId.current;
@@ -168,6 +219,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setSession(null);
     setHasPasswordRecoveryError(false);
     setIsPasswordRecovery(false);
+    setIsProfileSetupPending(false);
+    profileSetupSignUpIntent.current = false;
     latestUserId.current = null;
     queryClient.clear();
 
@@ -204,12 +257,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
+      beginProfileSetupSignUp,
+      cancelProfileSetupSignUp,
+      completeProfileSetup,
       hasPasswordRecoveryError,
       isConfigured: isSupabaseConfigured,
       isProcessingAuthCallback,
       isPasswordRecovery,
+      isProfileSetupPending,
       isRestoring,
       processAuthCallback,
+      registerPendingProfileSetup,
       completePasswordRecovery,
       showPasswordRecoveryError,
       session,
@@ -217,12 +275,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user: session?.user ?? null,
     }),
     [
+      beginProfileSetupSignUp,
+      cancelProfileSetupSignUp,
+      completeProfileSetup,
       completePasswordRecovery,
       hasPasswordRecoveryError,
       isProcessingAuthCallback,
       isPasswordRecovery,
+      isProfileSetupPending,
       isRestoring,
       processAuthCallback,
+      registerPendingProfileSetup,
       session,
       showPasswordRecoveryError,
       signOut,

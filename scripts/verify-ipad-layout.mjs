@@ -97,11 +97,17 @@ for (const width of [768, 834, 1024, 1032, 1194, 1376]) {
 }
 const container = read('src/components/content-container.tsx');
 const screen = read('src/components/screen.tsx');
+const authScreen = read('src/features/auth/components/auth-screen.tsx');
+const profileSetup = read('src/features/auth/profile-setup-screen.tsx');
 assert(container.includes('useWindowDimensions()'));
 assert(screen.includes('useContentLayout(contentWidth)'));
 assert(screen.includes('KeyboardAvoidingView'));
 assert(screen.includes('keyboardShouldPersistTaps'));
 assert(read('src/components/modal-screen.tsx').includes('SafeAreaProvider'));
+assert(authScreen.includes('contentStyles.auth'));
+assert(authScreen.includes('KeyboardAvoidingView'));
+assert(authScreen.includes('keyboardShouldPersistTaps="handled"'));
+assert(profileSetup.includes('<AuthScreen'));
 for (const file of [
   'src/features/journal/journal-screen.tsx',
   'src/features/care/care-history-screen.tsx',

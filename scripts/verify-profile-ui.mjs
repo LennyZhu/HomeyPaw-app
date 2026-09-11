@@ -57,6 +57,7 @@ const [
   profileScreen,
   useProfile,
   editProfile,
+  profileForm,
   profileAvatar,
   authContext,
   petsScreen,
@@ -71,6 +72,7 @@ const [
   read('src/features/profile/profile-screen.tsx'),
   read('src/features/profile/use-profile.ts'),
   read('src/features/profile/edit-profile-screen.tsx'),
+  read('src/features/profile/components/profile-form.tsx'),
   read('src/features/profile/profile-avatar.ts'),
   read('src/features/auth/auth-context.tsx'),
   read('src/features/pets/pets-screen.tsx'),
@@ -117,8 +119,8 @@ console.log(
   'PASS: long email is one line with tail truncation while accessibility retains the full value.',
 );
 
-assert(editProfile.includes('profileAvatarKeys.signed(user.id, uploadedPath)'));
-assert(editProfile.includes('selectedAvatar.uri'));
+assert(profileForm.includes('profileAvatarKeys.signed(user.id, uploadedPath)'));
+assert(profileForm.includes('selectedAvatar.uri'));
 assert(
   profileAvatar.includes(
     'queryKey: profileAvatarKeys.signed(user?.id, objectPath)',
@@ -193,7 +195,8 @@ console.log(
 
 assert(joinFamily.includes('.slice(0, 8)'));
 assert(joinFamily.includes('maxLength={8}'));
-assert(editProfile.includes('await updateProfile({'));
+assert(editProfile.includes('<ProfileForm'));
+assert(profileForm.includes('await updateProfile(updates)'));
 assert(editProfile.includes('router.back()'));
 assert(aboutScreen.includes("t('about.version', { build, version })"));
 const en = JSON.parse(enText);

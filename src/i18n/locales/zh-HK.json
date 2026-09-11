@@ -85,6 +85,13 @@
       "successBody": "請使用新密碼重新登入 HomeyPaw。"
     }
   },
+  "profileSetup": {
+    "title": "完善個人資料",
+    "addPhoto": "加入相片",
+    "nickname": "暱稱",
+    "done": "完成",
+    "skip": "稍後再說"
+  },
   "tabs": {
     "home": "首頁",
     "journal": "日記",
@@ -805,6 +812,7 @@
   "profile": {
     "title": "我的",
     "avatar": "使用者頭像",
+    "avatarWithName": "{{name}}的個人頭像",
     "loading": "載入個人資料…",
     "loadError": "暫時無法載入個人資料。",
     "emailUnavailable": "未提供電郵地址",

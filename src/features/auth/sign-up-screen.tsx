@@ -21,7 +21,12 @@ import { FormMessage } from './components/form-message';
 export default function SignUpScreen() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
-  const { isConfigured } = useAuth();
+  const {
+    beginProfileSetupSignUp,
+    cancelProfileSetupSignUp,
+    isConfigured,
+    registerPendingProfileSetup,
+  } = useAuth();
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
@@ -47,6 +52,7 @@ export default function SignUpScreen() {
       ? 'en'
       : 'zh-HK';
 
+    beginProfileSetupSignUp();
     try {
       const { data, error } = await requireSupabase().auth.signUp({
         email: values.email.trim().toLowerCase(),
@@ -64,6 +70,13 @@ export default function SignUpScreen() {
         throw error;
       }
 
+      const isNewUser = Boolean(data.user?.identities?.length);
+      if (data.user && isNewUser) {
+        registerPendingProfileSetup(data.user.id);
+      } else {
+        cancelProfileSetupSignUp();
+      }
+
       if (!data.session) {
         router.replace({
           pathname: '/check-email',
@@ -71,6 +84,7 @@ export default function SignUpScreen() {
         });
       }
     } catch (error) {
+      cancelProfileSetupSignUp();
       setSubmitError(getAuthErrorMessage(error, t));
     }
   });

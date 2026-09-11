@@ -85,6 +85,13 @@
       "successBody": "Sign in to HomeyPaw again using your new password."
     }
   },
+  "profileSetup": {
+    "title": "Complete Your Profile",
+    "addPhoto": "Add Photo",
+    "nickname": "Nickname",
+    "done": "Done",
+    "skip": "Skip for Now"
+  },
   "tabs": {
     "home": "Home",
     "journal": "Journal",
@@ -805,6 +812,7 @@
   "profile": {
     "title": "Me",
     "avatar": "User profile picture",
+    "avatarWithName": "{{name}}'s profile picture",
     "loading": "Loading your profile…",
     "loadError": "We couldn't load your profile.",
     "emailUnavailable": "Email address unavailable",
