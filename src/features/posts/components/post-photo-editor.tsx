@@ -348,19 +348,26 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
                 </View>
                 {aspect === 'free' ? (
                   <View style={styles.freeCropActions}>
-                    <EditorIconButton
-                      icon="remove"
-                      label={t('posts.photoEditor.reduceCrop')}
-                      onPress={() => setFreeCropHeight(freeHeight - 24)}
-                    />
-                    <AppText tone="secondary" variant="footnote">
-                      {t('posts.photoEditor.dragCrop')}
-                    </AppText>
-                    <EditorIconButton
-                      icon="add"
-                      label={t('posts.photoEditor.increaseCrop')}
-                      onPress={() => setFreeCropHeight(freeHeight + 24)}
-                    />
+                    <View style={styles.cropCopy}>
+                      <AppText tone="secondary" variant="footnote">
+                        {t('posts.photoEditor.adjustCrop')}
+                      </AppText>
+                      <AppText tone="tertiary" variant="caption">
+                        {t('posts.photoEditor.cropGestureHint')}
+                      </AppText>
+                    </View>
+                    <View style={styles.cropButtons}>
+                      <EditorIconButton
+                        icon="remove"
+                        label={t('posts.photoEditor.reduceCrop')}
+                        onPress={() => setFreeCropHeight(freeHeight - 24)}
+                      />
+                      <EditorIconButton
+                        icon="add"
+                        label={t('posts.photoEditor.increaseCrop')}
+                        onPress={() => setFreeCropHeight(freeHeight + 24)}
+                      />
+                    </View>
                   </View>
                 ) : null}
               </View>
@@ -392,7 +399,9 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
                 </ScrollView>
                 {selectedStickerId ? (
                   <Pressable
-                    accessibilityLabel={t('posts.photoEditor.deleteSticker')}
+                    accessibilityLabel={t(
+                      'posts.photoEditor.removeStickerAccessibility',
+                    )}
                     accessibilityRole="button"
                     onPress={removeSelectedSticker}
                     style={({ pressed }) => [
@@ -403,9 +412,9 @@ export function PostPhotoEditor({ draft, onCancel, onDone }: Props) {
                     <Ionicons
                       color={lightColors.error}
                       name="trash-outline"
-                      size={20}
+                      size={18}
                     />
-                    <AppText tone="error" variant="subheadline">
+                    <AppText tone="error" variant="footnote">
                       {t('posts.photoEditor.deleteSticker')}
                     </AppText>
                   </Pressable>
@@ -872,7 +881,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   bottomContent: { paddingBottom: spacing.sm },
-  toolOptions: { minHeight: 104, gap: spacing.sm },
+  toolOptions: { minHeight: 112, gap: spacing.sm },
   aspectRow: {
     flexWrap: 'wrap',
     flexDirection: 'row',
@@ -890,12 +899,13 @@ const styles = StyleSheet.create({
   },
   optionPillSelected: { backgroundColor: lightColors.primary },
   freeCropActions: {
-    flexWrap: 'wrap',
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
+    justifyContent: 'space-between',
   },
+  cropCopy: { flex: 1, gap: 2 },
+  cropButtons: { flexDirection: 'row', gap: spacing.xs },
   editorIconButton: {
     width: layout.minimumTouchTarget,
     height: layout.minimumTouchTarget,
@@ -917,13 +927,15 @@ const styles = StyleSheet.create({
   deleteSticker: {
     minHeight: 44,
     alignItems: 'center',
-    alignSelf: 'center',
+    alignSelf: 'flex-end',
+    backgroundColor: 'rgba(183, 68, 68, 0.08)',
+    borderRadius: radius.full,
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.xs,
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
   },
-  toolPlaceholder: { minHeight: 104 },
+  toolPlaceholder: { minHeight: 112 },
   toolBar: {
     alignItems: 'center',
     borderTopColor: lightColors.border,

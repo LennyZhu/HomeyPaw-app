@@ -275,12 +275,14 @@
       "crop": "Crop",
       "rotate": "Rotate",
       "sticker": "Sticker",
-      "deleteSticker": "Delete sticker",
+      "deleteSticker": "Remove",
+      "removeStickerAccessibility": "Remove selected sticker",
       "addSticker": "Add {{sticker}} sticker",
       "resizeCrop": "Resize free crop area",
       "reduceCrop": "Reduce crop height",
       "increaseCrop": "Increase crop height",
-      "dragCrop": "Drag the handle or use the buttons",
+      "adjustCrop": "Adjust crop",
+      "cropGestureHint": "Drag to reposition and pinch to zoom",
       "aspects": {
         "free": "Free"
       },

@@ -176,11 +176,18 @@ assert(editor.includes('Gesture.Pinch()'));
 assert(editor.includes('Gesture.Rotation()'));
 assert(editor.includes('Gesture.Pan()'));
 assert(editor.includes('deleteSticker'));
+assert(editor.includes("'posts.photoEditor.removeStickerAccessibility'"));
+assert(editor.includes("t('posts.photoEditor.adjustCrop')"));
+assert(editor.includes("t('posts.photoEditor.cropGestureHint')"));
+assert(editor.includes('toolOptions: { minHeight: 112'));
+assert(editor.includes("alignSelf: 'flex-end'"));
 assert(editor.includes('exporting={isExporting}'));
 assert(editor.includes('collapsable={false}'));
 assert(viewer.includes('getCurrentPostPhoto(media, mediaUrls, currentIndex)'));
 assert(en.includes('Your original selection is unchanged'));
 assert(zh.includes('原本選擇不會被更改'));
+assert(en.includes('Drag to reposition and pinch to zoom'));
+assert(zh.includes('拖動圖片調整位置，雙指縮放'));
 console.log(
   'PASS: Camera/library composer entry, editor gestures, clean canvas export, temp cleanup, existing upload pipeline, viewer, accessibility, and localized safe errors are wired.',
 );

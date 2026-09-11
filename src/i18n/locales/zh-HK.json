@@ -275,12 +275,14 @@
       "crop": "裁剪",
       "rotate": "旋轉",
       "sticker": "貼圖",
-      "deleteSticker": "刪除貼圖",
+      "deleteSticker": "移除",
+      "removeStickerAccessibility": "移除已選取的貼圖",
       "addSticker": "加入 {{sticker}} 貼圖",
       "resizeCrop": "調整自由裁剪範圍",
       "reduceCrop": "縮短裁剪高度",
       "increaseCrop": "增加裁剪高度",
-      "dragCrop": "拖動控制點或使用按鈕",
+      "adjustCrop": "調整裁剪範圍",
+      "cropGestureHint": "拖動圖片調整位置，雙指縮放",
       "aspects": {
         "free": "自由"
       },

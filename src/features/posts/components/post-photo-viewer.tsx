@@ -276,7 +276,7 @@ export function PostPhotoViewer({
             style={styles.pages}
           />
 
-          {media.length > 0 ? (
+          {media.length > 1 ? (
             <View
               style={[styles.controls, { bottom: insets.bottom + spacing.md }]}
             >

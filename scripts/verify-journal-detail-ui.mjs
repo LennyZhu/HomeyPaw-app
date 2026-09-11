@@ -44,6 +44,7 @@ for (const behavior of [
 ]) {
   assert.ok(viewer.includes(behavior), behavior);
 }
+assert.ok(viewer.includes('{media.length > 1 ? ('));
 
 assert.ok(detail.includes('<Avatar'));
 assert.ok(detail.includes('authorMember?.avatarUrl'));

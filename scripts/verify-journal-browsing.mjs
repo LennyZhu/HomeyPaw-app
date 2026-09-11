@@ -174,6 +174,7 @@ assert(viewer.includes(': Gesture.Simultaneous(pinch, doubleTap)'));
 assert(viewer.includes('getCurrentPostPhoto(media, mediaUrls, currentIndex)'));
 assert(viewer.includes("t('posts.photos.previous')"));
 assert(viewer.includes("t('posts.photos.next')"));
+assert(viewer.includes('{media.length > 1 ? ('));
 console.log(
-  'PASS: Viewer keeps buttons and synchronizes swipe, page indicator, zoom pan, and Save to Photos through currentIndex.',
+  'PASS: Viewer hides single-photo navigation while preserving multi-photo buttons, swipe, page indicator, zoom pan, and Save to Photos through currentIndex.',
 );
