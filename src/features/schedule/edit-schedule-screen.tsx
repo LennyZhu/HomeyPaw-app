@@ -7,7 +7,7 @@ import {
   useRouter,
 } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
@@ -50,6 +50,7 @@ import {
   CareTaskOccurrencePicker,
   occurrenceKey,
 } from './components/care-task-occurrence-picker';
+import { ScheduleAssigneeSelector } from './components/schedule-assignee-selector';
 
 export default function EditScheduleScreen() {
   const params = useLocalSearchParams<{
@@ -102,13 +103,6 @@ export default function EditScheduleScreen() {
   const addTasks = useAddCareShiftTasks(petId ?? '');
   const cancelTask = useCancelCareShiftTask(petId ?? '');
   const cancelShift = useCancelCareShift(petId ?? '');
-  const currentMembers = useMemo(
-    () =>
-      (membersQuery.data ?? []).filter(
-        (member) => member.role === 'owner' || member.role === 'member',
-      ),
-    [membersQuery.data],
-  );
   const occurrences = useMemo(
     () =>
       (occurrencesQuery.data ?? []).filter(
@@ -300,37 +294,18 @@ export default function EditScheduleScreen() {
         <>
           <View style={styles.section}>
             <AppText variant="title2">{t('schedule.form.details')}</AppText>
-            {role === 'owner' ? (
-              <View style={styles.field}>
-                <AppText variant="subheadline">
-                  {t('schedule.form.assignee')}
-                </AppText>
-                <View accessibilityRole="radiogroup" style={styles.chips}>
-                  <AssigneeChip
-                    label={t('schedule.unassigned')}
-                    onPress={() => setAssigneeOverride(null)}
-                    selected={assigneeUserId === null}
-                  />
-                  {currentMembers.map((member) => (
-                    <AssigneeChip
-                      key={member.userId}
-                      label={member.displayName}
-                      onPress={() => setAssigneeOverride(member.userId)}
-                      selected={assigneeUserId === member.userId}
-                    />
-                  ))}
-                </View>
-              </View>
-            ) : (
-              <View style={styles.fixedAssignee}>
-                <Ionicons
-                  color={lightColors.secondary}
-                  name="person-circle-outline"
-                  size={22}
-                />
-                <AppText>{t('schedule.form.assignedToSelf')}</AppText>
-              </View>
-            )}
+            <ScheduleAssigneeSelector
+              currentUserId={user?.id}
+              members={membersQuery.data ?? []}
+              onChange={setAssigneeOverride}
+              role={role}
+              selectedFallback={{
+                avatarUrl: shift.assigneeAvatarUrl,
+                displayName: shift.assigneeDisplayName,
+                userId: shift.assigneeUserId,
+              }}
+              value={role === 'member' ? (user?.id ?? null) : assigneeUserId}
+            />
             <View style={styles.field}>
               <AppText variant="subheadline">{t('schedule.form.note')}</AppText>
               <TextInput
@@ -459,36 +434,6 @@ export default function EditScheduleScreen() {
   );
 }
 
-function AssigneeChip({
-  label,
-  onPress,
-  selected,
-}: {
-  label: string;
-  onPress: () => void;
-  selected: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.selectedChip,
-        pressed && styles.pressed,
-      ]}
-    >
-      {selected ? (
-        <Ionicons color={lightColors.onPrimary} name="checkmark" size={16} />
-      ) : null}
-      <AppText tone={selected ? 'onPrimary' : 'primary'} variant="subheadline">
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { gap: spacing.xl, paddingTop: spacing.md },
   header: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
@@ -502,32 +447,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { flex: 1 },
   field: { gap: spacing.sm },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
-    minHeight: 48,
-    alignItems: 'center',
-    backgroundColor: lightColors.surface,
-    borderColor: lightColors.border,
-    borderRadius: radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  selectedChip: {
-    backgroundColor: lightColors.primary,
-    borderColor: lightColors.primary,
-  },
-  fixedAssignee: {
-    minHeight: 52,
-    alignItems: 'center',
-    backgroundColor: lightColors.secondarySoft,
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
   noteInput: {
     minHeight: 112,
     backgroundColor: lightColors.surface,

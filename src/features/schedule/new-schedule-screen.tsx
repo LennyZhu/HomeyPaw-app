@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Crypto from 'expo-crypto';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -8,7 +7,7 @@ import {
   useRouter,
 } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
@@ -42,6 +41,7 @@ import {
   CareTaskOccurrencePicker,
   occurrenceKey,
 } from './components/care-task-occurrence-picker';
+import { ScheduleAssigneeSelector } from './components/schedule-assignee-selector';
 import { ScheduleDateField } from './components/schedule-date-field';
 
 function initialDate(value: string | string[] | undefined) {
@@ -116,13 +116,6 @@ export default function NewScheduleScreen() {
         selectedKeys.has(occurrenceKey(occurrence)),
       ),
     [occurrences, selectedKeys],
-  );
-  const currentMembers = useMemo(
-    () =>
-      (membersQuery.data ?? []).filter(
-        (member) => member.role === 'owner' || member.role === 'member',
-      ),
-    [membersQuery.data],
   );
   const dateError =
     !parseCalendarDate(date) || date < getLocalDateOnly()
@@ -222,35 +215,13 @@ export default function NewScheduleScreen() {
         value={date}
       />
 
-      <View style={styles.field}>
-        <AppText variant="subheadline">{t('schedule.form.assignee')}</AppText>
-        {role === 'member' ? (
-          <View style={styles.fixedAssignee}>
-            <Ionicons
-              color={lightColors.secondary}
-              name="person-circle-outline"
-              size={22}
-            />
-            <AppText>{t('schedule.form.assignedToSelf')}</AppText>
-          </View>
-        ) : (
-          <View accessibilityRole="radiogroup" style={styles.chips}>
-            <AssigneeChip
-              label={t('schedule.unassigned')}
-              onPress={() => setAssigneeUserId(null)}
-              selected={assigneeUserId === null}
-            />
-            {currentMembers.map((member) => (
-              <AssigneeChip
-                key={member.userId}
-                label={member.displayName}
-                onPress={() => setAssigneeUserId(member.userId)}
-                selected={assigneeUserId === member.userId}
-              />
-            ))}
-          </View>
-        )}
-      </View>
+      <ScheduleAssigneeSelector
+        currentUserId={user?.id}
+        members={membersQuery.data ?? []}
+        onChange={setAssigneeUserId}
+        role={role}
+        value={role === 'member' ? (user?.id ?? null) : assigneeUserId}
+      />
 
       <View style={styles.field}>
         <View style={styles.fieldHeading}>
@@ -354,69 +325,11 @@ function ScreenHeader({
   );
 }
 
-function AssigneeChip({
-  label,
-  onPress,
-  selected,
-}: {
-  label: string;
-  onPress: () => void;
-  selected: boolean;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="radio"
-      accessibilityState={{ checked: selected }}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        selected && styles.selectedChip,
-        pressed && styles.pressed,
-      ]}
-    >
-      {selected ? (
-        <Ionicons color={lightColors.onPrimary} name="checkmark" size={16} />
-      ) : null}
-      <AppText tone={selected ? 'onPrimary' : 'primary'} variant="subheadline">
-        {label}
-      </AppText>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   content: { gap: spacing.xl, paddingTop: spacing.md },
   header: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   headerTitle: { flex: 1 },
   field: { gap: spacing.sm },
-  fixedAssignee: {
-    minHeight: 52,
-    alignItems: 'center',
-    backgroundColor: lightColors.secondarySoft,
-    borderRadius: radius.md,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    padding: spacing.md,
-  },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  chip: {
-    minHeight: 48,
-    alignItems: 'center',
-    backgroundColor: lightColors.surface,
-    borderColor: lightColors.border,
-    borderRadius: radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  selectedChip: {
-    backgroundColor: lightColors.primary,
-    borderColor: lightColors.primary,
-  },
-  pressed: { opacity: 0.68 },
   fieldHeading: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
   fieldHeadingCopy: { flex: 1, gap: spacing.xxs },
   addTaskButton: { minHeight: 44, paddingHorizontal: spacing.md },

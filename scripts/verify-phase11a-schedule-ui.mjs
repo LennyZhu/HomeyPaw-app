@@ -5,6 +5,7 @@ import ts from 'typescript';
 import {
   addCalendarDays,
   buildCalendarMonth,
+  formatCalendarDate,
   getCalendarMonthRange,
   getLocalDateInTimeZone,
   getSixWeekCalendarRange,
@@ -12,6 +13,7 @@ import {
   shiftCalendarMonth,
 } from '../src/features/schedule/calendar-date.ts';
 import { getUserAvatarInitial } from '../src/components/avatar-initial.ts';
+import { getScheduleAssigneeOptions } from '../src/features/schedule/schedule-assignee-options.ts';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 const modelSource = await read('src/features/schedule/care-schedule-model.ts');
@@ -95,12 +97,59 @@ assert.deepEqual(getCalendarMonthRange('2026-12-20'), {
 assert.equal(shiftCalendarMonth('2026-12-01', 1), '2027-01-01');
 assert.equal(addCalendarDays('2024-02-28', 1), '2024-02-29');
 assert.equal(parseCalendarDate('2026-02-29'), null);
+assert.equal(formatCalendarDate('2026-09-11', 'zh-HK'), '2026年9月11日');
+assert.equal(formatCalendarDate('2026-09-11', 'en'), 'Sep 11, 2026');
 assert.equal(
   getLocalDateInTimeZone('2026-09-07T16:30:00.000Z', 'Asia/Hong_Kong'),
   '2026-09-08',
 );
 console.log(
-  'PASS: leap year, month boundaries, 6-week grid, and date-only math.',
+  'PASS: leap year, month boundaries, localized dates, 6-week grid, and date-only math.',
+);
+
+const assigneeMembers = Array.from({ length: 10 }, (_, index) => ({
+  avatarUrl: index === 0 ? 'https://example.test/avatar.jpg' : null,
+  displayName:
+    index === 9
+      ? 'A very long family member name that must remain on one line'
+      : `Member ${index + 1}`,
+  role: index === 0 ? 'owner' : 'member',
+  userId: index === 0 ? 'owner-a' : `member-${index}`,
+}));
+for (const count of [1, 5, 10]) {
+  const ownerOptions = getScheduleAssigneeOptions(
+    assigneeMembers.slice(0, count),
+    'owner',
+    'owner-a',
+  );
+  assert.equal(ownerOptions.length, count + 1);
+  assert.equal(ownerOptions[0]?.userId, null);
+}
+const memberOptions = getScheduleAssigneeOptions(
+  assigneeMembers,
+  'member',
+  'member-4',
+);
+assert.deepEqual(
+  memberOptions.map((option) => option.userId),
+  ['member-4'],
+);
+assert(
+  getScheduleAssigneeOptions(assigneeMembers, 'owner', 'owner-a').some(
+    (option) => option.userId === 'member-4',
+  ),
+);
+assert.equal(
+  getScheduleAssigneeOptions(assigneeMembers, 'viewer', 'member-4').length,
+  0,
+);
+assert.equal(
+  getScheduleAssigneeOptions(assigneeMembers, 'owner', 'owner-a').at(-1)
+    ?.displayName,
+  'A very long family member name that must remain on one line',
+);
+console.log(
+  'PASS: assignee options cover 1, 5, and 10 members, long names, and role-safe choices.',
 );
 
 assert.equal(getUserAvatarInitial(' Simulator Member '), 'S');
@@ -291,6 +340,10 @@ const [
   calendar,
   scheduleScreen,
   assigneeGroup,
+  assigneeSelector,
+  assigneeOptions,
+  scheduleDateField,
+  occurrencePicker,
   newScreen,
   editScreen,
   queries,
@@ -308,6 +361,10 @@ const [
   read('src/features/schedule/components/schedule-month-calendar.tsx'),
   read('src/features/schedule/schedule-screen.tsx'),
   read('src/features/schedule/components/schedule-assignee-group.tsx'),
+  read('src/features/schedule/components/schedule-assignee-selector.tsx'),
+  read('src/features/schedule/schedule-assignee-options.ts'),
+  read('src/features/schedule/components/schedule-date-field.native.tsx'),
+  read('src/features/schedule/components/care-task-occurrence-picker.tsx'),
   read('src/features/schedule/new-schedule-screen.tsx'),
   read('src/features/schedule/edit-schedule-screen.tsx'),
   read('src/features/schedule/care-schedule-queries.ts'),
@@ -340,12 +397,25 @@ assert(scheduleScreen.includes("AppState.addEventListener('change'"));
 assert(scheduleScreen.includes('<RefreshControl'));
 assert(scheduleScreen.includes('groupCareScheduleByAssignee'));
 assert(scheduleScreen.includes('setGroupExpansion'));
+assert(scheduleScreen.includes('<ScheduleMonthCalendar'));
+assert(scheduleScreen.includes('fixedSixWeeks'));
+assert(!scheduleScreen.includes('icon="add"'));
+assert(
+  scheduleScreen.includes(
+    '/schedule/new?date=${encodeURIComponent(selectedDate)}',
+  ),
+);
 assert(homeSchedule.includes('const homeItemLimit = 4'));
 assert(homeSchedule.includes('truncateCareScheduleGroups'));
 assert(homeSchedule.includes('/schedule?date=${encodeURIComponent(date)}'));
 assert(homeSchedule.includes("t('schedule.overflowCount'"));
 assert(newScreen.includes('<CareTaskOccurrencePicker'));
+assert(newScreen.includes('<ScheduleAssigneeSelector'));
+assert(editScreen.includes('<ScheduleAssigneeSelector'));
 assert(newScreen.includes("pathname: '/reminders/new'"));
+assert(editScreen.includes("pathname: '/reminders/new'"));
+assert(newScreen.includes("role === 'member' ? user!.id : assigneeUserId"));
+assert(editScreen.includes("role === 'member' ? user!.id : assigneeUserId"));
 assert(editScreen.includes('useCancelCareShiftTask'));
 assert(editScreen.includes('isCareScheduleItemMutable'));
 console.log(
@@ -393,10 +463,58 @@ assert(
     "name={expanded ? 'chevron-down' : 'chevron-forward'}",
   ),
 );
-assert(newScreen.includes('accessibilityRole="radiogroup"'));
-assert(editScreen.includes('accessibilityRole="radiogroup"'));
+assert(assigneeSelector.includes('accessibilityRole="radio"'));
+assert(assigneeSelector.includes('accessibilityState={{ checked: selected }}'));
+assert(assigneeSelector.includes('accessibilityViewIsModal'));
+assert(assigneeSelector.includes("useContentLayout('modal')"));
+assert(assigneeSelector.includes('contentStyles.modal'));
+assert(assigneeSelector.includes('maxHeight: 480'));
+assert(assigneeSelector.includes('numberOfLines={1}'));
+assert(assigneeSelector.includes('<Avatar'));
+assert(assigneeSelector.includes('minHeight: 56'));
+assert(assigneeOptions.includes("role === 'owner'"));
+assert(assigneeOptions.includes("role === 'member'"));
+assert(scheduleDateField.includes('formatCalendarDate(value, i18n.language)'));
+assert(scheduleDateField.includes('display="inline"'));
+assert(newScreen.includes('formatCalendarDate(date, i18n.language)'));
+assert(editScreen.includes('formatCalendarDate(date, i18n.language)'));
+assert(
+  occurrencePicker.includes(
+    'accessibilityState={{ checked: selected, disabled }}',
+  ),
+);
+assert(occurrencePicker.includes('disabled={disabled}'));
 const en = JSON.parse(enText);
 const zh = JSON.parse(zhText);
+assert.equal(
+  en.schedule.subtitle,
+  "Plan who is responsible for your pet's care each day.",
+);
+assert.equal(zh.schedule.subtitle, '安排每天由誰負責毛孩的照顧。');
+assert.equal(
+  en.schedule.form.createSubtitle,
+  'Choose existing care reminders and assign responsibility.',
+);
+assert.equal(
+  zh.schedule.form.createSubtitle,
+  '選擇已有的照顧提醒，安排由誰負責。',
+);
+assert.equal(en.schedule.addCareTask, 'New Care Reminder');
+assert.equal(zh.schedule.addCareTask, '新增照顧提醒');
+const translatedValues = (value) =>
+  typeof value === 'string'
+    ? [value]
+    : Object.values(value).flatMap(translatedValues);
+assert(
+  !translatedValues(en.schedule).some((value) =>
+    value.match(/\boccurrences?\b/iu),
+  ),
+);
+assert(
+  !translatedValues(zh.schedule).some((value) =>
+    value.match(/\boccurrences?\b/iu),
+  ),
+);
 for (const key of [
   'title',
   'seeAll',

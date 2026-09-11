@@ -1044,7 +1044,7 @@
   },
   "schedule": {
     "title": "家庭排班",
-    "subtitle": "清楚分配每項照顧責任，同時保留完整家庭紀錄。",
+    "subtitle": "安排每天由誰負責毛孩的照顧。",
     "seeAll": "查看全部",
     "previousMonth": "前一個月",
     "nextMonth": "下一個月",
@@ -1061,7 +1061,7 @@
     "complete": "完成",
     "claim": "我來負責",
     "add": "新增排班",
-    "addCareTask": "新增照顧事項",
+    "addCareTask": "新增照顧提醒",
     "petFamily": "家庭照顧排班",
     "dayItemCount_one": "{{count}} 項照顧事項",
     "dayItemCount_other": "{{count}} 項照顧事項",
@@ -1091,10 +1091,14 @@
       "completedOutsideSchedule": "排班已取消；底層照顧事項其後由 {{name}} 完成"
     },
     "form": {
-      "createSubtitle": "選擇已有的照顧事項 occurrence，組成一個清晰的責任排班。",
+      "createSubtitle": "選擇已有的照顧提醒，安排由誰負責。",
       "date": "日期",
       "dateInvalid": "請選擇今天或有效的未來日期。",
-      "assignee": "負責家庭成員",
+      "assignee": "負責人",
+      "assigneeHint": "開啟家庭成員選單",
+      "assigneeSelection": "負責人：{{name}}",
+      "assigneePickerTitle": "選擇負責人",
+      "unknownAssignee": "家庭成員",
       "assignedToSelf": "由你負責",
       "tasks": "照顧事項",
       "note": "備註",
@@ -1104,7 +1108,7 @@
       "currentTasks": "現有照顧事項",
       "addTasks": "加入照顧事項",
       "addSelected": "加入已選事項",
-      "noOccurrences": "這一天沒有可用的照顧事項 occurrence。",
+      "noOccurrences": "這一天沒有可用的照顧提醒。",
       "selected": "已選擇",
       "available": "可選擇",
       "occurrenceAccessibility": "{{time}}，{{title}}，{{state}}"

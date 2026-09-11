@@ -9,6 +9,7 @@ import { AppText } from '@/components/app-text';
 import { lightColors, radius, spacing } from '@/theme';
 
 import {
+  calendarDatePickerLocale,
   formatCalendarDate,
   parseCalendarDate,
   toCalendarDate,
@@ -32,6 +33,7 @@ export function ScheduleDateField({ error, label, onChange, value }: Props) {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const selectedDate = localDate(value);
+  const formattedDate = formatCalendarDate(value, i18n.language);
   const minimumDate = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -48,28 +50,34 @@ export function ScheduleDateField({ error, label, onChange, value }: Props) {
   return (
     <View style={styles.field}>
       <AppText variant="subheadline">{label}</AppText>
-      {Platform.OS === 'ios' ? (
+      <Pressable
+        accessibilityLabel={`${label}: ${formattedDate}`}
+        accessibilityRole="button"
+        accessibilityState={
+          Platform.OS === 'ios' ? { expanded: isOpen } : undefined
+        }
+        onPress={() =>
+          setIsOpen((open) => (Platform.OS === 'ios' ? !open : true))
+        }
+        style={({ pressed }) => [
+          styles.control,
+          error && styles.controlError,
+          pressed && styles.pressed,
+        ]}
+      >
+        <AppText>{formattedDate}</AppText>
+      </Pressable>
+      {Platform.OS === 'ios' && isOpen ? (
         <DateTimePicker
-          display="compact"
+          accessibilityLabel={`${label}: ${formattedDate}`}
+          display="inline"
+          locale={calendarDatePickerLocale(i18n.language)}
           minimumDate={minimumDate}
           mode="date"
           onValueChange={handleChange}
           value={selectedDate}
         />
-      ) : (
-        <Pressable
-          accessibilityLabel={label}
-          accessibilityRole="button"
-          onPress={() => setIsOpen(true)}
-          style={({ pressed }) => [
-            styles.control,
-            error && styles.controlError,
-            pressed && styles.pressed,
-          ]}
-        >
-          <AppText>{formatCalendarDate(value, i18n.language)}</AppText>
-        </Pressable>
-      )}
+      ) : null}
       {Platform.OS === 'android' && isOpen ? (
         <DateTimePicker
           display="default"

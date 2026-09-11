@@ -1044,7 +1044,7 @@
   },
   "schedule": {
     "title": "Family schedule",
-    "subtitle": "Share each care responsibility without losing the full family picture.",
+    "subtitle": "Plan who is responsible for your pet's care each day.",
     "seeAll": "See all",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
@@ -1061,7 +1061,7 @@
     "complete": "Complete",
     "claim": "I'll take care of it",
     "add": "Add schedule",
-    "addCareTask": "Add care task",
+    "addCareTask": "New Care Reminder",
     "petFamily": "Family care schedule",
     "dayItemCount_one": "{{count}} care item",
     "dayItemCount_other": "{{count}} care items",
@@ -1091,10 +1091,14 @@
       "completedOutsideSchedule": "Schedule canceled; underlying task later completed by {{name}}"
     },
     "form": {
-      "createSubtitle": "Choose existing care task occurrences and assign them as one responsibility bundle.",
+      "createSubtitle": "Choose existing care reminders and assign responsibility.",
       "date": "Date",
       "dateInvalid": "Choose today or a valid future date.",
-      "assignee": "Responsible family member",
+      "assignee": "Assignee",
+      "assigneeHint": "Opens the family member list",
+      "assigneeSelection": "Assignee: {{name}}",
+      "assigneePickerTitle": "Choose assignee",
+      "unknownAssignee": "Family member",
       "assignedToSelf": "Assigned to you",
       "tasks": "Care tasks",
       "note": "Note",
@@ -1104,7 +1108,7 @@
       "currentTasks": "Current care tasks",
       "addTasks": "Add care tasks",
       "addSelected": "Add selected tasks",
-      "noOccurrences": "No available care task occurrences on this date.",
+      "noOccurrences": "No care reminders are available on this date.",
       "selected": "Selected",
       "available": "Available",
       "occurrenceAccessibility": "{{time}}, {{title}}, {{state}}"

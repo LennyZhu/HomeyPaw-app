@@ -234,17 +234,6 @@ export default function ScheduleScreen() {
             {t('schedule.subtitle')}
           </AppText>
         </View>
-        {pet ? (
-          <IconButton
-            accessibilityLabel={t('schedule.add')}
-            icon="add"
-            onPress={() =>
-              router.push(
-                `/schedule/new?date=${encodeURIComponent(selectedDate)}` as Href,
-              )
-            }
-          />
-        ) : null}
       </View>
 
       {pet ? (

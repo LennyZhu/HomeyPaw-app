@@ -130,12 +130,17 @@ export function formatCalendarMonth(value: string, locale: string) {
 }
 
 export function formatCalendarDate(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
+  const normalizedLocale = locale.startsWith('en') ? 'en' : 'zh-HK';
+  return new Intl.DateTimeFormat(normalizedLocale, {
     day: 'numeric',
-    month: 'long',
+    month: locale.startsWith('en') ? 'short' : 'long',
     timeZone: 'UTC',
     year: 'numeric',
   }).format(utcDate(value));
+}
+
+export function calendarDatePickerLocale(locale: string) {
+  return locale.startsWith('en') ? 'en' : 'zh-HK';
 }
 
 export function getLocalDateInTimeZone(
