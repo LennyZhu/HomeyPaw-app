@@ -9,6 +9,8 @@ import { AppText } from '@/components/app-text';
 import { parseDateOnly, toDateOnly } from '@/features/pets/pet-dates';
 import { lightColors, radius, spacing } from '@/theme';
 
+import { formatReminderDate, reminderDatePickerLocale } from '../reminder-date';
+
 type Props = {
   date: string;
   dateLabel: string;
@@ -35,8 +37,11 @@ export function TaskDateTimeFields({
 }: Props) {
   const { i18n } = useTranslation();
   const [androidMode, setAndroidMode] = useState<'date' | 'time' | null>(null);
+  const [isDateOpen, setIsDateOpen] = useState(false);
   const selectedDate = parseDateOnly(date) ?? new Date();
   const selectedTime = useMemo(() => timeValue(time), [time]);
+  const pickerLocale = reminderDatePickerLocale(i18n.language);
+  const formattedDate = formatReminderDate(date, i18n.language);
   const minimumDate = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -47,9 +52,26 @@ export function TaskDateTimeFields({
     <View style={styles.fields}>
       <View style={styles.field}>
         <AppText variant="subheadline">{dateLabel}</AppText>
-        {Platform.OS === 'ios' ? (
+        <Pressable
+          accessibilityLabel={`${dateLabel}: ${formattedDate}`}
+          accessibilityRole="button"
+          accessibilityState={
+            Platform.OS === 'ios' ? { expanded: isDateOpen } : {}
+          }
+          onPress={() =>
+            Platform.OS === 'ios'
+              ? setIsDateOpen((open) => !open)
+              : setAndroidMode('date')
+          }
+          style={({ pressed }) => [styles.control, pressed && styles.pressed]}
+        >
+          <AppText>{formattedDate}</AppText>
+        </Pressable>
+        {Platform.OS === 'ios' && isDateOpen ? (
           <DateTimePicker
-            display="compact"
+            accessibilityLabel={`${dateLabel}: ${formattedDate}`}
+            display="inline"
+            locale={pickerLocale}
             minimumDate={minimumDate}
             mode="date"
             onValueChange={(_event: DateTimePickerChangeEvent, value: Date) =>
@@ -57,25 +79,15 @@ export function TaskDateTimeFields({
             }
             value={selectedDate}
           />
-        ) : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => setAndroidMode('date')}
-            style={styles.control}
-          >
-            <AppText>
-              {new Intl.DateTimeFormat(i18n.language, {
-                dateStyle: 'medium',
-              }).format(selectedDate)}
-            </AppText>
-          </Pressable>
-        )}
+        ) : null}
       </View>
       <View style={styles.field}>
         <AppText variant="subheadline">{timeLabel}</AppText>
         {Platform.OS === 'ios' ? (
           <DateTimePicker
+            accessibilityLabel={`${timeLabel}: ${time}`}
             display="compact"
+            locale={pickerLocale}
             mode="time"
             onValueChange={(_event: DateTimePickerChangeEvent, value: Date) =>
               onTimeChange(
@@ -89,6 +101,7 @@ export function TaskDateTimeFields({
           />
         ) : (
           <Pressable
+            accessibilityLabel={`${timeLabel}: ${time}`}
             accessibilityRole="button"
             onPress={() => setAndroidMode('time')}
             style={styles.control}
@@ -99,6 +112,11 @@ export function TaskDateTimeFields({
       </View>
       {Platform.OS === 'android' && androidMode ? (
         <DateTimePicker
+          accessibilityLabel={
+            androidMode === 'date'
+              ? `${dateLabel}: ${formattedDate}`
+              : `${timeLabel}: ${time}`
+          }
           display="default"
           {...(androidMode === 'date' ? { minimumDate } : {})}
           mode={androidMode}
@@ -135,4 +153,5 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.lg,
   },
+  pressed: { opacity: 0.62 },
 });

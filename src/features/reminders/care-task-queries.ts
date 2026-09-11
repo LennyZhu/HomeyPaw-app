@@ -16,6 +16,8 @@ import { fetchCareTaskOccurrences } from './care-task-api';
 
 export const careTaskKeys = {
   all: (userId: string | undefined) => ['care-tasks', userId] as const,
+  activeCount: (userId: string | undefined, petId: string | null) =>
+    ['care-tasks', userId, 'active-count', petId] as const,
   detail: (userId: string | undefined, taskId: string) =>
     ['care-tasks', userId, 'detail', taskId] as const,
   occurrences: (
@@ -33,6 +35,16 @@ export const careTaskKeys = {
       windowEnd,
     ] as const,
 };
+
+async function fetchActiveCareTaskCount(petId: string) {
+  const { count, error } = await requireSupabase()
+    .from('care_tasks')
+    .select('id', { count: 'exact', head: true })
+    .eq('pet_id', petId)
+    .eq('is_active', true);
+  if (error) throw error;
+  return count ?? 0;
+}
 
 function valuesToTaskRpc(values: CareTaskFormValues, timeZone: string) {
   const isOnce = values.scheduleType === 'once';
@@ -144,6 +156,15 @@ export function useCareTaskOccurrences(
     enabled: Boolean(user && petId),
     queryFn: () => fetchCareTaskOccurrences({ petId, windowEnd, windowStart }),
     queryKey: careTaskKeys.occurrences(user?.id, petId, start, end),
+  });
+}
+
+export function useActiveCareTaskCount(petId: string | null) {
+  const { user } = useAuth();
+  return useQuery({
+    enabled: Boolean(user && petId),
+    queryFn: () => fetchActiveCareTaskCount(petId!),
+    queryKey: careTaskKeys.activeCount(user?.id, petId),
   });
 }
 

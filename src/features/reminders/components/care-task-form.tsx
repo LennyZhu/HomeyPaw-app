@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,6 @@ import {
   type CareTaskFormValues,
   type CareTaskKind,
 } from '../care-task-schema';
-import { getYearlyOccurrenceDate } from '../care-task-recurrence';
 import { TaskDateTimeFields } from './task-date-time-fields';
 
 type Props = {
@@ -60,6 +59,7 @@ export function CareTaskForm({
     control,
     formState: { errors, isSubmitting },
     handleSubmit,
+    getValues,
     reset,
     setValue,
   } = useForm<CareTaskFormValues>({
@@ -69,13 +69,27 @@ export function CareTaskForm({
   const scheduleType = useWatch({ control, name: 'scheduleType' });
   const category = useWatch({ control, name: 'category' });
   const date = useWatch({ control, name: 'date' });
-  const leapFallback =
-    scheduleType === 'yearly' && date.endsWith('-02-29')
-      ? getYearlyOccurrenceDate(Number(date.slice(0, 4)) + 1, date)
-      : null;
+  const isLeapDay = scheduleType === 'yearly' && date.endsWith('-02-29');
+  const visibleScheduleTypes: CareTaskScheduleType[] =
+    category === 'birthday' ? ['yearly'] : scheduleTypes;
+  const previousStandardCareType = useRef<CareTaskKind>(
+    initialValues.category === 'standard' ? initialValues.careType : 'feeding',
+  );
 
-  useEffect(() => reset(initialValues), [initialValues, reset]);
-  const submit = handleSubmit(onSubmit);
+  useEffect(() => {
+    reset(initialValues);
+    previousStandardCareType.current =
+      initialValues.category === 'standard'
+        ? initialValues.careType
+        : 'feeding';
+  }, [initialValues, reset]);
+  const submit = handleSubmit((values) =>
+    onSubmit(
+      values.category === 'birthday'
+        ? { ...values, careType: 'custom', scheduleType: 'yearly' }
+        : values,
+    ),
+  );
 
   return (
     <View style={styles.form}>
@@ -90,16 +104,24 @@ export function CareTaskForm({
               <ChoiceChip
                 icon="list-outline"
                 label={t('reminders.categories.standard')}
-                onPress={() => field.onChange('standard')}
+                onPress={() => {
+                  field.onChange('standard');
+                  if (category === 'birthday') {
+                    setValue('careType', previousStandardCareType.current);
+                  }
+                }}
                 selected={field.value === 'standard'}
               />
               <ChoiceChip
                 icon="gift-outline"
                 label={t('reminders.categories.birthday')}
                 onPress={() => {
-                  field.onChange('birthday');
-                  if (category !== 'birthday')
+                  if (category !== 'birthday') {
+                    previousStandardCareType.current = getValues('careType');
+                    setValue('careType', 'custom');
                     setValue('scheduleType', 'yearly');
+                  }
+                  field.onChange('birthday');
                 }}
                 selected={field.value === 'birthday'}
               />
@@ -128,29 +150,34 @@ export function CareTaskForm({
         )}
       />
 
-      <Controller
-        control={control}
-        name="careType"
-        render={({ field }) => (
-          <Field label={t('reminders.fields.type')}>
-            <View style={styles.chips}>
-              {taskKinds.map((kind) => (
-                <ChoiceChip
-                  icon={careTypeIcons[kind === 'custom' ? 'other' : kind]}
-                  key={kind}
-                  label={
-                    kind === 'custom'
-                      ? t('reminders.types.custom')
-                      : t(`care.types.${kind}`)
-                  }
-                  onPress={() => field.onChange(kind)}
-                  selected={field.value === kind}
-                />
-              ))}
-            </View>
-          </Field>
-        )}
-      />
+      {category === 'standard' ? (
+        <Controller
+          control={control}
+          name="careType"
+          render={({ field }) => (
+            <Field label={t('reminders.fields.type')}>
+              <View style={styles.chips}>
+                {taskKinds.map((kind) => (
+                  <ChoiceChip
+                    icon={careTypeIcons[kind === 'custom' ? 'other' : kind]}
+                    key={kind}
+                    label={
+                      kind === 'custom'
+                        ? t('reminders.types.custom')
+                        : t(`care.types.${kind}`)
+                    }
+                    onPress={() => {
+                      previousStandardCareType.current = kind;
+                      field.onChange(kind);
+                    }}
+                    selected={field.value === kind}
+                  />
+                ))}
+              </View>
+            </Field>
+          )}
+        />
+      ) : null}
 
       <Controller
         control={control}
@@ -158,7 +185,7 @@ export function CareTaskForm({
         render={({ field }) => (
           <Field label={t('reminders.fields.repeat')}>
             <View style={styles.chips}>
-              {scheduleTypes.map((type) => (
+              {visibleScheduleTypes.map((type) => (
                 <ChoiceChip
                   key={type}
                   label={t(`reminders.schedule.${type}`)}
@@ -250,11 +277,24 @@ export function CareTaskForm({
       ) : null}
 
       {scheduleType === 'yearly' ? (
-        <AppText tone="tertiary" variant="footnote">
-          {leapFallback
-            ? t('reminders.form.yearlyLeapHint', { date: leapFallback })
-            : t('reminders.form.yearlyHint')}
-        </AppText>
+        <View style={styles.helperCopy}>
+          <AppText
+            accessibilityLabel={t('reminders.form.yearlyHint')}
+            tone="tertiary"
+            variant="footnote"
+          >
+            {t('reminders.form.yearlyHint')}
+          </AppText>
+          {isLeapDay ? (
+            <AppText
+              accessibilityLabel={t('reminders.form.yearlyLeapHint')}
+              tone="tertiary"
+              variant="footnote"
+            >
+              {t('reminders.form.yearlyLeapHint')}
+            </AppText>
+          ) : null}
+        </View>
       ) : null}
 
       <Controller
@@ -365,6 +405,7 @@ function ChoiceChip({
 const styles = StyleSheet.create({
   form: { gap: spacing.xl },
   field: { gap: spacing.sm },
+  helperCopy: { gap: spacing.xs },
   input: {
     minHeight: 50,
     backgroundColor: lightColors.surface,

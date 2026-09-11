@@ -45,6 +45,7 @@ import {
   taskKindLabel,
 } from './care-task-display';
 import {
+  useActiveCareTaskCount,
   useCareTaskOccurrences,
   useCompleteCareTask,
   useUndoCareTaskCompletion,
@@ -75,6 +76,7 @@ export default function RemindersScreen() {
     window.start,
     window.end,
   );
+  const activeTasksQuery = useActiveCareTaskCount(pet?.id ?? null);
   const completeTask = useCompleteCareTask();
   const undoCompletion = useUndoCareTaskCompletion();
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -197,7 +199,11 @@ export default function RemindersScreen() {
 
   const refresh = async () => {
     setWindow(createOccurrenceWindow());
-    await Promise.all([occurrencesQuery.refetch(), petsState.refetch()]);
+    await Promise.all([
+      activeTasksQuery.refetch(),
+      occurrencesQuery.refetch(),
+      petsState.refetch(),
+    ]);
   };
 
   const enableNotifications = async () => {
@@ -220,7 +226,9 @@ export default function RemindersScreen() {
       refreshControl={
         <RefreshControl
           onRefresh={() => void refresh()}
-          refreshing={occurrencesQuery.isRefetching}
+          refreshing={
+            occurrencesQuery.isRefetching || activeTasksQuery.isRefetching
+          }
           tintColor={lightColors.primary}
         />
       }
@@ -310,17 +318,32 @@ export default function RemindersScreen() {
           onActionPress={() => router.push('/pets/new')}
           title={t('care.empty.noPetTitle')}
         />
-      ) : occurrencesQuery.isPending ? (
+      ) : occurrencesQuery.isPending || activeTasksQuery.isPending ? (
         <View style={styles.loadingCard}>
           <AppText tone="secondary">{t('common.loading')}</AppText>
         </View>
-      ) : occurrencesQuery.isError ? (
+      ) : occurrencesQuery.isError || activeTasksQuery.isError ? (
         <View style={styles.loadingCard}>
           <AppText tone="error">{t('reminders.errors.load')}</AppText>
           <AppButton
             label={t('common.retry')}
-            onPress={() => void occurrencesQuery.refetch()}
+            onPress={() =>
+              void Promise.all([
+                activeTasksQuery.refetch(),
+                occurrencesQuery.refetch(),
+              ])
+            }
             variant="secondary"
+          />
+        </View>
+      ) : activeTasksQuery.data === 0 ? (
+        <View style={styles.fullEmpty}>
+          <EmptyState
+            actionLabel={t('reminders.add')}
+            body={t('reminders.emptyBody')}
+            icon="notifications-outline"
+            onActionPress={() => router.push('/reminders/new')}
+            title={t('reminders.emptyTitle')}
           />
         </View>
       ) : (
@@ -361,22 +384,13 @@ export default function RemindersScreen() {
                 />
               ))
             ) : (
-              <EmptyState
-                actionLabel={t('reminders.add')}
-                body={t('reminders.emptyBody')}
-                icon="notifications-outline"
-                onActionPress={() => router.push('/reminders/new')}
-                title={t('reminders.emptyTitle')}
-              />
+              <AppText tone="secondary" variant="footnote">
+                {t('reminders.upcomingEmpty')}
+              </AppText>
             )}
           </TaskSection>
         </>
       )}
-
-      <AppButton
-        label={t('reminders.add')}
-        onPress={() => router.push('/reminders/new')}
-      />
 
       <PetSwitcherModal
         currentPetId={pet?.id ?? null}
@@ -466,7 +480,11 @@ function OccurrenceCard({
         <View style={styles.taskIcon}>
           <Ionicons
             color={lightColors.secondary}
-            name={careTypeIcons[occurrence.care_type ?? 'other']}
+            name={
+              occurrence.task_category === 'birthday'
+                ? 'gift-outline'
+                : careTypeIcons[occurrence.care_type ?? 'other']
+            }
             size={22}
           />
         </View>
@@ -503,8 +521,13 @@ function OccurrenceCard({
               occurrence.time_zone,
               locale,
             )}{' '}
-            · {taskKindLabel(occurrence.care_type, t)} ·{' '}
-            {scheduleTypeLabel(occurrence.schedule_type, t)}
+            ·{' '}
+            {occurrence.task_category === 'birthday'
+              ? scheduleTypeLabel(occurrence.schedule_type, t)
+              : `${taskKindLabel(occurrence.care_type, t)} · ${scheduleTypeLabel(
+                  occurrence.schedule_type,
+                  t,
+                )}`}
           </AppText>
           <AppText tone="tertiary" variant="caption">
             {occurrence.completion_id
@@ -585,6 +608,7 @@ const styles = StyleSheet.create({
   petCopy: { flex: 1 },
   section: { gap: spacing.md },
   loadingCard: { gap: spacing.md, paddingVertical: spacing.xl },
+  fullEmpty: { minHeight: 340, justifyContent: 'center' },
   taskCard: {
     gap: spacing.sm,
     backgroundColor: lightColors.surface,

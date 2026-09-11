@@ -411,29 +411,30 @@
   },
   "reminders": {
     "title": "Reminders",
-    "subtitle": "Shared family care tasks and device reminders.",
+    "subtitle": "Plan care together and stay on top of important moments.",
     "petFamily": "Selected pet family",
     "today": "Today",
     "dayLabel": {
       "today": "Today",
       "tomorrow": "Tomorrow"
     },
-    "todayEmpty": "No care task is due today.",
+    "todayEmpty": "No reminders are due today.",
     "upcoming": "Upcoming 30 days",
-    "emptyTitle": "Never miss an important day",
-    "emptyBody": "Create a shared feeding, walk, medicine or custom care task.",
-    "add": "Add reminder",
+    "upcomingEmpty": "No other reminders in the next 30 days.",
+    "emptyTitle": "No reminders yet",
+    "emptyBody": "Create your first care reminder.",
+    "add": "Add Reminder",
     "new": {
-      "title": "New reminder",
-      "subtitle": "Everyone in this pet family will see the task.",
+      "title": "New Reminder",
+      "subtitle": "Everyone in this family can see this reminder.",
       "choosePet": "Tap to choose a pet family"
     },
     "edit": {
-      "title": "Edit reminder",
-      "subtitle": "Changes apply to future occurrences only."
+      "title": "Edit Reminder",
+      "subtitle": "Changes only affect future reminders. Past records stay unchanged."
     },
     "fields": {
-      "title": "Task title",
+      "title": "Reminder name",
       "type": "Care type",
       "repeat": "Schedule",
       "date": "Date",
@@ -450,8 +451,8 @@
       "notePlaceholder": "Dose, preparation or family note",
       "monthDayHint": "Months without this date are skipped.",
       "timeZone": "Fixed family schedule: {{timeZone}}",
-      "yearlyHint": "Repeats yearly on this local date and time. Feb 29 falls on Feb 28 in non-leap years.",
-      "yearlyLeapHint": "Repeats yearly. The next non-leap occurrence is {{date}}."
+      "yearlyHint": "Repeats every year on this date and time.",
+      "yearlyLeapHint": "In non-leap years, this reminder will occur on February 28."
     },
     "types": {
       "custom": "Custom"
@@ -488,9 +489,9 @@
     "createdByLabel": "Created by",
     "completedBy": "{{name}} completed at {{time}}",
     "completedLabel": "Completion",
-    "nextOccurrence": "Next occurrence",
+    "nextOccurrence": "Next reminder",
     "complete": {
-      "title": "Complete care task",
+      "title": "Complete care reminder",
       "action": "Mark complete",
       "note": "Completion note (optional)",
       "notePlaceholder": "Anything the family should know"
@@ -498,20 +499,20 @@
     "undo": {
       "action": "Undo completion",
       "title": "Undo this completion?",
-      "body": "This completion and its linked Care Log will be deleted, and the reminder will become incomplete again."
+      "body": "This completion and its linked care record will be deleted, and the reminder will become incomplete again."
     },
     "deactivate": {
       "title": "Stop this reminder?",
-      "body": "Future occurrences and local notifications will be removed. Previous Care Logs remain unchanged.",
+      "body": "Future reminders and device notifications will be removed. Past care records stay unchanged.",
       "action": "Stop reminder"
     },
     "permission": {
       "promptTitle": "Get care reminders on this device",
-      "promptBody": "HomeyPaw can notify you when a shared family task is due. The task is already saved, and you can change this permission later.",
+      "promptBody": "HomeyPaw can notify you when a family reminder is due. The reminder is already saved, and you can change this permission later.",
       "allow": "Allow notifications",
       "later": "Maybe later",
       "deniedTitle": "Notifications are off",
-      "deniedBody": "Shared tasks still work. Turn on notifications in Settings to receive device reminders.",
+      "deniedBody": "Family reminders still work. Turn on notifications in Settings to receive device reminders.",
       "settings": "Settings"
     },
     "notification": {
@@ -519,7 +520,7 @@
       "body": "Today {{time}} · Tap to view family care"
     },
     "validation": {
-      "title": "Enter a task title of 100 characters or fewer.",
+      "title": "Enter a reminder name of 100 characters or fewer.",
       "date": "Choose a valid date.",
       "time": "Choose a valid time.",
       "future": "Choose a future date and time.",
@@ -530,12 +531,12 @@
     "errors": {
       "load": "We couldn't load reminders, or you no longer have access.",
       "save": "The reminder couldn't be saved. Your entries are still here, so you can try again.",
-      "complete": "The task couldn't be completed. No duplicate Care Log was created.",
+      "complete": "The reminder couldn't be completed. No duplicate care record was created.",
       "undo": "The completion couldn't be undone. Try again shortly.",
       "deactivate": "The reminder couldn't be stopped. Try again shortly.",
       "notFound": "This reminder doesn't exist or you no longer have access."
     },
-    "badgeAccessibility": "Reminders, {{count}} tasks need attention",
+    "badgeAccessibility": "{{count}} reminders need attention",
     "rowAccessibility": "{{petName}}, {{title}}, {{time}}, {{status}}",
     "categories": {
       "standard": "Reminder",

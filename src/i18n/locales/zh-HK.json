@@ -411,29 +411,30 @@
   },
   "reminders": {
     "title": "提醒",
-    "subtitle": "共享家庭照顧任務與本機提醒。",
+    "subtitle": "和家人一起安排照顧，不錯過重要時刻。",
     "petFamily": "目前選擇的毛孩家庭",
     "today": "今天",
     "dayLabel": {
       "today": "今天",
       "tomorrow": "明天"
     },
-    "todayEmpty": "今天暫時沒有待完成的照顧任務。",
+    "todayEmpty": "今天暫時沒有待完成的提醒。",
     "upcoming": "未來 30 天",
-    "emptyTitle": "別錯過毛孩的重要日子",
-    "emptyBody": "建立家庭共享的餵食、散步、用藥或自訂照顧任務。",
+    "upcomingEmpty": "未來 30 天沒有其他提醒",
+    "emptyTitle": "還沒有提醒",
+    "emptyBody": "建立第一個照顧提醒吧",
     "add": "新增提醒",
     "new": {
       "title": "新增提醒",
-      "subtitle": "這個毛孩家庭的所有成員都會看到任務。",
+      "subtitle": "這個家庭的成員都會看到這項提醒。",
       "choosePet": "點一下選擇毛孩家庭"
     },
     "edit": {
       "title": "編輯提醒",
-      "subtitle": "變更只會套用到未來的發生項目。"
+      "subtitle": "修改後只會影響之後的提醒，過去記錄不會改變。"
     },
     "fields": {
-      "title": "任務名稱",
+      "title": "提醒名稱",
       "type": "照顧類型",
       "repeat": "排程",
       "date": "日期",
@@ -450,8 +451,8 @@
       "notePlaceholder": "劑量、準備事項或家庭備註",
       "monthDayHint": "如果該月沒有這一天，會跳過該月。",
       "timeZone": "固定家庭排程：{{timeZone}}",
-      "yearlyHint": "按此本地日期和時間每年重複；非閏年的 2 月 29 日會在 2 月 28 日提醒。",
-      "yearlyLeapHint": "每年重複；下一個非閏年會在 {{date}} 提醒。"
+      "yearlyHint": "每年於這個日期和時間提醒。",
+      "yearlyLeapHint": "非閏年會於 2 月 28 日提醒。"
     },
     "types": {
       "custom": "自訂"
@@ -488,9 +489,9 @@
     "createdByLabel": "建立者",
     "completedBy": "{{name}} 於 {{time}} 完成",
     "completedLabel": "完成紀錄",
-    "nextOccurrence": "下次時間",
+    "nextOccurrence": "下次提醒",
     "complete": {
-      "title": "完成照顧任務",
+      "title": "完成照顧提醒",
       "action": "標記完成",
       "note": "完成備註（選填）",
       "notePlaceholder": "有甚麼需要讓家人知道"
@@ -502,16 +503,16 @@
     },
     "deactivate": {
       "title": "停止這個提醒？",
-      "body": "未來發生項目和本機通知會被移除；過往 Care Log 不會改變。",
+      "body": "未來提醒和裝置通知會被移除；過去的照顧記錄不會改變。",
       "action": "停止提醒"
     },
     "permission": {
       "promptTitle": "在這部裝置接收照顧提醒",
-      "promptBody": "HomeyPaw 可以在家庭共享任務到期時提醒你。任務已經成功儲存，你之後也可以更改權限。",
+      "promptBody": "HomeyPaw 可以在家庭提醒到期時通知你。提醒已經成功儲存，你之後也可以更改權限。",
       "allow": "允許通知",
       "later": "稍後再說",
       "deniedTitle": "通知已關閉",
-      "deniedBody": "共享任務仍可正常使用。請到設定開啟通知，才會收到裝置提醒。",
+      "deniedBody": "家庭提醒仍可正常使用。請到設定開啟通知，才會收到裝置提醒。",
       "settings": "設定"
     },
     "notification": {
@@ -519,7 +520,7 @@
       "body": "今天 {{time}} · 點一下查看家庭照顧"
     },
     "validation": {
-      "title": "請輸入 100 個字元以內的任務名稱。",
+      "title": "請輸入 100 個字元以內的提醒名稱。",
       "date": "請選擇有效日期。",
       "time": "請選擇有效時間。",
       "future": "請選擇未來的日期和時間。",
@@ -530,12 +531,12 @@
     "errors": {
       "load": "暫時無法載入提醒，或你已失去存取權。",
       "save": "提醒未能儲存；你填寫的內容仍然保留，可以直接重試。",
-      "complete": "任務未能完成，系統沒有建立重複的 Care Log。",
+      "complete": "提醒未能完成，系統沒有建立重複的照顧記錄。",
       "undo": "暫時無法復原完成，請稍後再試。",
       "deactivate": "暫時無法停止提醒，請稍後再試。",
       "notFound": "這個提醒不存在，或你已失去存取權。"
     },
-    "badgeAccessibility": "提醒，有 {{count}} 個任務需要處理",
+    "badgeAccessibility": "有 {{count}} 個提醒需要處理",
     "rowAccessibility": "{{petName}}，{{title}}，{{time}}，{{status}}",
     "categories": {
       "standard": "一般提醒",

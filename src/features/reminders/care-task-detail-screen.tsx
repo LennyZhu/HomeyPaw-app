@@ -218,11 +218,17 @@ export default function CareTaskDetailScreen() {
         <View style={styles.icon}>
           <Ionicons
             color={lightColors.secondary}
-            name={careTypeIcons[task.care_type ?? 'other']}
+            name={
+              task.task_category === 'birthday'
+                ? 'gift-outline'
+                : careTypeIcons[task.care_type ?? 'other']
+            }
             size={32}
           />
         </View>
-        <AppText variant="title2">{taskKindLabel(task.care_type, t)}</AppText>
+        {task.task_category === 'standard' ? (
+          <AppText variant="title2">{taskKindLabel(task.care_type, t)}</AppText>
+        ) : null}
         {task.task_category === 'birthday' ? (
           <View
             accessibilityLabel={t('reminders.categories.birthday')}
