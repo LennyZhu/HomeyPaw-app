@@ -100,7 +100,9 @@ export default function NewCareScreen() {
               : t('care.create.title')}
           </AppText>
           <AppText tone="secondary" variant="footnote">
-            {t('care.create.subtitle')}
+            {type === 'health'
+              ? t('care.health.subtitle')
+              : t('care.create.subtitle')}
           </AppText>
         </View>
       </View>
@@ -154,7 +156,9 @@ export default function NewCareScreen() {
         }}
         petName={petsState.currentPet.name}
         submitError={submitError}
-        submitLabel={t('care.create.submit')}
+        submitLabel={
+          type === 'health' ? t('care.health.submit') : t('care.create.submit')
+        }
       />
       <PetSwitcherModal
         currentPetId={petsState.currentPetId}

@@ -34,6 +34,7 @@ import {
   useDeleteCareLog,
 } from './care-queries';
 import { careLogLabel, careTypeIcons } from './care-types';
+import { CareLogActionsModal } from './components/care-log-actions-modal';
 
 type TimelineItem =
   | { id: string; kind: 'header'; label: string }
@@ -51,6 +52,7 @@ export default function CareHistoryScreen() {
   const membersQuery = usePetMembers(petId);
   const deleteCare = useDeleteCareLog();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [actionTarget, setActionTarget] = useState<CareLog | null>(null);
   const logs = useMemo(
     () => historyQuery.data?.pages.flatMap((page) => page.logs) ?? [],
     [historyQuery.data],
@@ -68,6 +70,10 @@ export default function CareHistoryScreen() {
   );
   const isOwner = membersQuery.data?.some(
     (member) => member.userId === user?.id && member.role === 'owner',
+  );
+  const targetCanEdit = actionTarget?.performed_by === user?.id;
+  const targetCanDelete = Boolean(
+    actionTarget && (isOwner || actionTarget.performed_by === user?.id),
   );
   const error =
     petsState.isError || historyQuery.isError || performersQuery.isError;
@@ -194,11 +200,11 @@ export default function CareHistoryScreen() {
             </AppText>
           ) : (
             <CareRow
-              canDelete={Boolean(isOwner || item.log.performed_by === user?.id)}
-              canEdit={item.log.performed_by === user?.id}
+              hasActions={Boolean(
+                isOwner || item.log.performed_by === user?.id,
+              )}
               log={item.log}
-              onDelete={() => confirmDelete(item.log)}
-              onEdit={() => router.push(`/care/${item.log.id}/edit` as Href)}
+              onActions={() => setActionTarget(item.log)}
               performerName={
                 performerNames[item.log.performed_by] ??
                 t('family.members.formerMember')
@@ -219,11 +225,30 @@ export default function CareHistoryScreen() {
         }}
         onClose={() => setSwitcherOpen(false)}
         onSelectPet={(id) => {
+          setActionTarget(null);
           petsState.setCurrentPetId(id);
           setSwitcherOpen(false);
         }}
         pets={petsState.pets}
         visible={switcherOpen}
+      />
+      <CareLogActionsModal
+        canDelete={targetCanDelete}
+        canEdit={targetCanEdit}
+        onCancel={() => setActionTarget(null)}
+        onDelete={() => {
+          if (!actionTarget) return;
+          const target = actionTarget;
+          setActionTarget(null);
+          confirmDelete(target);
+        }}
+        onEdit={() => {
+          if (!actionTarget) return;
+          const target = actionTarget;
+          setActionTarget(null);
+          router.push(`/care/${target.id}/edit` as Href);
+        }}
+        visible={Boolean(actionTarget)}
       />
     </SafeAreaView>
   );
@@ -257,18 +282,14 @@ function createTimeline(
 }
 
 function CareRow({
-  canDelete,
-  canEdit,
+  hasActions,
   log,
-  onDelete,
-  onEdit,
+  onActions,
   performerName,
 }: {
-  canDelete: boolean;
-  canEdit: boolean;
+  hasActions: boolean;
   log: CareLog;
-  onDelete: () => void;
-  onEdit: () => void;
+  onActions: () => void;
   performerName: string;
 }) {
   const { i18n, t } = useTranslation();
@@ -281,9 +302,11 @@ function CareRow({
           size={22}
         />
       </View>
-      <View style={styles.logCopy}>
+      <View style={[styles.logCopy, hasActions && styles.logCopyWithActions]}>
         <View style={styles.logTitleRow}>
-          <AppText variant="headline">{careLogLabel(log, t)}</AppText>
+          <AppText style={styles.logTitle} variant="headline">
+            {careLogLabel(log, t)}
+          </AppText>
           <AppText tone="tertiary" variant="footnote">
             {formatCareTime(log.occurred_at, log.time_zone, i18n.language)}
           </AppText>
@@ -301,25 +324,16 @@ function CareRow({
             {log.note}
           </AppText>
         ) : null}
-        {canEdit || canDelete ? (
-          <View style={styles.actions}>
-            {canEdit ? (
-              <Pressable onPress={onEdit}>
-                <AppText tone="brand" variant="footnote">
-                  {t('common.edit')}
-                </AppText>
-              </Pressable>
-            ) : null}
-            {canDelete ? (
-              <Pressable onPress={onDelete}>
-                <AppText tone="error" variant="footnote">
-                  {t('care.delete.action')}
-                </AppText>
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
       </View>
+      {hasActions ? (
+        <IconButton
+          accessibilityLabel={t('care.history.actions.label')}
+          icon="ellipsis-horizontal"
+          onPress={onActions}
+          size={20}
+          style={styles.actionsButton}
+        />
+      ) : null}
     </View>
   );
 }
@@ -356,6 +370,7 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.surface,
     borderRadius: radius.md,
     padding: spacing.lg,
+    position: 'relative',
   },
   logIcon: {
     width: 42,
@@ -366,12 +381,19 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.secondarySoft,
   },
   logCopy: { flex: 1, gap: spacing.xs },
+  logCopyWithActions: { paddingRight: 36 },
   logTitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
+  logTitle: { flex: 1 },
   note: { marginTop: spacing.xs },
-  actions: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.sm },
+  actionsButton: {
+    position: 'absolute',
+    right: spacing.xs,
+    top: spacing.xs,
+    backgroundColor: lightColors.surfaceSecondary,
+  },
 });

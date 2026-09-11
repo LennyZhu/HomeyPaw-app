@@ -972,7 +972,7 @@
     },
     "create": {
       "title": "記錄照顧",
-      "subtitle": "把已完成的照顧安全分享給家庭。",
+      "subtitle": "記下這次照顧，和家人同步毛孩近況。",
       "submit": "儲存照顧記錄",
       "saved": "照顧記錄已儲存。"
     },
@@ -988,7 +988,13 @@
     },
     "history": {
       "title": "照顧歷史",
-      "subtitle": "毛孩家庭共同分享的已完成照顧。"
+      "subtitle": "毛孩家庭共同分享的已完成照顧。",
+      "actions": {
+        "title": "記錄操作",
+        "label": "照顧記錄操作",
+        "edit": "編輯記錄",
+        "delete": "刪除記錄"
+      }
     },
     "empty": {
       "title": "還沒有照顧記錄",
@@ -1025,6 +1031,8 @@
     "health": {
       "title": "健康狀況",
       "record": "記錄健康狀況",
+      "subtitle": "記下毛孩當下的狀況，方便家人一起了解。",
+      "submit": "儲存健康記錄",
       "titleWithSubtype": "健康狀況 · {{subtype}}",
       "subtypes": {
         "stool": "便便",

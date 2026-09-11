@@ -72,6 +72,7 @@
     "verify:journal-create-ui": "node --experimental-strip-types scripts/verify-journal-create-ui.mjs",
     "verify:journal-composer-ui": "node --experimental-strip-types scripts/verify-journal-composer-ui.mjs",
     "verify:journal-detail-ui": "node --experimental-strip-types scripts/verify-journal-detail-ui.mjs",
+    "verify:care-ui": "node --experimental-strip-types scripts/verify-care-ui.mjs",
     "verify:phase5-dates": "node --experimental-strip-types scripts/verify-phase5-local-dates.mjs",
     "verify:phase6-dates": "node scripts/verify-phase6-local-dates.mjs",
     "verify:phase7-recurrence": "node --experimental-strip-types scripts/verify-care-task-recurrence.mjs",

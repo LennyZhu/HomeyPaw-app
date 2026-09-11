@@ -972,8 +972,8 @@
     },
     "create": {
       "title": "Record care",
-      "subtitle": "Save a completed care fact for the family.",
-      "submit": "Save care record",
+      "subtitle": "Record this care activity and keep your family updated.",
+      "submit": "Save Care Record",
       "saved": "Care record saved."
     },
     "edit": {
@@ -988,7 +988,13 @@
     },
     "history": {
       "title": "Care history",
-      "subtitle": "Completed care shared by the pet family."
+      "subtitle": "Completed care shared by the pet family.",
+      "actions": {
+        "title": "Record actions",
+        "label": "Care record actions",
+        "edit": "Edit Record",
+        "delete": "Delete Record"
+      }
     },
     "empty": {
       "title": "No care records yet",
@@ -1025,6 +1031,8 @@
     "health": {
       "title": "Health",
       "record": "Record health observation",
+      "subtitle": "Record how your pet is doing so your family can stay informed.",
+      "submit": "Save Health Record",
       "titleWithSubtype": "Health · {{subtype}}",
       "subtypes": {
         "stool": "Stool",

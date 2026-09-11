@@ -67,7 +67,7 @@ export default function CreateScreen() {
               accessibilityViewIsModal
               accessible={false}
               onPress={(event) => event.stopPropagation()}
-              style={styles.sheet}
+              style={[styles.sheet, activeMenu === 'care' && styles.careSheet]}
             >
               <View style={styles.handle} />
               <View style={styles.headingRow}>
@@ -110,11 +110,11 @@ export default function CreateScreen() {
 
               {activeMenu === 'care' && petsState.currentPet ? (
                 <ScrollView
-                  contentContainerStyle={styles.options}
+                  contentContainerStyle={[styles.options, styles.careOptions]}
                   showsVerticalScrollIndicator={false}
                 >
                   <AppText
-                    style={styles.sectionLabel}
+                    style={[styles.sectionLabel, styles.careSectionLabel]}
                     tone="secondary"
                     variant="footnote"
                   >
@@ -125,6 +125,7 @@ export default function CreateScreen() {
                       icon={careTypeIcons[careType]}
                       key={careType}
                       label={t(`care.types.${careType}`)}
+                      compact
                       onPress={() =>
                         open({
                           pathname: '/care/new',
@@ -134,7 +135,7 @@ export default function CreateScreen() {
                     />
                   ))}
                   <AppText
-                    style={styles.sectionLabel}
+                    style={[styles.sectionLabel, styles.careSectionLabel]}
                     tone="secondary"
                     variant="footnote"
                   >
@@ -145,6 +146,7 @@ export default function CreateScreen() {
                       icon="heart-outline"
                       key={subtype}
                       label={t(`care.health.subtypes.${subtype}`)}
+                      compact
                       onPress={() =>
                         open({
                           pathname: '/care/new',
@@ -183,11 +185,13 @@ export default function CreateScreen() {
 }
 
 function QuickOption({
+  compact = false,
   icon,
   label,
   onPress,
   primary = false,
 }: {
+  compact?: boolean;
   icon: IoniconName;
   label: string;
   onPress: () => void;
@@ -200,15 +204,22 @@ function QuickOption({
       onPress={onPress}
       style={({ pressed }) => [
         styles.option,
+        compact && styles.compactOption,
         primary && styles.primaryOption,
         pressed && styles.pressed,
       ]}
     >
-      <View style={[styles.optionIcon, primary && styles.primaryIcon]}>
+      <View
+        style={[
+          styles.optionIcon,
+          compact && styles.compactOptionIcon,
+          primary && styles.primaryIcon,
+        ]}
+      >
         <Ionicons
           color={primary ? lightColors.onPrimary : lightColors.secondary}
           name={icon}
-          size={24}
+          size={compact ? 20 : 24}
         />
       </View>
       <AppText style={styles.optionLabel} variant="headline">
@@ -243,6 +254,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     ...shadows.floating,
   },
+  careSheet: {
+    gap: spacing.sm,
+    minHeight: 540,
+    paddingBottom: spacing.sm,
+  },
   handle: {
     width: 38,
     height: 5,
@@ -265,10 +281,12 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.surfaceSecondary,
   },
   options: { gap: spacing.xs },
+  careOptions: { gap: 0 },
   sectionLabel: {
     marginTop: spacing.md,
     paddingHorizontal: spacing.md,
   },
+  careSectionLabel: { marginTop: spacing.xs },
   option: {
     minHeight: 56,
     alignItems: 'center',
@@ -278,6 +296,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
+  compactOption: { minHeight: 44 },
   primaryOption: { backgroundColor: lightColors.primarySoft },
   optionIcon: {
     width: 40,
@@ -287,6 +306,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: lightColors.secondarySoft,
   },
+  compactOptionIcon: { width: 32, height: 32 },
   primaryIcon: { backgroundColor: lightColors.primary },
   optionLabel: { flex: 1 },
   pressed: { opacity: 0.62 },
