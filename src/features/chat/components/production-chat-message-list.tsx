@@ -1,7 +1,7 @@
-import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 import type { ImageSource } from 'expo-image';
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,18 +13,24 @@ import {
   View,
   type ViewToken,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
-import { AppButton } from '@/components/app-button';
 import { Avatar } from '@/components/avatar';
-import { lightColors, radius, spacing } from '@/theme';
+import {
+  contentStyles,
+  useContentLayout,
+} from '@/components/content-container';
+import { modalSupportedOrientations } from '@/config/orientation';
+import { lightColors, radius, shadows, spacing } from '@/theme';
 
 import {
   formatChatDateLabel,
   formatChatTime,
   getChatDateOnly,
 } from '../chat-date';
+import { isChatMessageConsecutive } from '../chat-message-grouping';
 import type { ChatListMessage, ChatMemberSummary } from '../chat-queries';
 
 type ProductionChatMessageListProps = {
@@ -41,17 +47,10 @@ type ProductionChatMessageListProps = {
   onVisibleMessageChange: (messageId: string) => void;
 };
 
-function isConsecutive(
-  message: ChatListMessage,
-  previous: ChatListMessage | undefined,
-) {
-  if (!previous || previous.sender_id !== message.sender_id) return false;
-  return (
-    new Date(message.created_at).getTime() -
-      new Date(previous.created_at).getTime() <
-    5 * 60_000
-  );
-}
+const CHAT_VIEWABILITY_CONFIG = {
+  itemVisiblePercentThreshold: 60,
+  minimumViewTime: 250,
+};
 
 export const ProductionChatMessageList = forwardRef<
   FlatList<ChatListMessage>,
@@ -77,13 +76,8 @@ export const ProductionChatMessageList = forwardRef<
     null,
   );
   const onVisibleMessageChangeRef = useRef(onVisibleMessageChange);
-  onVisibleMessageChangeRef.current = onVisibleMessageChange;
   const lastVisibleMessageIdRef = useRef<string | null>(null);
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 60,
-    minimumViewTime: 250,
-  }).current;
-  const onViewableItemsChanged = useRef(
+  const onViewableItemsChanged = useCallback(
     ({ viewableItems }: { viewableItems: ViewToken<ChatListMessage>[] }) => {
       const visibleMessages = viewableItems
         .map((token) => token.item)
@@ -101,8 +95,13 @@ export const ProductionChatMessageList = forwardRef<
         onVisibleMessageChangeRef.current(latestVisible.id);
       }
     },
-  ).current;
+    [],
+  );
   const memberById = new Map(members.map((member) => [member.userId, member]));
+
+  useEffect(() => {
+    onVisibleMessageChangeRef.current = onVisibleMessageChange;
+  }, [onVisibleMessageChange]);
 
   const confirmDelete = (message: ChatListMessage) => {
     if (Platform.OS === 'web') {
@@ -195,7 +194,7 @@ export const ProductionChatMessageList = forwardRef<
             !previous ||
             getChatDateOnly(item.created_at) !==
               getChatDateOnly(previous.created_at);
-          const consecutive = isConsecutive(item, previous);
+          const consecutive = isChatMessageConsecutive(item, previous);
           const isOwn = item.sender_id === currentUserId;
           const member = memberById.get(item.sender_id);
           const authorName = isOwn
@@ -293,8 +292,13 @@ export const ProductionChatMessageList = forwardRef<
                       onEdit(item);
                     }
                   }}
-                  onLongPress={() => requestAction(item)}
-                  onPress={() => requestAction(item)}
+                  onLongPress={() => {
+                    if (canEdit || canDelete) {
+                      void Haptics.selectionAsync().catch(() => undefined);
+                    }
+                    requestAction(item);
+                  }}
+                  onPress={canRetry ? () => requestAction(item) : undefined}
                   style={({ pressed }) => [
                     styles.messageColumn,
                     isOwn ? styles.ownColumn : styles.otherColumn,
@@ -335,15 +339,6 @@ export const ProductionChatMessageList = forwardRef<
                       <AppText tone="tertiary" variant="caption">
                         {canRetry ? t('chat.live.sendFailed') : time}
                       </AppText>
-                      {canEdit || canDelete ? (
-                        <Ionicons
-                          accessibilityElementsHidden
-                          color={lightColors.textTertiary}
-                          importantForAccessibility="no-hide-descendants"
-                          name="ellipsis-horizontal"
-                          size={14}
-                        />
-                      ) : null}
                     </View>
                   </View>
                 </Pressable>
@@ -354,60 +349,140 @@ export const ProductionChatMessageList = forwardRef<
         removeClippedSubviews={Platform.OS === 'android'}
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
+        viewabilityConfig={CHAT_VIEWABILITY_CONFIG}
         windowSize={9}
       />
 
-      <Modal
-        animationType="fade"
-        onRequestClose={() => setActionTarget(null)}
-        transparent
+      <ChatMessageActionsModal
+        canDelete={targetCanDelete}
+        canEdit={targetCanEdit}
+        onCancel={() => setActionTarget(null)}
+        onDelete={() => {
+          if (!actionTarget) return;
+          const target = actionTarget;
+          setActionTarget(null);
+          confirmDelete(target);
+        }}
+        onEdit={() => {
+          if (!actionTarget) return;
+          const target = actionTarget;
+          setActionTarget(null);
+          onEdit(target);
+        }}
         visible={Boolean(actionTarget)}
-      >
-        <View style={styles.actionOverlay}>
-          <Pressable
-            accessibilityLabel={t('common.close')}
-            accessibilityRole="button"
-            onPress={() => setActionTarget(null)}
-            style={StyleSheet.absoluteFill}
-          />
-          <View accessibilityViewIsModal style={styles.actionSheet}>
-            <AppText accessibilityRole="header" variant="title3">
-              {t('chat.live.actions.title')}
-            </AppText>
-            {targetCanEdit && actionTarget ? (
-              <AppButton
-                label={t('chat.live.edit.action')}
-                onPress={() => {
-                  const target = actionTarget;
-                  setActionTarget(null);
-                  onEdit(target);
-                }}
-                variant="secondary"
-              />
-            ) : null}
-            {targetCanDelete && actionTarget ? (
-              <AppButton
-                label={t('chat.live.delete.action')}
-                onPress={() => {
-                  const target = actionTarget;
-                  setActionTarget(null);
-                  confirmDelete(target);
-                }}
-                variant="danger"
-              />
-            ) : null}
-            <AppButton
-              label={t('common.cancel')}
-              onPress={() => setActionTarget(null)}
-              variant="ghost"
-            />
-          </View>
-        </View>
-      </Modal>
+      />
     </>
   );
 });
+
+function ChatMessageActionsModal({
+  canDelete,
+  canEdit,
+  onCancel,
+  onDelete,
+  onEdit,
+  visible,
+}: {
+  canDelete: boolean;
+  canEdit: boolean;
+  onCancel: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+  visible: boolean;
+}) {
+  const { t } = useTranslation();
+  const { isWide } = useContentLayout('modal');
+
+  return (
+    <Modal
+      animationType={isWide ? 'fade' : 'slide'}
+      onRequestClose={onCancel}
+      supportedOrientations={modalSupportedOrientations}
+      transparent
+      visible={visible}
+    >
+      <Pressable
+        accessible={false}
+        onPress={onCancel}
+        style={[styles.actionOverlay, isWide && styles.actionOverlayWide]}
+      >
+        <SafeAreaView
+          edges={isWide ? [] : ['bottom']}
+          style={styles.actionSafeArea}
+        >
+          <Pressable
+            accessibilityViewIsModal
+            accessible={false}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <View style={styles.actionGroup}>
+              <AppText
+                accessibilityRole="header"
+                style={styles.actionTitle}
+                variant="headline"
+              >
+                {t('chat.live.actions.title')}
+              </AppText>
+              {canEdit ? (
+                <ChatActionRow
+                  icon="create-outline"
+                  label={t('chat.live.edit.action')}
+                  onPress={onEdit}
+                />
+              ) : null}
+              {canDelete ? (
+                <ChatActionRow
+                  destructive
+                  icon="trash-outline"
+                  label={t('chat.live.delete.action')}
+                  onPress={onDelete}
+                />
+              ) : null}
+            </View>
+            <ChatActionRow
+              cancel
+              icon="close-outline"
+              label={t('common.cancel')}
+              onPress={onCancel}
+            />
+          </Pressable>
+        </SafeAreaView>
+      </Pressable>
+    </Modal>
+  );
+}
+
+function ChatActionRow({
+  cancel = false,
+  destructive = false,
+  icon,
+  label,
+  onPress,
+}: {
+  cancel?: boolean;
+  destructive?: boolean;
+  icon: 'close-outline' | 'create-outline' | 'trash-outline';
+  label: string;
+  onPress: () => void;
+}) {
+  const color = destructive ? lightColors.error : lightColors.textPrimary;
+
+  return (
+    <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.actionRow,
+        cancel && styles.cancelAction,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Ionicons color={color} name={icon} size={22} />
+      <AppText style={[styles.actionLabel, { color }]}>{label}</AppText>
+    </Pressable>
+  );
+}
 
 const styles = StyleSheet.create({
   listContent: {
@@ -482,13 +557,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: lightColors.overlay,
     justifyContent: 'flex-end',
-    padding: spacing.xl,
+    paddingHorizontal: spacing.md,
   },
-  actionSheet: {
+  actionOverlayWide: {
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  actionSafeArea: {
     ...contentStyles.modal,
+  },
+  actionGroup: {
     backgroundColor: lightColors.surface,
     borderRadius: radius.xl,
-    gap: spacing.sm,
-    padding: spacing.xl,
+    overflow: 'hidden',
+    ...shadows.subtle,
   },
+  actionTitle: {
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+  },
+  actionRow: {
+    minHeight: 56,
+    alignItems: 'center',
+    backgroundColor: lightColors.surface,
+    borderTopColor: lightColors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+  },
+  cancelAction: {
+    borderRadius: radius.xl,
+    borderTopWidth: 0,
+    marginTop: spacing.sm,
+    ...shadows.subtle,
+  },
+  actionLabel: { flex: 1 },
 });

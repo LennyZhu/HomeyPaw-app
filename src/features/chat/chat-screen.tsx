@@ -288,11 +288,18 @@ export default function ChatScreen() {
             size={44}
           />
           <View style={styles.titleCopy}>
-            <AppText accessibilityRole="header" variant="headline">
-              {t('chat.live.header.title', { name: pet.name })}
+            <AppText
+              accessibilityLabel={pet.name}
+              accessibilityRole="header"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              style={styles.petName}
+              variant="headline"
+            >
+              {pet.name}
             </AppText>
             <AppText tone="secondary" variant="caption">
-              {t('chat.live.header.memberCount', { count: members.length })}
+              {t('chat.live.header.subtitle', { count: members.length })}
             </AppText>
           </View>
           <Ionicons
@@ -458,6 +465,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   titleCopy: { flex: 1, gap: 2 },
+  petName: { flexShrink: 1 },
   membersButton: {
     width: 46,
     height: 46,

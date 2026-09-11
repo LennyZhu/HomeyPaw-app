@@ -562,6 +562,8 @@
       },
       "header": {
         "title": "{{name}}的家庭聊天室",
+        "subtitle_one": "家庭聊天室 · {{count}}位家人",
+        "subtitle_other": "家庭聊天室 · {{count}}位家人",
         "memberCount_one": "{{count}} 位家人",
         "memberCount_other": "{{count}} 位家人",
         "members": "查看家庭成員",
@@ -603,7 +605,7 @@
         "memberAvatar": "{{name}}的個人圖片",
         "retryHint": "長按並使用相同的安全訊息識別碼重新傳送",
         "deleteHint": "長按以顯示刪除確認",
-        "actionsHint": "輕點或長按以顯示可用的訊息操作"
+        "actionsHint": "長按以顯示可用的訊息操作"
       },
       "noPet": {
         "title": "還沒有家庭聊天室",
