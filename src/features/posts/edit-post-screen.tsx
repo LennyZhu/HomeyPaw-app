@@ -1,10 +1,11 @@
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { useFeedback } from '@/components/feedback-provider';
+import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
@@ -128,12 +129,20 @@ export default function EditPostScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content} scroll>
-      <AppText accessibilityRole="header" variant="largeTitle">
-        {t('posts.edit.title')}
-      </AppText>
-      <AppText style={styles.subtitle} tone="secondary">
-        {t('posts.edit.subtitle')}
-      </AppText>
+      <View style={styles.header}>
+        <IconButton
+          accessibilityLabel={t('common.back')}
+          icon="chevron-back"
+          onPress={() => router.back()}
+        />
+        <AppText
+          accessibilityRole="header"
+          style={styles.headerTitle}
+          variant="largeTitle"
+        >
+          {t('posts.edit.title')}
+        </AppText>
+      </View>
       <PostForm
         initialMedia={initialMedia}
         initialValues={initialValues}
@@ -152,7 +161,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.huge,
     paddingTop: spacing.md,
   },
-  subtitle: {
-    marginTop: -spacing.md,
-  },
+  header: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
+  headerTitle: { flex: 1 },
 });

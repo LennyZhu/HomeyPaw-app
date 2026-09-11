@@ -81,13 +81,17 @@ assert(postMedia.includes('CAMERA_PERMISSION_DENIED'));
 assert(postMedia.includes('CAMERA_PERMISSION_BLOCKED'));
 assert(postMedia.includes('photos: toPostMediaDrafts(result.assets'));
 assert(postMedia.includes('export const maximumPostMedia = 9'));
-assert(postForm.includes("selectPhotos('camera')"));
-assert(postForm.includes("selectPhotos('library')"));
+assert(postForm.includes("selectPhotoSource('camera')"));
+assert(postForm.includes("selectPhotoSource('library')"));
 assert(postForm.includes('maximumPostMedia - media.length'));
-assert(postForm.includes('media.length < maximumPostMedia'));
-assert(postForm.includes('ActionSheetIOS.showActionSheetWithOptions'));
+assert(postForm.includes('getPostPhotoAddPresentation'));
+assert(postForm.includes('<PostComposerActionModal'));
+assert.equal(
+  postForm.includes('ActionSheetIOS.showActionSheetWithOptions'),
+  false,
+);
 console.log(
-  'PASS: Camera and library sources share validation and the existing nine-photo upload pipeline.',
+  'PASS: Camera and library actions use the responsive composer sheet while preserving validation and the existing nine-photo upload pipeline.',
 );
 
 assert(postViewer.includes('Gesture.Pinch()'));

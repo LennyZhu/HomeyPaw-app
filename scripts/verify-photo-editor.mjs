@@ -160,7 +160,8 @@ const [
 assert(media.includes("source === 'camera'"));
 assert(media.includes('allowsMultipleSelection: true'));
 assert(media.includes('editTempUri: null'));
-assert(form.includes('icon="create-outline"'));
+assert(form.includes("icon: 'create-outline'"));
+assert(form.includes('onPress={() => openPhotoEditor(item)}'));
 assert(form.includes('<PostPhotoEditor'));
 assert(form.includes('createEditedPostMediaDraft'));
 assert(form.includes('removePostPhotoEditTemp'));

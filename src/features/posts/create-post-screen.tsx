@@ -99,18 +99,13 @@ export default function CreatePostScreen() {
           icon="chevron-back"
           onPress={() => router.back()}
         />
-        <View style={styles.headerCopy}>
-          <AppText accessibilityRole="header" variant="largeTitle">
-            {t('posts.create.title')}
-          </AppText>
-          <AppText
-            style={styles.subtitle}
-            tone="secondary"
-            variant="subheadline"
-          >
-            {t('posts.create.subtitle', { name: petsState.currentPet.name })}
-          </AppText>
-        </View>
+        <AppText
+          accessibilityRole="header"
+          style={styles.headerTitle}
+          variant="largeTitle"
+        >
+          {t('posts.create.title')}
+        </AppText>
       </View>
       <PostForm
         initialValues={initialValues}
@@ -129,9 +124,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.huge,
   },
-  header: { alignItems: 'flex-start', flexDirection: 'row', gap: spacing.md },
-  headerCopy: { flex: 1 },
-  subtitle: { marginTop: spacing.xs },
+  header: { alignItems: 'center', flexDirection: 'row', gap: spacing.md },
+  headerTitle: { flex: 1 },
   emptyContent: {
     gap: spacing.lg,
     paddingBottom: spacing.huge,

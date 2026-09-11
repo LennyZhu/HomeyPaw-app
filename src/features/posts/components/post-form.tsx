@@ -5,8 +5,7 @@ import { Image } from 'expo-image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  ActionSheetIOS,
-  Alert,
+  ActivityIndicator,
   Pressable,
   Linking,
   Platform,
@@ -33,12 +32,21 @@ import {
   type PostMediaDraft,
 } from '../post-media';
 import { removePostPhotoEditTemp } from '../post-photo-edit-files';
+import {
+  getPostPhotoAddPresentation,
+  movePostPhoto,
+  removePostPhoto,
+} from '../post-composer-photo-state';
 import type { PublishProgress } from '../post-publishing';
 import {
   createPostFormSchema,
   postTags,
   type PostFormValues,
 } from '../post-schema';
+import {
+  PostComposerActionModal,
+  type PostComposerAction,
+} from './post-composer-action-modal';
 import { PostPhotoEditor } from './post-photo-editor';
 
 type PostFormProps = {
@@ -68,8 +76,16 @@ export function PostForm({
   const [showPhotoSettings, setShowPhotoSettings] = useState(false);
   const [isPicking, setIsPicking] = useState(false);
   const [editorDraft, setEditorDraft] = useState<PostMediaDraft | null>(null);
+  const [photoSourceMenuVisible, setPhotoSourceMenuVisible] = useState(false);
+  const [photoActionsId, setPhotoActionsId] = useState<string | null>(null);
   const mediaRef = useRef(media);
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const photoPickerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const photoEditorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const {
     control,
     handleSubmit,
@@ -95,6 +111,12 @@ export function PostForm({
     }
 
     return () => {
+      if (photoPickerTimerRef.current) {
+        clearTimeout(photoPickerTimerRef.current);
+      }
+      if (photoEditorTimerRef.current) {
+        clearTimeout(photoEditorTimerRef.current);
+      }
       cleanupTimerRef.current = setTimeout(() => {
         for (const item of mediaRef.current) {
           if (item.kind === 'new') {
@@ -144,39 +166,21 @@ export function PostForm({
   };
 
   const showPhotoSourceMenu = () => {
-    const options = [
-      t('posts.photos.takePhoto'),
-      t('posts.photos.chooseLibrary'),
-      t('common.cancel'),
-    ];
-    const handleSelection = (index: number) => {
-      if (index === 0) void selectPhotos('camera');
-      if (index === 1) void selectPhotos('library');
-    };
+    setPhotoSourceMenuVisible(true);
+  };
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          cancelButtonIndex: 2,
-          options,
-          title: t('posts.photos.sourceTitle'),
-        },
-        handleSelection,
-      );
-      return;
+  const selectPhotoSource = (source: PostPhotoSource) => {
+    setPhotoSourceMenuVisible(false);
+    if (photoPickerTimerRef.current) {
+      clearTimeout(photoPickerTimerRef.current);
     }
-
-    Alert.alert(t('posts.photos.sourceTitle'), undefined, [
-      {
-        onPress: () => handleSelection(0),
-        text: options[0],
+    photoPickerTimerRef.current = setTimeout(
+      () => {
+        photoPickerTimerRef.current = null;
+        void selectPhotos(source);
       },
-      {
-        onPress: () => handleSelection(1),
-        text: options[1],
-      },
-      { style: 'cancel', text: options[2] },
-    ]);
+      Platform.OS === 'ios' ? 350 : 0,
+    );
   };
 
   const moveMedia = (index: number, direction: -1 | 1) => {
@@ -186,28 +190,31 @@ export function PostForm({
       return;
     }
 
-    setMedia((current) => {
-      const next = [...current];
-      const selected = next[index];
-      const adjacent = next[nextIndex];
+    setMedia((current) => movePostPhoto(current, index, direction));
+  };
 
-      if (!selected || !adjacent) {
-        return current;
-      }
-
-      next[index] = adjacent;
-      next[nextIndex] = selected;
-      return next;
-    });
+  const openPhotoEditor = (item: PostMediaDraft, afterMenu = false) => {
+    if (!afterMenu) {
+      setEditorDraft(item);
+      return;
+    }
+    if (photoEditorTimerRef.current) {
+      clearTimeout(photoEditorTimerRef.current);
+    }
+    photoEditorTimerRef.current = setTimeout(
+      () => {
+        photoEditorTimerRef.current = null;
+        setEditorDraft(item);
+      },
+      Platform.OS === 'ios' ? 350 : 0,
+    );
   };
 
   const removeMedia = (item: PostMediaDraft) => {
     if (item.kind === 'new') {
       removePostPhotoEditTemp(item.editTempUri);
     }
-    setMedia((current) =>
-      current.filter((candidate) => candidate.id !== item.id),
-    );
+    setMedia((current) => removePostPhoto(current, item.id));
   };
 
   const applyPhotoEdit = (result: EditedPhotoResult) => {
@@ -236,6 +243,60 @@ export function PostForm({
     await onSubmit(values, media);
   });
   const isBusy = isSubmitting || isPicking;
+  const addPhotoPresentation = getPostPhotoAddPresentation(
+    media.length,
+    maximumPostMedia,
+  );
+  const photoActionsIndex = media.findIndex(
+    (item) => item.id === photoActionsId,
+  );
+  const photoActionsItem =
+    photoActionsIndex >= 0 ? media[photoActionsIndex] : undefined;
+  const photoSourceActions: PostComposerAction[] = [
+    {
+      icon: 'camera-outline',
+      label: t('posts.photos.takePhoto'),
+      onPress: () => selectPhotoSource('camera'),
+    },
+    {
+      icon: 'images-outline',
+      label: t('posts.photos.chooseLibrary'),
+      onPress: () => selectPhotoSource('library'),
+    },
+  ];
+  const photoTileActions: PostComposerAction[] = photoActionsItem
+    ? [
+        {
+          icon: 'create-outline',
+          label: t('posts.photoEditor.edit'),
+          onPress: () => openPhotoEditor(photoActionsItem, true),
+        },
+        ...(photoActionsIndex > 0
+          ? [
+              {
+                icon: 'chevron-back' as const,
+                label: t('posts.photos.moveEarlier'),
+                onPress: () => moveMedia(photoActionsIndex, -1),
+              },
+            ]
+          : []),
+        ...(photoActionsIndex < media.length - 1
+          ? [
+              {
+                icon: 'chevron-forward' as const,
+                label: t('posts.photos.moveLater'),
+                onPress: () => moveMedia(photoActionsIndex, 1),
+              },
+            ]
+          : []),
+        {
+          destructive: true,
+          icon: 'trash-outline',
+          label: t('posts.photos.remove'),
+          onPress: () => removeMedia(photoActionsItem),
+        },
+      ]
+    : [];
 
   return (
     <View style={styles.form}>
@@ -243,8 +304,18 @@ export function PostForm({
 
       <View style={styles.field}>
         <View style={styles.photoHeader}>
-          <AppText variant="subheadline">{t('posts.fields.photos')}</AppText>
-          <AppText tone="tertiary" variant="footnote">
+          <AppText style={styles.photoHeaderLabel} variant="subheadline">
+            {t('posts.fields.photos')}
+          </AppText>
+          <AppText
+            accessibilityLabel={t('posts.photos.countAccessibility', {
+              count: media.length,
+              maximum: maximumPostMedia,
+            })}
+            style={styles.photoCount}
+            tone="tertiary"
+            variant="footnote"
+          >
             {t('posts.photos.count', {
               count: media.length,
               maximum: maximumPostMedia,
@@ -256,53 +327,75 @@ export function PostForm({
           <View style={styles.photoGrid}>
             {media.map((item, index) => (
               <View key={item.id} style={styles.photoTile}>
-                <Image
-                  accessibilityLabel={t('posts.photos.preview', {
+                <Pressable
+                  accessibilityLabel={t('posts.photoEditor.editPosition', {
                     position: index + 1,
                   })}
-                  cachePolicy={item.kind === 'new' ? 'none' : 'disk'}
-                  contentFit="cover"
-                  recyclingKey={item.id}
-                  source={item.uri}
-                  style={styles.photo}
-                />
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isBusy }}
+                  disabled={isBusy}
+                  onPress={() => openPhotoEditor(item)}
+                  style={({ pressed }) => [
+                    styles.photoPressable,
+                    pressed && styles.photoPressed,
+                  ]}
+                >
+                  <Image
+                    accessible={false}
+                    cachePolicy={item.kind === 'new' ? 'none' : 'disk'}
+                    contentFit="cover"
+                    recyclingKey={item.id}
+                    source={item.uri}
+                    style={styles.photo}
+                  />
+                </Pressable>
                 <View style={styles.photoPosition}>
                   <AppText tone="onPrimary" variant="caption">
                     {index + 1}
                   </AppText>
                 </View>
-                <View style={styles.photoActions}>
-                  <PhotoAction
-                    disabled={isBusy}
-                    icon="create-outline"
-                    label={t('posts.photoEditor.edit')}
-                    onPress={() => setEditorDraft(item)}
-                  />
-                  <PhotoAction
-                    disabled={index === 0 || isBusy}
-                    icon="chevron-back"
-                    label={t('posts.photos.moveEarlier')}
-                    onPress={() => moveMedia(index, -1)}
-                  />
-                  <PhotoAction
-                    disabled={index === media.length - 1 || isBusy}
-                    icon="chevron-forward"
-                    label={t('posts.photos.moveLater')}
-                    onPress={() => moveMedia(index, 1)}
-                  />
-                  <PhotoAction
-                    disabled={isBusy}
-                    icon="trash-outline"
-                    label={t('posts.photos.remove')}
-                    onPress={() => removeMedia(item)}
-                  />
-                </View>
+                <PhotoOverlayAction
+                  disabled={isBusy}
+                  icon="ellipsis-horizontal"
+                  label={t('posts.photos.actions', {
+                    position: index + 1,
+                  })}
+                  onPress={() => setPhotoActionsId(item.id)}
+                />
               </View>
             ))}
+            {addPhotoPresentation === 'tile' ? (
+              <Pressable
+                accessibilityLabel={t('posts.photos.add')}
+                accessibilityRole="button"
+                accessibilityState={{ busy: isPicking, disabled: isBusy }}
+                disabled={isBusy}
+                onPress={showPhotoSourceMenu}
+                style={({ pressed }) => [
+                  styles.addPhotoTile,
+                  pressed && styles.pressed,
+                  isBusy && styles.disabled,
+                ]}
+              >
+                {isPicking ? (
+                  <ActivityIndicator color={lightColors.primary} />
+                ) : (
+                  <Ionicons color={lightColors.primary} name="add" size={28} />
+                )}
+                <AppText
+                  numberOfLines={2}
+                  style={styles.addPhotoLabel}
+                  tone="brand"
+                  variant="subheadline"
+                >
+                  {t('posts.photos.add')}
+                </AppText>
+              </Pressable>
+            ) : null}
           </View>
         ) : null}
 
-        {media.length < maximumPostMedia ? (
+        {addPhotoPresentation === 'button' ? (
           <AppButton
             disabled={isSubmitting}
             label={t('posts.photos.add')}
@@ -427,6 +520,24 @@ export function PostForm({
         onPress={() => void submit()}
       />
 
+      <PostComposerActionModal
+        actions={photoSourceActions}
+        onCancel={() => setPhotoSourceMenuVisible(false)}
+        title={t('posts.photos.sourceTitle')}
+        visible={photoSourceMenuVisible}
+      />
+
+      {photoActionsItem ? (
+        <PostComposerActionModal
+          actions={photoTileActions}
+          onCancel={() => setPhotoActionsId(null)}
+          title={t('posts.photos.actions', {
+            position: photoActionsIndex + 1,
+          })}
+          visible
+        />
+      ) : null}
+
       {editorDraft ? (
         <PostPhotoEditor
           draft={editorDraft}
@@ -438,7 +549,7 @@ export function PostForm({
   );
 }
 
-function PhotoAction({
+function PhotoOverlayAction({
   disabled,
   icon,
   label,
@@ -462,7 +573,9 @@ function PhotoAction({
         pressed && styles.pressed,
       ]}
     >
-      <Ionicons color={lightColors.textPrimary} name={icon} size={18} />
+      <View style={styles.photoActionVisual}>
+        <Ionicons color={lightColors.textPrimary} name={icon} size={18} />
+      </View>
     </Pressable>
   );
 }
@@ -503,6 +616,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  photoHeaderLabel: { flex: 1 },
+  photoCount: { flexShrink: 0, textAlign: 'right' },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -512,12 +627,15 @@ const styles = StyleSheet.create({
     width: '48.5%',
     backgroundColor: lightColors.surfaceSecondary,
     borderRadius: radius.md,
+    aspectRatio: 1,
     overflow: 'hidden',
   },
   photo: {
     width: '100%',
-    aspectRatio: 1,
+    height: '100%',
   },
+  photoPressable: { width: '100%', height: '100%' },
+  photoPressed: { opacity: 0.86 },
   photoPosition: {
     position: 'absolute',
     left: spacing.sm,
@@ -529,17 +647,40 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     justifyContent: 'center',
   },
-  photoActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: spacing.xs,
-  },
   photoAction: {
-    width: 36,
-    height: 40,
+    position: 'absolute',
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    right: spacing.xs,
+    top: spacing.xs,
   },
+  photoActionVisual: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    backgroundColor: 'rgba(251, 247, 242, 0.88)',
+    borderColor: lightColors.border,
+    borderRadius: radius.full,
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+  },
+  addPhotoTile: {
+    width: '48.5%',
+    minHeight: 44,
+    alignItems: 'center',
+    aspectRatio: 1,
+    backgroundColor: lightColors.primarySoft,
+    borderColor: lightColors.primary,
+    borderRadius: radius.md,
+    borderStyle: 'dashed',
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: spacing.sm,
+    justifyContent: 'center',
+    padding: spacing.md,
+  },
+  addPhotoLabel: { maxWidth: '100%', textAlign: 'center' },
   disabled: {
     opacity: 0.3,
   },
