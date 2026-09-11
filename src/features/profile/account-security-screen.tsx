@@ -88,10 +88,15 @@ export default function AccountSecurityScreen() {
       </AppText>
 
       <View style={styles.dangerZone}>
-        <AppText tone="error" variant="headline">
+        <AppText tone="error" variant="footnote">
           {t('accountSecurity.dangerZone')}
         </AppText>
-        <AppText>{t('accountSecurity.deleteDescription')}</AppText>
+        <AppText variant="headline">
+          {t('accountSecurity.deleteAction')}
+        </AppText>
+        <AppText tone="secondary">
+          {t('accountSecurity.deleteDescription')}
+        </AppText>
         {deleteError ? <AppText tone="error">{deleteError}</AppText> : null}
         {Platform.OS === 'web' && webConfirmationStep > 0 ? (
           <View style={styles.webConfirmation}>
@@ -132,9 +137,11 @@ export default function AccountSecurityScreen() {
           </View>
         ) : (
           <AppButton
+            accessibilityLabel={`${t('accountSecurity.dangerZone')}: ${t('accountSecurity.deleteAction')}`}
             label={t('accountSecurity.deleteAction')}
             loading={isDeleting}
             onPress={confirmDeletion}
+            style={styles.deleteButton}
             variant="danger"
           />
         )}
@@ -151,13 +158,17 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   dangerZone: {
-    gap: spacing.lg,
-    backgroundColor: '#F9E7E7',
-    borderColor: lightColors.error,
+    gap: spacing.md,
+    backgroundColor: lightColors.surface,
+    borderColor: lightColors.border,
     borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
     marginTop: spacing.huge,
     padding: spacing.xl,
+  },
+  deleteButton: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.xs,
   },
   webConfirmation: {
     gap: spacing.md,

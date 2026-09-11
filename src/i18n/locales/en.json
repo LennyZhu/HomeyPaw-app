@@ -898,7 +898,11 @@
     "list": {
       "title": "My pets",
       "subtitle": "Your owned and shared pet families.",
-      "add": "Add"
+      "add": "Add",
+      "actionsTitle": "Add",
+      "createActions": "Add or join a pet",
+      "addPet": "Add Pet",
+      "joinFamily": "Join Family"
     },
     "create": {
       "title": "Add a pet",
@@ -1170,7 +1174,7 @@
     "title": "Account and security",
     "subtitle": "Manage your HomeyPaw account and private data.",
     "dangerZone": "Danger zone",
-    "deleteDescription": "Deleting your account permanently removes your login identity, profile and owned pets. It also permanently deletes journal entries, photos and care records you created in shared pet families. This cannot be undone.",
+    "deleteDescription": "Once deleted, your account and related data cannot be recovered.",
     "deleteAction": "Permanently delete account",
     "confirmTitle": "Delete your HomeyPaw account?",
     "confirmBody": "Your account and owned pet data will be permanently deleted. Journal entries, photos and care records you created in shared pet families will also be permanently deleted.",

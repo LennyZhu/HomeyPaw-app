@@ -15,6 +15,7 @@ import { lightColors, radius, spacing } from '@/theme';
 
 import { useProfile } from './use-profile';
 import { useProfileAvatarUrl } from './profile-avatar';
+import { getProfilePresentationState } from './profile-query-state';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 type MenuKey =
@@ -35,6 +36,14 @@ export default function ProfileScreen() {
   const { signOut, user } = useAuth();
   const { error, isLoading, profile, refetch } = useProfile();
   const avatarQuery = useProfileAvatarUrl(profile?.avatar_url ?? null);
+  const presentation = getProfilePresentationState({
+    hasError: Boolean(error),
+    hasProfile: Boolean(profile),
+    isPending: isLoading,
+  });
+  const profileEmail = user?.email ?? t('profile.emailUnavailable');
+  const profileLanguage =
+    profile?.locale === 'en' ? t('profile.english') : t('profile.zhHK');
 
   useFocusEffect(
     useCallback(() => {
@@ -95,8 +104,10 @@ export default function ProfileScreen() {
         {t('profile.title')}
       </AppText>
 
-      {isLoading ? <LoadingView label={t('profile.loading')} /> : null}
-      {error ? (
+      {presentation.showInitialLoading ? (
+        <LoadingView label={t('profile.loading')} />
+      ) : null}
+      {presentation.showInitialError ? (
         <View style={styles.errorState}>
           <AppText tone="error">{t('profile.loadError')}</AppText>
           <AppButton
@@ -107,10 +118,11 @@ export default function ProfileScreen() {
         </View>
       ) : null}
 
-      {profile ? (
+      {presentation.showContent && profile ? (
         <>
           <Pressable
-            accessibilityLabel={t('profile.editProfile')}
+            accessibilityHint={t('profile.editProfile')}
+            accessibilityLabel={`${profile.display_name}, ${profileEmail}, ${profileLanguage}`}
             accessibilityRole="button"
             onPress={() => router.push('/edit-profile')}
             style={({ pressed }) => [
@@ -126,10 +138,17 @@ export default function ProfileScreen() {
             />
             <View style={styles.profileCopy}>
               <AppText variant="title2">{profile.display_name}</AppText>
-              <AppText tone="secondary" variant="subheadline">
-                {user?.email ?? t('profile.emailUnavailable')}
+              <AppText
+                accessibilityLabel={profileEmail}
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                style={styles.email}
+                tone="secondary"
+                variant="subheadline"
+              >
+                {profileEmail}
               </AppText>
-              <AppText tone="tertiary" variant="footnote">
+              <AppText tone="secondary" variant="footnote">
                 {profile.locale === 'en'
                   ? t('profile.english')
                   : t('profile.zhHK')}
@@ -190,10 +209,12 @@ const styles = StyleSheet.create({
     marginTop: spacing.xxxl,
   },
   profileCopy: {
+    minWidth: 0,
     flex: 1,
     gap: spacing.xs,
     paddingLeft: spacing.lg,
   },
+  email: { flexShrink: 1 },
   menu: {
     marginTop: spacing.huge,
   },

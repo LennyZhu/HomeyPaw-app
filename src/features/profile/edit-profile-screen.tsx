@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -25,6 +26,7 @@ import { AuthField } from '../auth/components/auth-field';
 import { FormMessage } from '../auth/components/form-message';
 import {
   removeProfileAvatar,
+  profileAvatarKeys,
   uploadProfileAvatar,
   useProfileAvatarUrl,
 } from './profile-avatar';
@@ -36,6 +38,7 @@ export default function EditProfileScreen() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
   const { showFeedback } = useFeedback();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { isLoading, profile, updateProfile } = useProfile();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -130,6 +133,7 @@ export default function EditProfileScreen() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     let uploadedPath: string | null = null;
+    let profileUpdated = false;
 
     try {
       if (!user) throw new Error('AUTH_SESSION_MISSING');
@@ -139,6 +143,10 @@ export default function EditProfileScreen() {
           avatar: selectedAvatar,
           userId: user.id,
         });
+        queryClient.setQueryData(
+          profileAvatarKeys.signed(user.id, uploadedPath),
+          selectedAvatar.uri,
+        );
       }
       const originalAvatarPath = profile?.avatar_url ?? null;
       await updateProfile({
@@ -150,6 +158,7 @@ export default function EditProfileScreen() {
         display_name: values.displayName.trim(),
         locale,
       });
+      profileUpdated = true;
       if (
         originalAvatarPath &&
         (selectedAvatar || avatarRemoved) &&
@@ -161,7 +170,11 @@ export default function EditProfileScreen() {
       showFeedback(t('profile.edit.saved'));
       router.back();
     } catch {
-      if (uploadedPath) {
+      if (uploadedPath && !profileUpdated) {
+        queryClient.removeQueries({
+          exact: true,
+          queryKey: profileAvatarKeys.signed(user?.id, uploadedPath),
+        });
         await removeProfileAvatar(uploadedPath).catch(() => undefined);
       }
       setSubmitError(t('profile.edit.saveError'));

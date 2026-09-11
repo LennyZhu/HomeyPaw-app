@@ -898,7 +898,11 @@
     "list": {
       "title": "我的毛孩",
       "subtitle": "查看你擁有及共同照顧的毛孩。",
-      "add": "新增"
+      "add": "新增",
+      "actionsTitle": "新增",
+      "createActions": "新增或加入毛孩",
+      "addPet": "新增毛孩",
+      "joinFamily": "加入家庭"
     },
     "create": {
       "title": "新增毛孩",
@@ -1170,7 +1174,7 @@
     "title": "帳戶與安全",
     "subtitle": "管理你的 HomeyPaw 帳戶和私人資料。",
     "dangerZone": "危險操作",
-    "deleteDescription": "刪除帳戶會永久刪除登入身份、Profile 和你擁有的毛孩資料，也會永久刪除你在共享毛孩中建立的日記、相片與照顧記錄。這個操作無法復原。",
+    "deleteDescription": "刪除後，你的帳戶與相關資料將無法復原。",
     "deleteAction": "永久刪除帳戶",
     "confirmTitle": "刪除 HomeyPaw 帳戶？",
     "confirmBody": "你的帳戶及擁有的毛孩資料將永久刪除；你在共享毛孩中建立的日記、相片與照顧記錄也會永久刪除。",

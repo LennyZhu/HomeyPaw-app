@@ -1,16 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { type Href, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { EmptyState } from '@/components/empty-state';
+import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { lightColors, spacing } from '@/theme';
 
 import { PetAvatar } from './components/pet-avatar';
+import { PetsCreateActionsModal } from './components/pets-create-actions-modal';
 import { getPetSummaryLabel } from './pet-display';
 import { usePets } from './pet-queries';
 
@@ -18,31 +21,37 @@ export default function PetsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const petsQuery = usePets();
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
   return (
     <Screen contentContainerStyle={styles.content} scroll>
       <View style={styles.header}>
-        <View style={styles.headerCopy}>
-          <AppText accessibilityRole="header" variant="largeTitle">
-            {t('pets.list.title')}
-          </AppText>
-          <AppText tone="secondary">{t('pets.list.subtitle')}</AppText>
-        </View>
-        <View style={styles.headerActions}>
-          <AppButton
-            label={t('family.join.action')}
-            onPress={() => router.push('/join-family' as Href)}
-            style={styles.headerButton}
-            variant="secondary"
-          />
-          <AppButton
-            label={t('pets.list.add')}
-            onPress={() => router.push('/pets/new')}
-            style={styles.headerButton}
-            variant="secondary"
-          />
-        </View>
+        <AppText
+          accessibilityRole="header"
+          style={styles.headerTitle}
+          variant="largeTitle"
+        >
+          {t('pets.list.title')}
+        </AppText>
+        <IconButton
+          accessibilityLabel={t('pets.list.createActions')}
+          icon="add"
+          onPress={() => setIsCreateMenuOpen(true)}
+        />
       </View>
+
+      <PetsCreateActionsModal
+        onAddPet={() => {
+          setIsCreateMenuOpen(false);
+          router.push('/pets/new');
+        }}
+        onCancel={() => setIsCreateMenuOpen(false)}
+        onJoinFamily={() => {
+          setIsCreateMenuOpen(false);
+          router.push('/join-family' as Href);
+        }}
+        visible={isCreateMenuOpen}
+      />
 
       {petsQuery.isPending ? (
         <LoadingView label={t('pets.loading.list')} />
@@ -120,21 +129,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   header: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.lg,
   },
-  headerCopy: {
-    flex: 1,
-    gap: spacing.sm,
-  },
-  headerActions: {
-    gap: spacing.sm,
-  },
-  headerButton: {
-    minHeight: 42,
-    paddingHorizontal: spacing.md,
-  },
+  headerTitle: { flex: 1 },
   state: {
     alignItems: 'flex-start',
     gap: spacing.lg,
