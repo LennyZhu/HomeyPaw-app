@@ -16,6 +16,7 @@ import { appScreenOrientation } from '@/config/orientation';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { AuthDeepLinkCoordinator } from '@/features/auth/auth-deep-link-coordinator';
 import { CareTaskNotificationCoordinator } from '@/features/reminders/care-task-notification-coordinator';
+import { FamilyPushCoordinator } from '@/features/reminders/family-push-coordinator';
 import i18n from '@/i18n';
 import { AppQueryClientProvider } from '@/lib/query-client';
 import { NetworkStatusProvider } from '@/lib/network-status';
@@ -156,6 +157,7 @@ function RootNavigator() {
       </Stack>
       <AuthDeepLinkCoordinator />
       <CareTaskNotificationCoordinator />
+      <FamilyPushCoordinator />
       <StatusBar style="dark" />
     </>
   );

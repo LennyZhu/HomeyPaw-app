@@ -19,6 +19,7 @@ import {
   supabase,
 } from '@/lib/supabase/client';
 import { cancelCareTaskNotifications } from '@/services/care-task-notifications';
+import { unregisterFamilyPushDevice } from '@/services/family-push-device';
 
 import {
   applyAuthCallback,
@@ -212,6 +213,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const client = requireSupabase();
     const departingUserId = latestUserId.current;
     if (departingUserId) {
+      await unregisterFamilyPushDevice().catch(() => false);
       await cancelCareTaskNotifications(departingUserId).catch(() => undefined);
     }
     const { error } = await client.auth.signOut({ scope: 'local' });

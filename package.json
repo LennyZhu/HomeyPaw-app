@@ -94,6 +94,8 @@
     "verify:user-avatar-rls": "node scripts/verify-user-profile-avatar-rls.mjs",
     "verify:user-feedback-client": "node --experimental-strip-types scripts/verify-user-feedback-client.mjs",
     "verify:family-member-cap": "node scripts/verify-family-member-cap.mjs",
+    "verify:family-push": "node --experimental-strip-types scripts/verify-family-push.mjs",
+    "verify:family-push-edge": "node scripts/verify-family-push-edge.mjs",
     "verify:health-yearly-rls": "node scripts/verify-health-yearly-rls.mjs",
     "verify:save-photo": "node --experimental-strip-types scripts/verify-save-photo.mjs",
     "verify:journal-browsing": "node --experimental-strip-types scripts/verify-journal-browsing.mjs",

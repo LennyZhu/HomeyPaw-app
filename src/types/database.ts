@@ -418,6 +418,23 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      has_shared_family_for_push: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      register_push_device: {
+        Args: {
+          device_app_version: string;
+          device_expo_push_token: string;
+          device_installation_id: string;
+          device_platform: string;
+        };
+        Returns: string;
+      };
+      unregister_push_device: {
+        Args: { device_installation_id: string };
+        Returns: boolean;
+      };
       add_care_shift_tasks: {
         Args: { target_shift_id: string; task_items: Json };
         Returns: Database['public']['Tables']['care_shift_tasks']['Row'][];

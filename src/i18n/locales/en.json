@@ -92,6 +92,14 @@
     "done": "Done",
     "skip": "Skip for Now"
   },
+  "familyPush": {
+    "permission": {
+      "title": "Turn on family notifications",
+      "body": "Get notified when family adds a journal entry, care record or reminder.",
+      "enable": "Turn On Notifications",
+      "later": "Not Now"
+    }
+  },
   "tabs": {
     "home": "Home",
     "journal": "Journal",
@@ -1174,8 +1182,8 @@
     "contact": "Contact support",
     "privacyTitle": "Privacy Policy",
     "termsTitle": "Terms of Service",
-    "updated": "Updated August 27, 2026",
-    "privacyBody": "HomeyPaw processes the account, pet, family sharing, journal, photo, care record, and reminder data you choose to provide so it can deliver a private pet journal. Data is stored in Supabase and access is restricted through authentication, Row Level Security, and private Storage policies. Photo access is used only when you choose images. Notification access is used only for local reminders you enable on your device. HomeyPaw currently does not use advertising tracking, contacts, precise location, camera, microphone, or remote push notifications. You can delete your account and related data in the app. For support, email lenny996@163.com. A public policy URL will be added before release.",
+    "updated": "Updated September 11, 2026",
+    "privacyBody": "HomeyPaw processes the account, pet, family sharing, journal, photo, care record, reminder, and device push token data you choose to provide so it can deliver a private pet journal, local reminders, and generic family activity notifications. Data is stored in Supabase and access is restricted through authentication, Row Level Security, and private Storage policies. Photo access is used only when you choose images. Notification access is used for local reminders you enable and privacy-safe family activity notifications; notification text never includes journal content, care notes, health notes, or medication details. HomeyPaw does not use advertising tracking, contacts, precise location, camera, or microphone. You can delete your account and related data in the app. For support, email lenny996@163.com. A public policy URL will be added before release.",
     "termsBody": "You are responsible for your account credentials and family invite codes, and you may upload only content you have the right to use. Family members can view or manage shared pet data according to their role. Removing a member ends future access, while previously published content follows the data lifecycle described in the product. Reminders are an aid and are not a substitute for veterinary or emergency advice. The service may be temporarily unavailable for maintenance or network interruptions. Account and pet deletion cannot be undone. For support, email lenny996@163.com. A public terms URL will be added before release."
   },
   "accountSecurity": {

@@ -55,7 +55,7 @@ export async function getCareTaskNotificationPermission(): Promise<CareTaskNotif
   return permissions.status === 'denied' ? 'denied' : 'undetermined';
 }
 
-async function ensureReminderChannel() {
+export async function ensureReminderNotificationChannel() {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(channelId, {
     importance: Notifications.AndroidImportance.HIGH,
@@ -66,7 +66,7 @@ async function ensureReminderChannel() {
 
 export async function requestCareTaskNotificationPermission() {
   if (Platform.OS === 'web') return 'unsupported' as const;
-  await ensureReminderChannel();
+  await ensureReminderNotificationChannel();
   await Notifications.requestPermissionsAsync({
     ios: { allowAlert: true, allowBadge: false, allowSound: true },
   });
@@ -111,7 +111,7 @@ async function runSync(
       scheduled: 0,
     };
   }
-  await ensureReminderChannel();
+  await ensureReminderNotificationChannel();
 
   const now = new Date();
   const windowEnd = new Date(
