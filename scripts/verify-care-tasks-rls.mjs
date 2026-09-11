@@ -1,30 +1,13 @@
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 
 import { createClient } from '@supabase/supabase-js';
 
 const fixtureName = 'HomeyPaw Phase 7 Verification Pet';
 const fixtureDescription = 'Temporary Phase 7 care-task RLS verification';
 
-function readPublicConfig() {
-  const contents = readFileSync(
-    new URL('../.env.local', import.meta.url),
-    'utf8',
-  );
-  const values = new Map();
-  for (const line of contents.split(/\r?\n/u)) {
-    const match = line.match(/^([A-Z0-9_]+)=(.*)$/u);
-    if (match) values.set(match[1], match[2].trim());
-  }
-  return {
-    key: values.get('EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY'),
-    url: values.get('EXPO_PUBLIC_SUPABASE_URL'),
-  };
-}
-
 function required(name) {
   const value = process.env[name]?.trim();
-  if (!value) throw new Error(`Missing temporary test credential: ${name}`);
+  if (!value) throw new Error(`Missing local test configuration: ${name}`);
   return value;
 }
 
@@ -47,6 +30,21 @@ async function signIn(supabase, email, password, label) {
     throw new Error(`${label} sign-in failed (${error?.code ?? 'no_user'}).`);
   }
   return data.user;
+}
+
+async function createFixtureUser(admin, label) {
+  const email = `phase7-${label.toLowerCase()}-${randomUUID()}@example.test`;
+  const password = `Local-${randomUUID()}-Aa1!`;
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    email_confirm: true,
+    password,
+    user_metadata: { display_name: label, locale: 'en' },
+  });
+  if (error || !data.user) {
+    throw error ?? new Error(`${label} fixture user creation failed.`);
+  }
+  return { email, id: data.user.id, password };
 }
 
 function localSchedule(date, timeZone) {
@@ -128,28 +126,38 @@ async function deletePet(supabase, petId) {
 }
 
 async function main() {
-  const { key, url } = readPublicConfig();
-  if (!key || !url)
-    throw new Error('Public Supabase configuration is missing.');
+  const url = required('SUPABASE_LOCAL_URL');
+  const key = required('SUPABASE_LOCAL_ANON_KEY');
+  const serviceKey = required('SUPABASE_LOCAL_SERVICE_ROLE_KEY');
+  if (!['127.0.0.1', 'localhost'].includes(new URL(url).hostname)) {
+    throw new Error('SAFETY STOP: Phase 7 RLS verification is local only.');
+  }
+  const admin = client(url, serviceKey);
+  const fixtures = await Promise.all([
+    createFixtureUser(admin, 'Owner'),
+    createFixtureUser(admin, 'Member'),
+    createFixtureUser(admin, 'Stranger'),
+  ]);
+  const [ownerFixture, memberFixture, strangerFixture] = fixtures;
   const ownerClient = client(url, key);
   const memberClient = client(url, key);
   const strangerClient = client(url, key);
   const owner = await signIn(
     ownerClient,
-    required('PAWDAY_FAMILY_OWNER_EMAIL'),
-    required('PAWDAY_FAMILY_OWNER_PASSWORD'),
+    ownerFixture.email,
+    ownerFixture.password,
     'Owner',
   );
   const member = await signIn(
     memberClient,
-    required('PAWDAY_FAMILY_MEMBER_EMAIL'),
-    required('PAWDAY_FAMILY_MEMBER_PASSWORD'),
+    memberFixture.email,
+    memberFixture.password,
     'Member',
   );
   await signIn(
     strangerClient,
-    required('PAWDAY_FAMILY_STRANGER_EMAIL'),
-    required('PAWDAY_FAMILY_STRANGER_PASSWORD'),
+    strangerFixture.email,
+    strangerFixture.password,
     'Stranger',
   );
   let petId = null;
@@ -476,12 +484,16 @@ async function main() {
     petId = null;
     console.log('PASS: Pet deletion removes tasks.');
   } finally {
-    if (petId) await deletePet(ownerClient, petId).catch(() => undefined);
+    if (petId) await deletePet(ownerClient, petId);
     await Promise.all([
       ownerClient.auth.signOut(),
       memberClient.auth.signOut(),
       strangerClient.auth.signOut(),
     ]);
+    for (const fixture of fixtures) {
+      const deleted = await admin.auth.admin.deleteUser(fixture.id);
+      if (deleted.error) throw deleted.error;
+    }
   }
 }
 

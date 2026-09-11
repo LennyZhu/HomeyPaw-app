@@ -447,7 +447,10 @@ try {
   );
 } finally {
   for (const petId of pets) {
-    await admin.from('pets').delete().eq('id', petId);
+    sql(`delete from public.pets where id = '${petId}'::uuid;`);
   }
-  for (const item of users) await admin.auth.admin.deleteUser(item.id);
+  for (const item of users) {
+    const deleted = await admin.auth.admin.deleteUser(item.id);
+    if (deleted.error) throw deleted.error;
+  }
 }
