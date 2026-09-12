@@ -423,7 +423,10 @@ console.log(
 );
 
 assert(scheduleApi.includes("'complete_care_shift_task'"));
-assert(featureFlags.includes('SCHEDULE_ENABLED = LOCAL_FEATURE_PREVIEW'));
+assert(featureFlags.includes('PRODUCTION_SCHEDULE_ENABLED = true'));
+assert(
+  featureFlags.includes('PRODUCTION_SCHEDULE_ENABLED || LOCAL_FEATURE_PREVIEW'),
+);
 assert(featureFlags.includes('__DEV__ && LOCAL_BACKEND'));
 assert(backendTarget.includes("['localhost', '127.0.0.1']"));
 assert(scheduleApi.includes('SCHEDULE_BACKEND_UNAVAILABLE'));

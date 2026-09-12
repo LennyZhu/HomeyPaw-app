@@ -301,7 +301,7 @@ assert(
 );
 assert(
   featureFlags.includes('__DEV__') &&
-    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = true') &&
     featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     route.includes('if (!CHAT_ENABLED)') &&
     tabs.includes('...(CHAT_ENABLED ? {} : { href: null })'),

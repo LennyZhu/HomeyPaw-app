@@ -45,7 +45,7 @@ assert(
 );
 assert(
   featureFlags.includes('__DEV__') &&
-    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = true') &&
     featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     liveRoute.includes('if (!CHAT_ENABLED)') &&
     liveRoute.includes('<Redirect href="/" />'),

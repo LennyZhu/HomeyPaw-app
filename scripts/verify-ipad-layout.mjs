@@ -17,8 +17,8 @@ assert.equal(config.ios.requireFullScreen, false);
 assert.equal(config.orientation, 'portrait');
 assert.equal(config.scheme, 'pawday');
 assert.equal(config.ios.bundleIdentifier, 'com.zhushunli.homeypaw');
-assert.equal(config.version, '1.0.0');
-assert.equal(config.ios.buildNumber, '1');
+assert.equal(config.version, '1.1.0');
+assert.equal(config.ios.buildNumber, '2');
 assert.equal(
   config.extra.eas.projectId,
   '3623de2b-5a77-48ec-b2ec-45e8136d9ac7',

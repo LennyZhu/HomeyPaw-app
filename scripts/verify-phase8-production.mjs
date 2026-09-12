@@ -27,22 +27,19 @@ function walk(directory) {
 }
 
 assert(expo.name === 'HomeyPaw', 'App display name must be HomeyPaw.');
-assert(expo.version === '1.0.0', 'App version must be 1.0.0.');
+assert(expo.version === '1.1.0', 'App version must be 1.1.0.');
 assert(expo.orientation === 'portrait', 'V1 must be portrait-only.');
 assert(expo.userInterfaceStyle === 'light', 'V1 must use Light appearance.');
 assert(
   expo.ios?.bundleIdentifier === 'com.zhushunli.homeypaw',
   'Unexpected iOS bundle identifier.',
 );
-assert(expo.ios?.buildNumber === '1', 'Initial iOS build number must be 1.');
+assert(expo.ios?.buildNumber === '2', 'iOS build number must be 2.');
 assert(
   expo.android?.package === 'com.zhushunli.homeypaw',
   'Unexpected Android package.',
 );
-assert(
-  expo.android?.versionCode === 1,
-  'Initial Android versionCode must be 1.',
-);
+assert(expo.android?.versionCode === 2, 'Android versionCode must be 2.');
 assert(
   expo.extra?.eas?.projectId === easProjectId,
   'Unexpected EAS project ID.',
@@ -126,12 +123,12 @@ const featureFlags = read('src/config/features.ts');
 const backendTarget = read('src/config/backend-target.ts');
 assert(
   tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })') &&
-    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = true') &&
     featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     backendTarget.includes("['localhost', '127.0.0.1']") &&
     chatRoute.includes('if (!CHAT_ENABLED)') &&
     chatRoute.includes('<Redirect href="/" />'),
-  'Chat must remain inaccessible in a production export.',
+  'Chat must use the approved production release gate and route guard.',
 );
 assert(
   fs.existsSync(path.join(root, 'eas.json')),
@@ -176,7 +173,9 @@ if (failures.length > 0) {
   console.log(
     'PASS: Production source has no direct console calls, unapproved emails, or test hooks.',
   );
-  console.log('PASS: Chat remains hidden and privacy/terms drafts exist.');
+  console.log(
+    'PASS: Chat uses the approved release gate and privacy/terms drafts exist.',
+  );
   console.log(
     'PASS: Public HomeyPaw policy/support URLs and support email are recorded in metadata.',
   );

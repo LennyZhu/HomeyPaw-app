@@ -23,11 +23,8 @@ const chatRoute = read('src/app/(tabs)/chat.tsx');
 const featureFlags = read('src/config/features.ts');
 
 assert(expo.name === 'HomeyPaw', 'Production name must be HomeyPaw.');
-assert(expo.version === '1.0.0', 'Production version must be 1.0.0.');
-assert(
-  expo.ios?.buildNumber === '1',
-  'Initial production build number must be 1.',
-);
+assert(expo.version === '1.1.0', 'Production version must be 1.1.0.');
+assert(expo.ios?.buildNumber === '2', 'Production build number must be 2.');
 assert(
   expo.ios?.bundleIdentifier === 'com.zhushunli.homeypaw',
   'The production Bundle ID must be com.zhushunli.homeypaw.',
@@ -65,10 +62,10 @@ assert(expo.owner === 'homeypaw', 'Unexpected EAS project owner.');
 assert(expo.slug === 'homeypaw', 'Unexpected Expo project slug.');
 assert(
   tabsLayout.includes('...(CHAT_ENABLED ? {} : { href: null })') &&
-    featureFlags.includes('PRODUCTION_CHAT_ENABLED = false') &&
+    featureFlags.includes('PRODUCTION_CHAT_ENABLED = true') &&
     featureFlags.includes('__DEV__ && LOCAL_BACKEND') &&
     chatRoute.includes('if (!CHAT_ENABLED)'),
-  'Phase 10A Chat must remain hidden from the current production release.',
+  'Phase 10A Chat must be enabled behind the approved route guard.',
 );
 
 const serializedAppConfig = JSON.stringify(appConfig);
