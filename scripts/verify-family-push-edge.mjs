@@ -168,7 +168,7 @@ try {
   });
   if (journal.error) throw journal.error;
   sql(
-    `update private.family_notification_outbox set created_at = '2000-01-01T00:00:00Z' where source_id = '${postId}'::uuid;`,
+    `update private.family_notification_outbox set created_at = now() - interval '9 minutes' where source_id = '${postId}'::uuid;`,
   );
 
   const first = await invoke();

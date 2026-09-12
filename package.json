@@ -96,6 +96,7 @@
     "verify:family-member-cap": "node scripts/verify-family-member-cap.mjs",
     "verify:family-push": "node --experimental-strip-types scripts/verify-family-push.mjs",
     "verify:family-push-edge": "node scripts/verify-family-push-edge.mjs",
+    "verify:family-push-ttl": "node scripts/verify-family-push-ttl.mjs",
     "verify:edge-function-acl": "node scripts/verify-edge-function-service-role-permissions.mjs",
     "verify:delete-post-edge": "node scripts/verify-lifecycle-edge-functions.mjs delete-post",
     "verify:delete-pet-edge": "node scripts/verify-lifecycle-edge-functions.mjs delete-pet",
