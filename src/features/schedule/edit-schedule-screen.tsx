@@ -46,10 +46,8 @@ import {
   useCareScheduleRange,
   useUpdateCareShift,
 } from './care-schedule-queries';
-import {
-  CareTaskOccurrencePicker,
-  occurrenceKey,
-} from './components/care-task-occurrence-picker';
+import { CareTaskOccurrencePicker } from './components/care-task-occurrence-picker';
+import { occurrenceKey } from './schedule-reminder-return';
 import { ScheduleAssigneeSelector } from './components/schedule-assignee-selector';
 
 export default function EditScheduleScreen() {

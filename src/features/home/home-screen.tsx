@@ -36,6 +36,7 @@ import {
 import { lightColors, radius, spacing } from '@/theme';
 import type { CareLog } from '@/types/database';
 import { useAuth } from '@/features/auth/auth-context';
+import { runManualRefresh } from '@/lib/manual-refresh';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -122,18 +123,18 @@ export default function HomeScreen() {
     if (!petId) return;
     setLocalToday(getLocalDateOnly());
     setCurrentTime(new Date());
-    setIsRefreshing(true);
-    await Promise.all([
-      petQuery.refetch(),
-      postsQuery.refetch(),
-      membersQuery.refetch(),
-      authorsQuery.refetch(),
-      todayCareQuery.refetch(),
-      carePerformersQuery.refetch(),
-      reminderQuery.refetch(),
-      invalidateCareSchedule(queryClient, user?.id, petId),
-    ]);
-    setIsRefreshing(false);
+    await runManualRefresh(setIsRefreshing, () =>
+      Promise.all([
+        petQuery.refetch(),
+        postsQuery.refetch(),
+        membersQuery.refetch(),
+        authorsQuery.refetch(),
+        todayCareQuery.refetch(),
+        carePerformersQuery.refetch(),
+        reminderQuery.refetch(),
+        invalidateCareSchedule(queryClient, user?.id, petId),
+      ]),
+    );
   };
 
   useFocusEffect(

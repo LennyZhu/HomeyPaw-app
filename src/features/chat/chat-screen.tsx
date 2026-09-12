@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { onlineManager, useQueryClient } from '@tanstack/react-query';
+import { onlineManager } from '@tanstack/react-query';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import * as Crypto from 'expo-crypto';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -19,11 +19,8 @@ import { logError } from '@/lib/logger';
 import { lightColors, layout, radius, spacing } from '@/theme';
 
 import {
-  chatKeys,
-  clearChatPetCache,
   getChronologicalMessages,
   isChatAccessError,
-  useChatChannelVersion,
   useChatMembers,
   useChatMessages,
   useChatUnreadCount,
@@ -33,67 +30,64 @@ import {
   useUpdateChatMessage,
   type ChatListMessage,
 } from './chat-queries';
+import { shouldShowChatInitialLoading } from './chat-presentation';
+import { useChatSession } from './chat-session-provider';
 import { ChatEditMessageModal } from './components/chat-edit-message-modal';
 import { ChatMembersModal } from './components/chat-members-modal';
 import { ProductionChatComposer } from './components/production-chat-composer';
 import { ProductionChatMessageList } from './components/production-chat-message-list';
-import { useChatRealtime } from './use-chat-realtime';
 
 export default function ChatScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const { user } = useAuth();
   const petsState = useCurrentPet();
   const pet = petsState.currentPet;
   const petId = pet?.id ?? null;
-  const [isFocused, setIsFocused] = useState(false);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ChatListMessage | null>(null);
-  const [accessLostPetId, setAccessLostPetId] = useState<string | null>(null);
   const [visibleCursor, setVisibleCursor] = useState<{
     messageId: string;
     petId: string;
   } | null>(null);
   const messageListRef = useRef<FlatList<ChatListMessage>>(null);
   const lastReadRequestRef = useRef<string | null>(null);
+  const {
+    accessLost: sessionAccessLost,
+    isChatActive,
+    markAccessLost,
+    retryConnection: retrySessionConnection,
+    setChatActive,
+    status: realtimeStatus,
+    versionError,
+  } = useChatSession();
 
   useFocusEffect(
     useCallback(() => {
-      setIsFocused(true);
-      return () => setIsFocused(false);
-    }, []),
+      setChatActive(true);
+      return () => setChatActive(false);
+    }, [setChatActive]),
   );
 
   const onAccessLost = useCallback(() => {
     setIsMembersOpen(false);
     setEditTarget(null);
-    setAccessLostPetId(petId);
-  }, [petId]);
+    markAccessLost();
+  }, [markAccessLost]);
 
-  const explicitlyLostAccess = accessLostPetId === petId;
-
-  const versionQuery = useChatChannelVersion(petId, !explicitlyLostAccess);
-  const realtime = useChatRealtime({
-    channelVersion: versionQuery.data,
-    enabled: Boolean(isFocused && petId && user && !explicitlyLostAccess),
-    onAccessLost,
-    petId,
-    userId: user?.id,
-  });
-  const isSubscribed = realtime.status === 'subscribed';
+  const isSubscribed = realtimeStatus === 'subscribed';
   const messagesQuery = useChatMessages(
     petId,
-    isSubscribed && !explicitlyLostAccess,
+    isSubscribed && !sessionAccessLost,
   );
   const membersQuery = useChatMembers(
     petId,
-    isSubscribed && !explicitlyLostAccess,
+    isSubscribed && !sessionAccessLost,
   );
   const unreadQuery = useChatUnreadCount(
     petId,
-    isSubscribed && !explicitlyLostAccess,
+    isSubscribed && !sessionAccessLost,
   );
   const sendMutation = useSendChatMessage(petId ?? '');
   const updateMutation = useUpdateChatMessage(petId ?? '');
@@ -106,33 +100,27 @@ export default function ChatScreen() {
   const members = membersQuery.data ?? [];
   const currentMember = members.find((member) => member.userId === user?.id);
   const isOwner = currentMember?.role === 'owner';
-  const queryError =
-    versionQuery.error ?? messagesQuery.error ?? membersQuery.error;
-  const accessLost = explicitlyLostAccess || isChatAccessError(queryError);
+  const queryError = versionError ?? messagesQuery.error ?? membersQuery.error;
+  const accessLost = sessionAccessLost || isChatAccessError(queryError);
   const visibleMessageId =
     visibleCursor?.petId === petId ? visibleCursor.messageId : null;
 
   useEffect(() => {
-    if (!petId || !user || !isChatAccessError(queryError)) return;
+    if (!petId || !user || sessionAccessLost || !isChatAccessError(queryError))
+      return;
 
     let active = true;
-    void queryClient
-      .cancelQueries({ queryKey: chatKeys.all(user.id) })
-      .then(() => {
-        if (!active) return;
-        clearChatPetCache(queryClient, user.id, petId);
-        setIsMembersOpen(false);
-        setAccessLostPetId(petId);
-      });
-
+    void Promise.resolve().then(() => {
+      if (active) onAccessLost();
+    });
     return () => {
       active = false;
     };
-  }, [petId, queryClient, queryError, user]);
+  }, [onAccessLost, petId, queryError, sessionAccessLost, user]);
 
   useEffect(() => {
     if (
-      isFocused &&
+      isChatActive &&
       isSubscribed &&
       unreadQuery.data !== undefined &&
       unreadQuery.data > 0 &&
@@ -153,7 +141,7 @@ export default function ChatScreen() {
       });
     }
   }, [
-    isFocused,
+    isChatActive,
     isSubscribed,
     markReadMutation,
     messages.length,
@@ -164,14 +152,14 @@ export default function ChatScreen() {
   ]);
 
   useEffect(() => {
-    if (isFocused && messages.length > 0) {
+    if (isChatActive && messages.length > 0) {
       const timer = setTimeout(
         () => messageListRef.current?.scrollToEnd({ animated: false }),
         40,
       );
       return () => clearTimeout(timer);
     }
-  }, [isFocused, messages.length, petId]);
+  }, [isChatActive, messages.length, petId]);
 
   if (petsState.isPending) {
     return <LoadingView label={t('pets.loading.list')} />;
@@ -255,13 +243,7 @@ export default function ChatScreen() {
   };
 
   const retryConnection = () => {
-    if (explicitlyLostAccess) {
-      setAccessLostPetId(null);
-      return;
-    }
-    setAccessLostPetId(null);
-    void versionQuery.refetch();
-    void realtime.validateAndReconcile();
+    retrySessionConnection();
   };
 
   return (
@@ -338,7 +320,8 @@ export default function ChatScreen() {
             title={t('chat.live.accessLost.title')}
           />
         </View>
-      ) : versionQuery.isError || realtime.status === 'error' ? (
+      ) : (versionError || realtimeStatus === 'error') &&
+        messagesQuery.data === undefined ? (
         <View style={styles.flex}>
           <EmptyState
             actionLabel={t('common.retry')}
@@ -348,7 +331,11 @@ export default function ChatScreen() {
             title={t('chat.live.error.title')}
           />
         </View>
-      ) : !isSubscribed || messagesQuery.isPending || membersQuery.isPending ? (
+      ) : shouldShowChatInitialLoading({
+          hasCachedMessages: messagesQuery.data !== undefined,
+          messagesPending: messagesQuery.isPending || membersQuery.isPending,
+          realtimeStatus,
+        }) ? (
         <LoadingView label={t('chat.live.loading')} />
       ) : messages.length === 0 ? (
         <View style={styles.emptyRoom}>
@@ -396,7 +383,7 @@ export default function ChatScreen() {
 
       {!accessLost && isSubscribed ? (
         <ProductionChatComposer
-          disabled={realtime.status !== 'subscribed'}
+          disabled={realtimeStatus !== 'subscribed'}
           key={pet.id}
           onSend={send}
         />

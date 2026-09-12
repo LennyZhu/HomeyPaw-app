@@ -377,6 +377,21 @@ export function useMarkChatRead(petId: string) {
 
   return useMutation({
     mutationFn: (messageId: string) => markChatRead(petId, messageId),
+    onMutate: async () => {
+      const queryKey = chatKeys.unread(user?.id, petId);
+      await queryClient.cancelQueries({ queryKey });
+      const previousCount = queryClient.getQueryData<number>(queryKey);
+      queryClient.setQueryData(queryKey, 0);
+      return { previousCount };
+    },
+    onError: (_error, _messageId, context) => {
+      if (context?.previousCount !== undefined) {
+        queryClient.setQueryData(
+          chatKeys.unread(user?.id, petId),
+          context.previousCount,
+        );
+      }
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: chatKeys.unread(user?.id, petId),

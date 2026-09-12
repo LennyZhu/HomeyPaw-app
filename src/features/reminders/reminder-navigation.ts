@@ -4,12 +4,16 @@ export type ReminderCompletionNavigation =
 export function getNewReminderCompletionNavigation({
   canGoBack,
   returnTo,
+  source,
 }: {
   canGoBack: boolean;
   returnTo?: string | null | undefined;
+  source?: string | null | undefined;
 }): ReminderCompletionNavigation {
   if (returnTo && /^\/schedule(?:[/?]|$)/u.test(returnTo)) {
-    return { href: returnTo, kind: 'replace' };
+    return source === 'schedule' && canGoBack
+      ? { kind: 'back' }
+      : { href: returnTo, kind: 'replace' };
   }
 
   return canGoBack ? { kind: 'back' } : { href: '/reminders', kind: 'replace' };

@@ -20,6 +20,7 @@ const queries = read('src/features/chat/chat-queries.ts');
 const cache = read('src/features/chat/chat-cache.ts');
 const realtime = read('src/features/chat/use-chat-realtime.ts');
 const screen = read('src/features/chat/chat-screen.tsx');
+const sessionProvider = read('src/features/chat/chat-session-provider.tsx');
 const composer = read(
   'src/features/chat/components/production-chat-composer.tsx',
 );
@@ -283,7 +284,7 @@ assert(
     screen.includes('ProductionChatMessageList') &&
     screen.includes('ProductionChatComposer') &&
     screen.includes('key={pet.id}') &&
-    screen.includes('clearChatPetCache') &&
+    sessionProvider.includes('clearChatPetCache') &&
     !composer.includes('Attachment') &&
     !screen.includes('image-picker'),
   'Real UI is missing core states or includes Phase 10B attachments.',

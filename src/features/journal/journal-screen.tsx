@@ -32,6 +32,7 @@ import {
   usePosts,
 } from '@/features/posts/post-queries';
 import { lightColors, layout, radius, spacing } from '@/theme';
+import { runManualRefresh } from '@/lib/manual-refresh';
 
 import { JournalDateFilterModal } from './components/journal-date-filter-modal';
 import {
@@ -43,6 +44,7 @@ import {
   setJournalScrollOffset,
 } from './journal-browsing';
 import { useJournalFilterStore } from './journal-browsing-state';
+import { isJournalInitialLoading } from './manual-refresh';
 
 type TimelineItem =
   | { id: string; kind: 'year'; label: string }
@@ -67,6 +69,7 @@ export default function JournalScreen() {
   const authorsQuery = usePetPostAuthors(petId);
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [photoViewer, setPhotoViewer] = useState<{
     initialIndex: number;
     media: PostWithMedia['post_media'];
@@ -103,8 +106,13 @@ export default function JournalScreen() {
       ),
     [authorsQuery.data],
   );
-  const isRefreshing =
-    postsQuery.isRefetching && !postsQuery.isFetchingNextPage;
+  const refreshJournal = useCallback(
+    () =>
+      runManualRefresh(setIsManualRefreshing, () =>
+        Promise.all([postsQuery.refetch(), authorsQuery.refetch()]),
+      ),
+    [authorsQuery, postsQuery],
+  );
   const dateRangeLabel = dateRange
     ? formatCompactJournalDateRange(dateRange, i18n.language)
     : t('journal.filter.all');
@@ -133,7 +141,10 @@ export default function JournalScreen() {
                 variant="secondary"
               />
             </View>
-          ) : postsQuery.isPending || authorsQuery.isPending ? (
+          ) : isJournalInitialLoading(
+              postsQuery.data !== undefined,
+              postsQuery.isPending || authorsQuery.isPending,
+            ) ? (
             <ActivityIndicator
               color={lightColors.primary}
               style={styles.emptyLoader}
@@ -280,11 +291,8 @@ export default function JournalScreen() {
         }
         refreshControl={
           <RefreshControl
-            onRefresh={() => {
-              void postsQuery.refetch();
-              void authorsQuery.refetch();
-            }}
-            refreshing={isRefreshing}
+            onRefresh={() => void refreshJournal()}
+            refreshing={isManualRefreshing}
             tintColor={lightColors.primary}
           />
         }

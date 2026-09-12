@@ -18,8 +18,12 @@ import {
   mergeChatMessage,
   removeChatMessageFromCache,
 } from './chat-queries';
+import {
+  consumeCreatedMessageId,
+  shouldInvalidateChatUnread,
+  type ChatRealtimeStatus,
+} from './chat-presentation';
 
-type ChatRealtimeStatus = 'connecting' | 'error' | 'idle' | 'subscribed';
 type ChatRealtimeConnection = {
   status: ChatRealtimeStatus;
   topic: string | null;
@@ -90,6 +94,8 @@ export function useChatRealtime({
     let retryAttempted = false;
     let rotationRunning = false;
     let channel: RealtimeChannel | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    const seenCreatedMessageIds = new Set<string>();
 
     const loseAccess = async () => {
       if (!active) return;
@@ -197,20 +203,37 @@ export function useChatRealtime({
     };
     validateRef.current = validateAndReconcile;
 
-    const reconcileMessage = async (event: BroadcastEnvelope) => {
+    const reconcileMessage = async (
+      event: BroadcastEnvelope,
+      invalidateUnread: boolean,
+    ) => {
       const messageId = getMessageId(event);
       if (!messageId || !active) return;
+
+      if (
+        invalidateUnread &&
+        !consumeCreatedMessageId(seenCreatedMessageIds, messageId)
+      )
+        return;
 
       try {
         const message = await fetchChatMessageById(messageId);
         if (!active) return;
         if (message?.pet_id === petId) {
           mergeChatMessage(queryClient, messageQueryKey, message);
-          await queryClient.invalidateQueries({
-            queryKey: chatKeys.unread(userId, petId),
-          });
+          if (
+            invalidateUnread &&
+            shouldInvalidateChatUnread(message.sender_id, userId)
+          ) {
+            await queryClient.invalidateQueries({
+              queryKey: chatKeys.unread(userId, petId),
+            });
+          }
+        } else if (invalidateUnread) {
+          seenCreatedMessageIds.delete(messageId);
         }
       } catch (error) {
+        if (invalidateUnread) seenCreatedMessageIds.delete(messageId);
         if (isChatAccessError(error)) {
           await loseAccess();
           return;
@@ -238,8 +261,12 @@ export function useChatRealtime({
 
       channel = client
         .channel(topic, { config: { private: true } })
-        .on('broadcast', { event: 'message_created' }, reconcileMessage)
-        .on('broadcast', { event: 'message_updated' }, reconcileMessage)
+        .on('broadcast', { event: 'message_created' }, (event) =>
+          reconcileMessage(event as unknown as BroadcastEnvelope, true),
+        )
+        .on('broadcast', { event: 'message_updated' }, (event) =>
+          reconcileMessage(event as unknown as BroadcastEnvelope, false),
+        )
         .on('broadcast', { event: 'message_deleted' }, reconcileDeletion)
         .subscribe((nextStatus) => {
           if (!active) return;
@@ -261,7 +288,8 @@ export function useChatRealtime({
           if (nextStatus === 'CHANNEL_ERROR' && !retryAttempted) {
             retryAttempted = true;
             setConnection({ status: 'connecting', topic });
-            setTimeout(() => {
+            retryTimer = setTimeout(() => {
+              retryTimer = null;
               void fetchChatChannelVersion(petId)
                 .then((latestVersion) => {
                   if (!active) return;
@@ -302,6 +330,7 @@ export function useChatRealtime({
       active = false;
       validateRef.current = async () => undefined;
       rotationRef.current = async () => undefined;
+      if (retryTimer) clearTimeout(retryTimer);
       setConnection((current) =>
         current.topic === topic ? { status: 'idle', topic: null } : current,
       );
@@ -370,6 +399,7 @@ export function useChatRealtime({
   useEffect(() => {
     if (!enabled) return;
     const client = requireSupabase();
+    const deferredValidationTimers = new Set<ReturnType<typeof setTimeout>>();
     const appStateSubscription = AppState.addEventListener(
       'change',
       (nextState) => {
@@ -386,19 +416,23 @@ export function useChatRealtime({
     });
     const { data: authListener } = client.auth.onAuthStateChange((event) => {
       if (event === 'TOKEN_REFRESHED') {
-        setTimeout(() => void validateRef.current(), 0);
+        const timer = setTimeout(() => {
+          deferredValidationTimers.delete(timer);
+          void validateRef.current();
+        }, 0);
+        deferredValidationTimers.add(timer);
       }
     });
     const membershipRecheck = setInterval(
       () => void validateRef.current(),
       membershipRecheckIntervalMs,
     );
-
     return () => {
       appStateSubscription.remove();
       unsubscribeNetwork();
       authListener.subscription.unsubscribe();
       clearInterval(membershipRecheck);
+      for (const timer of deferredValidationTimers) clearTimeout(timer);
     };
   }, [enabled]);
 

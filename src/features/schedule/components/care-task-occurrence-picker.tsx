@@ -8,12 +8,7 @@ import type { CareTaskOccurrence } from '@/features/reminders/care-task-types';
 import { lightColors, radius, spacing } from '@/theme';
 
 import { formatScheduleTime } from '../calendar-date';
-
-export function occurrenceKey(
-  occurrence: Pick<CareTaskOccurrence, 'scheduled_for' | 'task_id'>,
-) {
-  return `${occurrence.task_id}|${occurrence.scheduled_for}`;
-}
+import { occurrenceKey } from '../schedule-reminder-return';
 
 type Props = {
   assignedKeys: Set<string>;

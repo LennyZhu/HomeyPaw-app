@@ -14,6 +14,7 @@ import { getDeviceTimeZone, getLocalDateOnly } from '@/features/care/care-date';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
+import { stageScheduleReminderReturn } from '@/features/schedule/schedule-reminder-return';
 import {
   getCareTaskNotificationPermission,
   requestCareTaskNotificationPermission,
@@ -38,21 +39,26 @@ import { useAuth } from '../auth/auth-context';
 function defaultValues(requestedDate?: string): CareTaskFormValues {
   const next = new Date(Date.now() + 60 * 60_000);
   next.setMinutes(Math.ceil(next.getMinutes() / 5) * 5, 0, 0);
+  const date = /^\d{4}-\d{2}-\d{2}$/u.test(requestedDate ?? '')
+    ? requestedDate!
+    : getLocalDateOnly(next);
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  const day = Number(date.slice(8, 10));
+  const jsDay = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
   return {
     careType: 'feeding',
     category: 'standard',
-    date: /^\d{4}-\d{2}-\d{2}$/u.test(requestedDate ?? '')
-      ? requestedDate!
-      : getLocalDateOnly(next),
+    date,
     localTime: `${next.getHours().toString().padStart(2, '0')}:${next
       .getMinutes()
       .toString()
       .padStart(2, '0')}`,
-    monthDay: String(next.getDate()),
+    monthDay: String(day),
     note: '',
     scheduleType: 'once',
     title: '',
-    weekDay: String(next.getDay() === 0 ? 7 : next.getDay()),
+    weekDay: String(jsDay === 0 ? 7 : jsDay),
   };
 }
 
@@ -61,6 +67,9 @@ export default function NewCareTaskScreen() {
     date?: string | string[];
     petId?: string | string[];
     returnTo?: string | string[];
+    scheduleDate?: string | string[];
+    scheduleDraftId?: string | string[];
+    source?: string | string[];
   }>();
   const { t } = useTranslation();
   const router = useRouter();
@@ -76,6 +85,15 @@ export default function NewCareTaskScreen() {
   const requestedReturnTo = Array.isArray(params.returnTo)
     ? params.returnTo[0]
     : params.returnTo;
+  const requestedScheduleDate = Array.isArray(params.scheduleDate)
+    ? params.scheduleDate[0]
+    : params.scheduleDate;
+  const requestedScheduleDraftId = Array.isArray(params.scheduleDraftId)
+    ? params.scheduleDraftId[0]
+    : params.scheduleDraftId;
+  const requestedSource = Array.isArray(params.source)
+    ? params.source[0]
+    : params.source;
   const [selectedPetId, setSelectedPetId] = useState<string | null>(() =>
     requestedPetId && petsState.pets.some((pet) => pet.id === requestedPetId)
       ? requestedPetId
@@ -104,6 +122,7 @@ export default function NewCareTaskScreen() {
       getNewReminderCompletionNavigation({
         canGoBack: router.canGoBack(),
         returnTo: requestedReturnTo,
+        source: requestedSource,
       }),
     );
   const cancel = () =>
@@ -121,6 +140,18 @@ export default function NewCareTaskScreen() {
         timeZone,
         values: formValues,
       });
+      if (
+        requestedSource === 'schedule' &&
+        requestedScheduleDraftId &&
+        requestedScheduleDate
+      ) {
+        stageScheduleReminderReturn({
+          draftId: requestedScheduleDraftId,
+          petId: selectedPet.id,
+          scheduleDate: requestedScheduleDate,
+          taskId,
+        });
+      }
       const permission = await getCareTaskNotificationPermission();
       const hasShownPreprompt = user
         ? await hasShownCareTaskNotificationPreprompt(user.id)

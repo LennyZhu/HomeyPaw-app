@@ -8,6 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 
 import { CHAT_ENABLED } from '@/config/features';
+import {
+  ChatSessionProvider,
+  useChatSession,
+} from '@/features/chat/chat-session-provider';
+import { formatChatBadge } from '@/features/chat/chat-presentation';
 import { lightColors, layout, radius, shadows, spacing } from '@/theme';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -35,9 +40,19 @@ function CreateTabIcon() {
 }
 
 export default function TabsLayout() {
+  return (
+    <ChatSessionProvider>
+      <TabsNavigator />
+    </ChatSessionProvider>
+  );
+}
+
+function TabsNavigator() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isWide, width, fontScale } = useContentLayout();
+  const chatSession = useChatSession();
+  const chatBadge = formatChatBadge(chatSession.unreadCount);
 
   return (
     <Tabs
@@ -112,8 +127,10 @@ export default function TabsLayout() {
         name="chat"
         options={{
           ...(CHAT_ENABLED ? {} : { href: null }),
+          ...(chatBadge === undefined ? {} : { tabBarBadge: chatBadge }),
           title: t('tabs.chat'),
           tabBarAccessibilityLabel: t('tabs.chat'),
+          tabBarBadgeStyle: styles.chatBadge,
           tabBarIcon: ({ color, focused, size }) => (
             <TabIcon
               color={color}
@@ -156,6 +173,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     lineHeight: 14,
+  },
+  chatBadge: {
+    fontSize: 10,
+    minWidth: 18,
   },
   createIcon: {
     width: 50,

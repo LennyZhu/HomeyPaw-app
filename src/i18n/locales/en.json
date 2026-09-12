@@ -1161,6 +1161,7 @@
       "complete": "The care item was not completed. Refresh and try again.",
       "save": "The schedule was not saved. Your input is still here.",
       "occurrences": "Available care tasks could not be loaded.",
+      "newReminderOccurrenceMissing": "The new reminder did not create a care item on this schedule date. Your schedule draft is still here.",
       "cancel": "The scheduled responsibility was not canceled.",
       "notMutable": "This schedule is unavailable or its history can no longer be changed."
     }

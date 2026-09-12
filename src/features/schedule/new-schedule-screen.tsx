@@ -37,12 +37,14 @@ import {
   useCareScheduleRange,
   useCreateCareShift,
 } from './care-schedule-queries';
-import {
-  CareTaskOccurrencePicker,
-  occurrenceKey,
-} from './components/care-task-occurrence-picker';
+import { CareTaskOccurrencePicker } from './components/care-task-occurrence-picker';
 import { ScheduleAssigneeSelector } from './components/schedule-assignee-selector';
 import { ScheduleDateField } from './components/schedule-date-field';
+import {
+  mergeScheduleReminderSelection,
+  occurrenceKey,
+  takeScheduleReminderReturn,
+} from './schedule-reminder-return';
 
 function initialDate(value: string | string[] | undefined) {
   const candidate = Array.isArray(value) ? value[0] : value;
@@ -61,6 +63,7 @@ export default function NewScheduleScreen() {
   const petsState = useCurrentPet();
   const pet = petsState.currentPet;
   const petId = pet?.id ?? null;
+  const [draftId] = useState(() => Crypto.randomUUID());
   const [date, setDate] = useState(() => initialDate(params.date));
   const [assigneeUserId, setAssigneeUserId] = useState<string | null>(
     user?.id ?? null,
@@ -144,12 +147,59 @@ export default function NewScheduleScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void Promise.all([
-        refetchOccurrences(),
-        refetchAssigned(),
-        refetchMembers(),
-      ]);
-    }, [refetchAssigned, refetchMembers, refetchOccurrences]),
+      let active = true;
+      const reminderReturn = takeScheduleReminderReturn(draftId);
+      const refresh = async () => {
+        const [occurrencesResult, assignedResult] = await Promise.all([
+          refetchOccurrences(),
+          refetchAssigned(),
+          refetchMembers(),
+        ]);
+        if (!active || !reminderReturn) return;
+
+        const refreshedAssignedKeys = new Set(
+          (assignedResult.data ?? []).map(
+            (item) => `${item.care_task_id}|${item.source_scheduled_for}`,
+          ),
+        );
+        const refreshedOccurrences = (occurrencesResult.data ?? []).filter(
+          (occurrence) =>
+            getLocalDateInTimeZone(
+              occurrence.scheduled_for,
+              occurrence.time_zone,
+            ) === date,
+        );
+        const result = mergeScheduleReminderSelection({
+          assignedKeys: refreshedAssignedKeys,
+          currentSelectedKeys: new Set(),
+          occurrences: refreshedOccurrences,
+          petId,
+          result: reminderReturn,
+          scheduleDate: date,
+        });
+        if (result.kind === 'ineligible') {
+          setSubmitError(t('schedule.errors.newReminderOccurrenceMissing'));
+          return;
+        }
+        setSelectedKeys((current) => {
+          const next = new Set(current);
+          next.add(occurrenceKey(result.occurrence));
+          return next;
+        });
+      };
+      void refresh();
+      return () => {
+        active = false;
+      };
+    }, [
+      date,
+      draftId,
+      petId,
+      refetchAssigned,
+      refetchMembers,
+      refetchOccurrences,
+      t,
+    ]),
   );
 
   const toggleOccurrence = (occurrence: CareTaskOccurrence) => {
@@ -233,16 +283,20 @@ export default function NewScheduleScreen() {
           </View>
           <AppButton
             label={t('schedule.addCareTask')}
-            onPress={() =>
+            onPress={() => {
+              setSubmitError(null);
               router.push({
                 pathname: '/reminders/new',
                 params: {
                   date,
                   petId: petId ?? '',
+                  scheduleDate: date,
+                  scheduleDraftId: draftId,
+                  source: 'schedule',
                   returnTo: `/schedule/new?date=${date}`,
                 },
-              } as Href)
-            }
+              } as Href);
+            }}
             style={styles.addTaskButton}
             variant="ghost"
           />

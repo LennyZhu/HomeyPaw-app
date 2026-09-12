@@ -34,7 +34,7 @@ assert(
   expo.ios?.bundleIdentifier === 'com.zhushunli.homeypaw',
   'Unexpected iOS bundle identifier.',
 );
-assert(expo.ios?.buildNumber === '2', 'iOS build number must be 2.');
+assert(expo.ios?.buildNumber === '3', 'iOS build number must be 3.');
 assert(
   expo.android?.package === 'com.zhushunli.homeypaw',
   'Unexpected Android package.',

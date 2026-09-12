@@ -24,7 +24,7 @@ const featureFlags = read('src/config/features.ts');
 
 assert(expo.name === 'HomeyPaw', 'Production name must be HomeyPaw.');
 assert(expo.version === '1.1.0', 'Production version must be 1.1.0.');
-assert(expo.ios?.buildNumber === '2', 'Production build number must be 2.');
+assert(expo.ios?.buildNumber === '3', 'Production build number must be 3.');
 assert(
   expo.ios?.bundleIdentifier === 'com.zhushunli.homeypaw',
   'The production Bundle ID must be com.zhushunli.homeypaw.',
