@@ -20,6 +20,7 @@ if (!['127.0.0.1', 'localhost'].includes(parsedUrl.hostname)) {
 const admin = createClient(localUrl, localServiceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
+const testClients = new Set();
 
 function createTestClient() {
   return createClient(localUrl, localAnonKey, {
@@ -145,6 +146,7 @@ async function createUser(label) {
     throw signInError ?? new Error(`${label} sign-in failed`);
   }
   await client.realtime.setAuth(signIn.session.access_token);
+  testClients.add(client);
   return { client, id: data.user.id };
 }
 
@@ -220,21 +222,31 @@ async function subscribeAllowed(client, topic, label) {
       events.push({ event: 'message_deleted', payload: event.payload }),
     );
 
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error(`${label} subscription timed out`)),
-      8000,
-    );
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        clearTimeout(timer);
-        resolve();
-      } else if (status === 'CHANNEL_ERROR') {
-        clearTimeout(timer);
-        reject(new Error(`${label} subscription was denied`));
-      }
+  let timer;
+  try {
+    await new Promise((resolve, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`${label} subscription timed out`)),
+        8000,
+      );
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          resolve();
+        } else if (
+          status === 'CHANNEL_ERROR' ||
+          status === 'TIMED_OUT' ||
+          status === 'CLOSED'
+        ) {
+          reject(new Error(`${label} subscription was denied`));
+        }
+      });
     });
-  });
+  } catch (error) {
+    await client.removeChannel(channel).catch(() => undefined);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 
   return { channel, events };
 }
@@ -249,44 +261,54 @@ async function subscribeControlAllowed(client, userId, label) {
       events.push({ event: 'chat_channel_rotated', payload: event.payload }),
     );
 
-  await new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new Error(`${label} control subscription timed out`)),
-      8000,
-    );
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        clearTimeout(timer);
-        resolve();
-      } else if (status === 'CHANNEL_ERROR') {
-        clearTimeout(timer);
-        reject(new Error(`${label} control subscription was denied`));
-      }
+  let timer;
+  try {
+    await new Promise((resolve, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`${label} control subscription timed out`)),
+        8000,
+      );
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          resolve();
+        } else if (
+          status === 'CHANNEL_ERROR' ||
+          status === 'TIMED_OUT' ||
+          status === 'CLOSED'
+        ) {
+          reject(new Error(`${label} control subscription was denied`));
+        }
+      });
     });
-  });
+  } catch (error) {
+    await client.removeChannel(channel).catch(() => undefined);
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 
   return { channel, events };
 }
 
 async function expectSubscriptionDenied(client, topic, label) {
   const channel = client.channel(topic, { config: { private: true } });
+  let timer;
   try {
     await new Promise((resolve, reject) => {
-      const timer = setTimeout(
+      timer = setTimeout(
         () => reject(new Error(`${label} denial timed out`)),
         8000,
       );
       channel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          clearTimeout(timer);
           reject(new Error(`SECURITY BREACH: ${label} subscribed`));
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-          clearTimeout(timer);
           resolve();
         }
       });
     });
   } finally {
+    clearTimeout(timer);
     await client.removeChannel(channel);
   }
 }
@@ -901,7 +923,7 @@ async function main() {
       memberSubscription.events.length === memberEventsBeforeDelete,
       'SECURITY BREACH: Removed Member received a delete event.',
     );
-    member.client.realtime.disconnect();
+    await member.client.realtime.disconnect();
     member.client.realtime.connect();
     await member.client.realtime.setAuth();
     await expectSubscriptionDenied(
@@ -1229,6 +1251,10 @@ async function main() {
   } finally {
     for (const [client, channel] of channels) {
       await client.removeChannel(channel).catch(() => undefined);
+    }
+    for (const client of testClients) {
+      await client.removeAllChannels().catch(() => undefined);
+      await client.realtime.disconnect().catch(() => undefined);
     }
     if (crossPetId && owner) {
       await owner.client.from('pets').delete().eq('id', crossPetId);

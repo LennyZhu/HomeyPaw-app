@@ -12,7 +12,11 @@ function assert(condition, message) {
 const migration = read(
   'supabase/migrations/20260907150000_phase11a_family_care_schedule.sql',
 );
+const rescheduleMigration = read(
+  'supabase/migrations/20260912100000_fix_schedule_occurrence_reschedule.sql',
+);
 const compactMigration = migration.replace(/\s+/gu, '');
+const compactRescheduleMigration = rescheduleMigration.replace(/\s+/gu, '');
 const databaseTypes = read('src/types/database.ts');
 const api = read('src/features/schedule/care-schedule-api.ts');
 const queries = read('src/features/schedule/care-schedule-queries.ts');
@@ -29,6 +33,26 @@ assert(
     migration.includes('unique (care_task_id, source_scheduled_for)') &&
     migration.includes('on delete set null'),
   'Composite Pet integrity, unique occurrence assignment, or safe completion FK is missing.',
+);
+assert(
+  compactRescheduleMigration.includes(
+    'dropconstraintcare_shift_tasks_occurrence_unique',
+  ) &&
+    compactRescheduleMigration.includes(
+      'createuniqueindexcare_shift_tasks_non_canceled_occurrence_unique_idx',
+    ) &&
+    compactRescheduleMigration.includes(
+      'onpublic.care_shift_tasks(care_task_id,source_scheduled_for)',
+    ) &&
+    compactRescheduleMigration.includes("wherestatus<>'canceled'"),
+  'Canceled Schedule history does not have the required non-canceled occurrence uniqueness.',
+);
+assert(
+  rescheduleMigration.includes('having count(*) > 1') &&
+    rescheduleMigration.includes("using errcode = '23505'") &&
+    !rescheduleMigration.includes('delete from public.care_shift_tasks') &&
+    !rescheduleMigration.includes('update public.care_shift_tasks'),
+  'Schedule uniqueness migration must fail on conflicting data without rewriting history.',
 );
 assert(
   migration.includes('care_shifts_canceled_state') &&
@@ -140,6 +164,9 @@ if (failures.length > 0) {
   process.exitCode = 1;
 } else {
   console.log('PASS: Phase 11A bundle/item schema and completion link.');
+  console.log(
+    'PASS: canceled occurrences can be rescheduled while all non-canceled history remains unique.',
+  );
   console.log('PASS: Owner/Member-only RLS and hardened RPC grants.');
   console.log('PASS: occurrence/date validation and atomic whole-Shift claim.');
   console.log('PASS: Task deactivation and removed-member lifecycle hooks.');

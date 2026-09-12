@@ -393,6 +393,160 @@ async function main() {
     );
     console.log('PASS: full pending Shift soft-cancel.');
 
+    const rescheduleTask = await createDailyTask(
+      owner.client,
+      petId,
+      'Canceled occurrence reschedule',
+    );
+    const firstRescheduleId = randomUUID();
+    const firstReschedule = await createShift(owner.client, {
+      assigneeUserId: member.id,
+      localDate,
+      petId,
+      shiftId: firstRescheduleId,
+      tasks: [rescheduleTask],
+    });
+    expect(!firstReschedule.error, 'Initial reschedule fixture failed.');
+    expect(
+      !(
+        await member.client.rpc('cancel_care_shift', {
+          target_shift_id: firstRescheduleId,
+        })
+      ).error,
+      'Initial occurrence cancellation failed.',
+    );
+
+    const secondRescheduleId = randomUUID();
+    const secondReschedule = await createShift(owner.client, {
+      assigneeUserId: member.id,
+      localDate,
+      petId,
+      shiftId: secondRescheduleId,
+      tasks: [rescheduleTask],
+    });
+    expect(
+      !secondReschedule.error,
+      `Canceled occurrence could not be rescheduled: ${secondReschedule.error?.message ?? 'unknown'}`,
+    );
+    expect(
+      !(
+        await member.client.rpc('cancel_care_shift', {
+          target_shift_id: secondRescheduleId,
+        })
+      ).error,
+      'Second occurrence cancellation failed.',
+    );
+
+    const thirdRescheduleId = randomUUID();
+    const thirdReschedule = await createShift(owner.client, {
+      assigneeUserId: member.id,
+      localDate,
+      petId,
+      shiftId: thirdRescheduleId,
+      tasks: [rescheduleTask],
+    });
+    expect(
+      !thirdReschedule.error,
+      `Repeated canceled occurrence reschedule failed: ${thirdReschedule.error?.message ?? 'unknown'}`,
+    );
+    const { data: rescheduleRows, error: rescheduleRowsError } =
+      await owner.client
+        .from('care_shift_tasks')
+        .select('id, shift_id, status')
+        .eq('care_task_id', rescheduleTask.task.id)
+        .eq('source_scheduled_for', rescheduleTask.scheduledFor);
+    expect(
+      !rescheduleRowsError &&
+        rescheduleRows.length === 3 &&
+        rescheduleRows.filter((item) => item.status === 'canceled').length ===
+          2 &&
+        rescheduleRows.filter((item) => item.status === 'scheduled').length ===
+          1 &&
+        new Set(rescheduleRows.map((item) => item.id)).size === 3 &&
+        rescheduleRows.some((item) => item.shift_id === firstRescheduleId) &&
+        rescheduleRows.some((item) => item.shift_id === secondRescheduleId) &&
+        rescheduleRows.some((item) => item.shift_id === thirdRescheduleId),
+      'Repeated reschedule did not preserve two canceled rows and one current scheduled row.',
+    );
+    console.log(
+      'PASS: canceled occurrence reschedules with immutable historical rows.',
+    );
+    console.log(
+      'PASS: repeated cancel/reschedule keeps two canceled rows and one scheduled row.',
+    );
+
+    const concurrentRescheduleTask = await createDailyTask(
+      owner.client,
+      petId,
+      'Concurrent canceled occurrence reschedule',
+    );
+    const initialConcurrentShiftId = randomUUID();
+    const initialConcurrentShift = await createShift(owner.client, {
+      assigneeUserId: member.id,
+      localDate,
+      petId,
+      shiftId: initialConcurrentShiftId,
+      tasks: [concurrentRescheduleTask],
+    });
+    expect(
+      !initialConcurrentShift.error,
+      'Concurrent fixture creation failed.',
+    );
+    expect(
+      !(
+        await member.client.rpc('cancel_care_shift', {
+          target_shift_id: initialConcurrentShiftId,
+        })
+      ).error,
+      'Concurrent fixture cancellation failed.',
+    );
+    const concurrentShiftIds = [randomUUID(), randomUUID()];
+    const concurrentReschedules = await allWithin(
+      [
+        createShift(owner.client, {
+          assigneeUserId: member.id,
+          localDate,
+          petId,
+          shiftId: concurrentShiftIds[0],
+          tasks: [concurrentRescheduleTask],
+        }),
+        createShift(helper.client, {
+          assigneeUserId: helper.id,
+          localDate,
+          petId,
+          shiftId: concurrentShiftIds[1],
+          tasks: [concurrentRescheduleTask],
+        }),
+      ],
+      'Concurrent canceled occurrence reschedule',
+    );
+    const { data: concurrentRows, error: concurrentRowsError } =
+      await owner.client
+        .from('care_shift_tasks')
+        .select('id, status')
+        .eq('care_task_id', concurrentRescheduleTask.task.id)
+        .eq('source_scheduled_for', concurrentRescheduleTask.scheduledFor);
+    const { data: concurrentShifts, error: concurrentShiftsError } =
+      await owner.client
+        .from('care_shifts')
+        .select('id')
+        .in('id', concurrentShiftIds);
+    expect(
+      concurrentReschedules.filter((result) => !result.error).length === 1 &&
+        concurrentReschedules.filter((result) => result.error).length === 1 &&
+        !concurrentRowsError &&
+        concurrentRows.filter((item) => item.status === 'scheduled').length ===
+          1 &&
+        concurrentRows.filter((item) => item.status === 'canceled').length ===
+          1 &&
+        !concurrentShiftsError &&
+        concurrentShifts.length === 1,
+      'Concurrent reschedule did not produce one winner with atomic loser rollback.',
+    );
+    console.log(
+      'PASS: concurrent canceled occurrence reschedule has one winner and no orphan Shift.',
+    );
+
     const assignOtherTask = await createDailyTask(
       owner.client,
       petId,
@@ -425,15 +579,26 @@ async function main() {
       'PASS: Member cannot assign others or create unassigned Shifts.',
     );
 
+    const activeDuplicateShiftId = randomUUID();
     expectError(
       await createShift(owner.client, {
         assigneeUserId: helper.id,
         localDate,
         petId,
+        shiftId: activeDuplicateShiftId,
         tasks: [feeding],
       }),
       'Duplicate Care Task occurrence assignment was accepted.',
     );
+    const { data: activeDuplicateShift } = await owner.client
+      .from('care_shifts')
+      .select('id')
+      .eq('id', activeDuplicateShiftId);
+    expect(
+      activeDuplicateShift.length === 0,
+      'Rejected active duplicate left an orphan Shift.',
+    );
+    console.log('PASS: active occurrence duplicate is rejected atomically.');
     const forgedTask = await createDailyTask(
       owner.client,
       petId,
@@ -679,6 +844,28 @@ async function main() {
         linkedCompletion?.completed_by === helper.id &&
         ownerBundle.data.assignee_user_id === member.id,
       'Completion link, occurrence identity, or assignee/completer separation failed.',
+    );
+    const completedDuplicateShiftId = randomUUID();
+    expectError(
+      await createShift(owner.client, {
+        assigneeUserId: helper.id,
+        localDate,
+        petId,
+        shiftId: completedDuplicateShiftId,
+        tasks: [feeding],
+      }),
+      'Completed Care Task occurrence was scheduled again.',
+    );
+    const { data: completedDuplicateShift } = await owner.client
+      .from('care_shifts')
+      .select('id')
+      .eq('id', completedDuplicateShiftId);
+    expect(
+      completedDuplicateShift.length === 0,
+      'Rejected completed occurrence left an orphan Shift.',
+    );
+    console.log(
+      'PASS: completed occurrence reschedule is rejected atomically.',
     );
     expectError(
       await member.client.rpc('cancel_care_shift_task', {
