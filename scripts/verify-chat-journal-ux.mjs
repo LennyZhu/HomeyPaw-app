@@ -39,9 +39,10 @@ console.log(
   'PASS: other-member unread, self-message exclusion, duplicate ID dedupe, read visibility, and pet/user isolation.',
 );
 
-assert.equal(journal.isJournalInitialLoading(false, true), true);
-assert.equal(journal.isJournalInitialLoading(true, true), false);
-assert.equal(journal.isJournalInitialLoading(true, false), false);
+assert.equal(journal.isJournalInitialLoading(true, false, true), true);
+assert.equal(journal.isJournalInitialLoading(true, true, true), false);
+assert.equal(journal.isJournalInitialLoading(true, true, false), false);
+assert.equal(journal.isJournalInitialLoading(false, false, true), false);
 
 const resolvedStates = [];
 await manualRefresh.runManualRefresh(

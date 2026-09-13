@@ -4,7 +4,8 @@ import { create } from 'zustand';
 
 type CurrentPetState = {
   currentPetId: string | null;
-  setCurrentPetId: (petId: string | null) => void;
+  currentPetUserId: string | null;
+  setCurrentPetId: (petId: string | null, userId: string | null) => void;
 };
 
 const localStorageAdapter: StateStorage = {
@@ -23,11 +24,16 @@ export const useCurrentPetStore = create<CurrentPetState>()(
   persist(
     (set) => ({
       currentPetId: null,
-      setCurrentPetId: (currentPetId) => set({ currentPetId }),
+      currentPetUserId: null,
+      setCurrentPetId: (currentPetId, currentPetUserId) =>
+        set({ currentPetId, currentPetUserId }),
     }),
     {
       name: 'pawday-current-pet',
-      partialize: ({ currentPetId }) => ({ currentPetId }),
+      partialize: ({ currentPetId, currentPetUserId }) => ({
+        currentPetId,
+        currentPetUserId,
+      }),
       storage: createJSONStorage(() => localStorageAdapter),
     },
   ),

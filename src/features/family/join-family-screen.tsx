@@ -93,7 +93,7 @@ export default function JoinFamilyScreen() {
     setErrorMessage(null);
     try {
       const result = await joinPet.mutateAsync(submittedCode);
-      setCurrentPetId(result.petId);
+      setCurrentPetId(result.petId, user?.id ?? null);
       const message =
         result.status === 'already_member'
           ? t('family.join.alreadyMember', { name: result.petName })

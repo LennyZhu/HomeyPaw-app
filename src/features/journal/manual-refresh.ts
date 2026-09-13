@@ -1,6 +1,7 @@
 export function isJournalInitialLoading(
+  hasActivePet: boolean,
   hasCachedData: boolean,
   isPending: boolean,
 ) {
-  return !hasCachedData && isPending;
+  return hasActivePet && !hasCachedData && isPending;
 }

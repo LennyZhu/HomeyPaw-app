@@ -34,7 +34,7 @@ export default function NewPetScreen() {
 
     try {
       const pet = await createPet.mutateAsync(values);
-      setCurrentPetId(pet.id);
+      setCurrentPetId(pet.id, user?.id ?? null);
       let avatarWarning = false;
 
       if (avatarChange.type === 'replace' && user) {

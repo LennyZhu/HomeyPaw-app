@@ -10,8 +10,7 @@ import {
 
 import { CHAT_ENABLED } from '@/config/features';
 import { useAuth } from '@/features/auth/auth-context';
-import { familyKeys } from '@/features/family/family-queries';
-import { petKeys } from '@/features/pets/pet-queries';
+import { clearRevokedPetAccess } from '@/features/pets/pet-access-cleanup';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 
 import {
@@ -55,18 +54,14 @@ export function ChatSessionProvider({ children }: PropsWithChildren) {
     if (!user || !petId) return;
     setAccessLostScope(`${user.id}:${petId}`);
     queryClient.setQueryData(chatKeys.unread(user.id, petId), 0);
-    void queryClient
-      .cancelQueries({ queryKey: chatKeys.all(user.id) })
-      .then(async () => {
-        clearChatPetCache(queryClient, user.id, petId);
-        queryClient.removeQueries({
-          queryKey: familyKeys.members(user.id, petId),
-        });
-        queryClient.removeQueries({ queryKey: petKeys.detail(user.id, petId) });
-        await queryClient.invalidateQueries({ queryKey: petKeys.all(user.id) });
-      })
-      .catch(() => undefined);
-  }, [petId, queryClient, user]);
+    clearChatPetCache(queryClient, user.id, petId);
+    clearRevokedPetAccess({
+      petId,
+      queryClient,
+      setCurrentPetId: petsState.setCurrentPetId,
+      userId: user.id,
+    });
+  }, [petId, petsState.setCurrentPetId, queryClient, user]);
 
   const versionQuery = useChatChannelVersion(
     petId,

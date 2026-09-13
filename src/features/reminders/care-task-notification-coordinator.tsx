@@ -90,14 +90,16 @@ export function CareTaskNotificationCoordinator() {
       if (url) {
         const petId = data?.petId;
         if (typeof petId === 'string' && /^[0-9a-f-]{36}$/u.test(petId)) {
-          useCurrentPetStore.getState().setCurrentPetId(petId);
+          useCurrentPetStore.getState().setCurrentPetId(petId, session.user.id);
         }
         router.push(url as Href);
       } else if (
         familyTarget &&
         (await canOpenFamilyPushTarget(familyTarget).catch(() => false))
       ) {
-        useCurrentPetStore.getState().setCurrentPetId(familyTarget.petId);
+        useCurrentPetStore
+          .getState()
+          .setCurrentPetId(familyTarget.petId, session.user.id);
         router.push(familyTarget.href);
       } else {
         router.replace('/');

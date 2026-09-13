@@ -88,6 +88,7 @@
     "verify:phase10a-chat-client": "node --experimental-strip-types scripts/verify-phase10a-chat-client.mjs",
     "verify:chat-ui": "node --experimental-strip-types scripts/verify-chat-ui.mjs",
     "verify:chat-journal-ux": "node --experimental-strip-types scripts/verify-chat-journal-ux.mjs",
+    "verify:removed-member-ux": "node --experimental-strip-types scripts/verify-removed-member-ux.mjs",
     "verify:phase10a-chat-rls": "node scripts/verify-phase10a-chat-rls.mjs",
     "verify:phase11a-schedule": "node scripts/verify-phase11a-schedule.mjs",
     "verify:phase11a-schedule-rls": "node scripts/verify-phase11a-schedule-rls.mjs",

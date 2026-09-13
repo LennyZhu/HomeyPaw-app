@@ -142,6 +142,7 @@ export default function JournalScreen() {
               />
             </View>
           ) : isJournalInitialLoading(
+              Boolean(petsState.currentPet),
               postsQuery.data !== undefined,
               postsQuery.isPending || authorsQuery.isPending,
             ) ? (
