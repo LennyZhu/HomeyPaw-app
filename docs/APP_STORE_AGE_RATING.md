@@ -1,21 +1,21 @@
 # App Store Age Rating — Suggested Answers
 
-Prepared on 2026-08-27. App Store Connect calculates the final regional rating; `4+` is the expected result, not a guaranteed selection.
+Updated on 2026-09-13 for HomeyPaw 1.1.0 Build 4. App Store Connect calculates the final regional rating; the live questionnaire and Apple's current definitions remain authoritative.
 
 ## App Capabilities
 
-| Question                | Suggested answer                                          | Basis                                                                                                               |
-| ----------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Made for Kids           | No                                                        | HomeyPaw is a general family utility, not a Kids Category app.                                                      |
-| Parental Controls       | No                                                        | No parent/guardian control feature.                                                                                 |
-| Age Assurance           | No                                                        | No age verification or declared-age flow.                                                                           |
-| Unrestricted Web Access | No                                                        | Policy/support links open known pages; there is no general browser.                                                 |
-| User-Generated Content  | No, under Apple's current “broad distribution” definition | Content is limited to a small, authenticated, invite-only pet family with Owner moderation and no public discovery. |
-| Messaging and Chat      | No                                                        | Production Chat is hidden and no messaging service exists.                                                          |
-| Social Media            | No                                                        | No public profile, feed, follower, or stranger interaction.                                                         |
-| Advertising             | No                                                        | No advertisements or advertising SDK.                                                                               |
+| Question                | Suggested answer    | Basis                                                                                                               |
+| ----------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Made for Kids           | No                  | HomeyPaw is a general family utility, not a Kids Category app.                                                      |
+| Parental Controls       | No                  | No parent/guardian control feature.                                                                                 |
+| Age Assurance           | No                  | No age verification or declared-age flow.                                                                           |
+| Unrestricted Web Access | No                  | Policy/support links open known pages; there is no general browser.                                                 |
+| User-Generated Content  | Yes, conservatively | Members create Journal, Care and Chat content inside a private, invite-only Pet Family Space with Owner moderation. |
+| Messaging and Chat      | Yes                 | Build 4 includes private text Chat for active Owner／Member only; no public discovery or stranger messaging.        |
+| Social Media            | No                  | No public profile, feed, follower, or stranger interaction.                                                         |
+| Advertising             | No                  | No advertisements or advertising SDK.                                                                               |
 
-If the live questionnaire defines user-generated content as any content shared with another user, answer `Yes` conservatively and describe the invite-only/Owner-moderated controls. Do not force the local recommendation against Apple's current wording.
+Describe the invite-only boundary, Owner member-removal/moderation controls, RLS isolation, and absence of public discovery. Do not answer `No` merely because Chat is private.
 
 ## Content Frequency
 

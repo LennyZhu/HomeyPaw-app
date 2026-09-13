@@ -1,171 +1,155 @@
-# Supabase Setup and Phase 2 Verification
+# Supabase Setup and Operations
 
-本文件的 Expo 客戶端只使用 Supabase Project URL 和 publishable key。secret／`service_role` key 與資料庫密碼絕不可寫入 Expo `.env`、程式碼或 Git。
+HomeyPaw 的 Production Supabase 已上線。本文同時記錄可重複的 local setup、versioned migration／Edge Function workflow，以及 Production 操作邊界；「已上線」不代表任何本機指令可以自動修改 Production。
 
-## 1. 建立 Supabase Project
+## Security Boundary
 
-1. 打開 [Supabase Dashboard](https://supabase.com/dashboard)，建立一個開發／測試 Project。
-2. 等待 Project provisioning 完成。
-3. 打開 **Connect** 或 **Project Settings → API**。
-4. 複製 **Project URL**。
-5. 複製 **Publishable key**（`sb_publishable_...`）。不要複製 Secret key、legacy `service_role` key 或資料庫密碼。
-
-## 2. 設定本機環境
-
-在專案根目錄執行：
-
-```bash
-cp .env.example .env.local
-```
-
-填寫：
+Expo client 只能使用：
 
 ```env
 EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_SB_PUBLISHABLE_KEY
 ```
 
-儲存後完全停止並重新啟動 Expo。`.env.local` 已被 `.gitignore` 排除；仍應在 commit 前執行密鑰掃描。
+所有 `EXPO_PUBLIC_*` 都會進入 client bundle。不得放入 secret／legacy `service_role` key、資料庫密碼、Vault secret、Expo Access Token 或 Apple credential。
 
-## 3. Email Auth 設定
+`.env.local` 必須保持 Git ignored。任何實際 Project URL／key 都不得寫入本文或 commit。
 
-1. Dashboard 打開 **Authentication → Providers → Email**。
-2. 保持 Email provider 啟用。
-3. 決定是否要求 Email confirmation：
-   - 啟用：註冊後 App 顯示「檢查你的電郵」，不假設使用者已登入。
-   - 停用：Supabase 可在註冊後直接回傳 session，Router 會進入私人 Tabs。
-4. 開發階段確認 email rate limit 足以完成測試，但不要把 production rate limit 設成無限制。
-5. Dashboard 的 **URL Configuration** 設定真實可控的 Site URL，並保留 `pawday://**`（或分別加入 `pawday://check-email`、`pawday://reset-password`）作為 mobile callback allow-list。App 已支援 PKCE／implicit callback、token exchange 與設定新密碼畫面；正式發佈前仍須在真機完成寄信、回跳、改密碼和舊密碼失效驗收。
+## Local Development
 
-## 4. 部署 Migration
-
-Schema 唯一來源是：
-
-```text
-supabase/migrations/20260822150000_create_profiles.sql
-```
-
-推薦使用專案範圍的 Supabase CLI，不需全域安裝：
+安裝依賴並建立本機環境：
 
 ```bash
-npx supabase@latest login
-npx supabase@latest link --project-ref YOUR_PROJECT_REF
-npx supabase@latest db push --dry-run
-npx supabase@latest db push
-```
-
-如果 npm 的 CLI 二進制套件暫時無法取得，可依 Supabase 官方指引使用 Homebrew CLI，再執行相同的 `link`、`db push --dry-run` 和 `db push`。不要改成只在 Table Editor 手動建表；migration 必須繼續留在 Git。
-
-部署後在 Dashboard 確認：
-
-- `public.profiles` 已存在。
-- `id` 是指向 `auth.users.id`、`ON DELETE CASCADE` 的 primary key。
-- RLS 已啟用。
-- 只有「本人 SELECT」和「本人 UPDATE」兩條 policy；沒有 `using (true)`。
-- `anon` 沒有 table 權限；`authenticated` 只有 SELECT 和指定 Profile 欄位的 UPDATE 權限。
-- `on_auth_user_created` trigger 已存在。
-
-## 5. 部署 Account Deletion Edge Function
-
-函數來源：
-
-```text
-supabase/functions/delete-account/index.ts
-```
-
-部署：
-
-```bash
-npx supabase@latest functions deploy delete-account
-```
-
-`supabase/config.toml` 保持 `verify_jwt = true`。Supabase hosted functions 自動提供 `SUPABASE_SECRET_KEYS`／legacy `SUPABASE_SERVICE_ROLE_KEY`；不要把它們複製到 App。函數會再次驗證 caller JWT，從 JWT 取得 user ID，並只刪除該使用者。
-
-## 6. 啟動 App
-
-```bash
-nvm use 22.13.0
 npm install
-npm start
+cp .env.example .env.local
+npx supabase start
+npx supabase status
 ```
 
-修改 `.env.local` 後必須重啟 Metro，Hot Reload 不足以重新載入環境變數。
+停止本機 stack：
 
-## 7. Manual Test Checklist
-
-### Sign Up
-
-- [ ] 暱稱空白會顯示本地化錯誤。
-- [ ] Invalid email 不會提交。
-- [ ] 少於 8 個字元的密碼不會提交。
-- [ ] Password confirmation 不一致不會提交。
-- [ ] 連續點擊只產生一次請求，送出期間按鈕 disabled/loading。
-- [ ] Email confirmation 開啟時顯示「檢查你的電郵」，沒有 session，也無法進 Tabs。
-- [ ] Email confirmation 關閉時，成功註冊後直接進 Tabs。
-- [ ] `auth.users` 新增使用者後，自動存在相同 ID 的 `public.profiles` row。
-
-### Login and Errors
-
-- [ ] 正確電郵和密碼可登入。
-- [ ] 錯誤密碼只顯示安全、泛化的本地化訊息，不暴露原始後端內容。
-- [ ] 中斷網絡後顯示 network／generic error，App 不崩潰。
-- [ ] 「忘記密碼」可發送 email，成功提示不洩漏該 email 是否已註冊。
-
-### Session
-
-- [ ] 登入後 kill App。
-- [ ] 重新開啟 App 時保持登入。
-- [ ] Session restore 期間只見 Splash／Loading，不會先閃出登入頁。
-- [ ] App 從 background 回 foreground 後 token refresh 正常。
-- [ ] 登出確認後 session 清除，無法透過 back gesture 或 deep link 回到 Tabs。
-
-### Profile
-
-- [ ] 「我的」顯示真實 display name 和 Auth email，不再顯示 Mock Lenny。
-- [ ] 修改 display name 後重新開啟 App 仍保留。
-- [ ] 切換 `zh-HK`／`en` 後 UI 立即更新，重新登入後從 `profiles.locale` 恢復。
-- [ ] 未連線或 query 失敗時顯示 loading/error/retry。
-
-### Authorization — 必須使用 User A 和 User B
-
-1. 建立 User A、User B，記下兩者 UUID。
-2. 以 User A 登入 App。
-3. 使用同一個 User A session 執行對 `profiles` 的查詢，條件指定 User B UUID；結果必須是空集合。
-4. 使用 User A session 嘗試 update User B Profile；受影響 row 必須為 0，User B 資料不可改變。
-5. User A 必須仍可 SELECT 和 UPDATE 自己的 Profile。
-6. 未登入 client 查詢 `profiles` 必須收到 permission/RLS failure，不能取得任何 row。
-
-也可以在測試 Project 的 SQL Editor 以 transaction 模擬 User A；完成後必須 rollback：
-
-```sql
-begin;
-set local role authenticated;
-select set_config(
-  'request.jwt.claims',
-  json_build_object('sub', 'USER_A_UUID', 'role', 'authenticated')::text,
-  true
-);
-
-select * from public.profiles where id = 'USER_B_UUID';
-update public.profiles
-set display_name = 'must not change'
-where id = 'USER_B_UUID';
-rollback;
+```bash
+npx supabase stop
 ```
 
-第一個查詢必須回傳 0 rows，UPDATE 必須影響 0 rows。
+`npx supabase start`／`status`／`stop` 只管理 local Supabase。Verifier 的 local backend override 必須同时满足：
 
-### Account Deletion
+1. `__DEV__` 為 true；
+2. hostname 是 `localhost` 或 `127.0.0.1`。
 
-- [ ] 「設定／帳戶與安全／刪除帳戶」清楚標示不可復原。
-- [ ] 取消第一或第二次確認不會發送請求。
-- [ ] 成功後 Auth user 已刪除。
-- [ ] 對應 Profile 因 `ON DELETE CASCADE` 已刪除。
-- [ ] 本機 session 已清除，不能返回 Tabs。
-- [ ] 使用舊 access/refresh token 不能重新取得私人資料。
-- [ ] User A 呼叫函數永遠不能指定或刪除 User B；request body 不接受 user ID。
+Production build 不得接受任意 LAN／remote URL 作為 local backend。本機測試不會自動指向 Production。
 
-## 8. Release Blockers
+## Email Auth and Redirect URLs
 
-- Password reset 已包含 `pawday://reset-password` callback、PKCE／implicit token exchange、設定新密碼 UI，以及完成後本機登出。真機端到端測試仍是 TestFlight 前的必要門檻。
-- Phase 3 加入 Storage 前，帳戶刪除函數必須先刪除該使用者擁有的 Storage objects，因為擁有 Storage objects 的 Auth User 可能無法直接刪除。
+在 **Authentication → Providers → Email** 啟用 Email provider，按環境決定是否要求 confirmation。Production redirect allow-list 的目前基線包含：
+
+```text
+pawday://check-email
+pawday://reset-password
+```
+
+App 支援 PKCE／implicit callback、Email confirmation、Password recovery、設定新密碼與完成後 session cleanup。Callback URL、access token、refresh token 和原始 Supabase error 不得寫入 log。
+
+## Versioned Migrations
+
+`supabase/migrations/` 是 schema、RLS、grants、trigger 與 RPC 的唯一版本來源。目前 repository migration baseline 由 profiles 开始，並涵蓋：
+
+- Pet／Family Space、Journal、private Storage policy 與 Care。
+- Reminder／Care Task recurrence。
+- Secure Family Chat 與 private Realtime policy。
+- Family Care Schedule。
+- Profile avatar、家庭成員上限。
+- Health／Birthday／Yearly recurrence。
+- Family Remote Push、server-only Edge ACL、Schedule rescheduling 與 Push TTL。
+
+Production release record 已確認 migrations 部署完成。後續變更必须先在 local stack 驗證，再由 release operator 顯式執行：
+
+```bash
+npx supabase db reset
+npx supabase db lint
+npx supabase migration list --local
+```
+
+Production dry run／deploy 是獨立操作，不得由一般 test script 呼叫：
+
+```bash
+npx supabase link --project-ref <PROJECT_REF>
+npx supabase db push --dry-run
+npx supabase db push
+```
+
+執行前必須核對 linked project、migration list、reviewed SQL、備份／rollback plan 與 release 授權。不要在 Table Editor 手動建立替代 schema；所有變更必须回到 versioned migration。
+
+## Edge Functions
+
+目前 repository 包含：
+
+- `delete-account`
+- `delete-pet`
+- `delete-post`
+- `preview-pet-invite`
+- `family-push`
+
+本機 serve／驗證：
+
+```bash
+npx supabase functions serve <FUNCTION_NAME>
+```
+
+Production deployment 必須显式執行：
+
+```bash
+npx supabase functions deploy <FUNCTION_NAME>
+```
+
+Functions 從受信任的 server environment 取得 Supabase secret／service-role credential。Client 不得傳入要冒充的 user ID，也不得取得管理 key。JWT、caller membership、Pet ownership 和 source row 必須在 server boundary 重新驗證。
+
+## Storage
+
+- `pet-avatars`、`post-media` 與 Profile avatar storage 都是 private。
+- Object path 只是結構限制；真正讀寫權限由 Storage RLS 及 active membership 驗證。
+- Client 顯示媒體時使用短期 signed URL，不把 signed URL 寫入資料庫或持久 client store。
+- Pet／Post／Account deletion 的 Edge Function 先完成必要 object cleanup，再刪除 canonical rows。
+
+Production bucket 与 policy 已作为当前 release baseline 配置完成。新增 bucket、改 public/private 狀態或修改 policy 仍需獨立 review 和 deployment。
+
+## Private Realtime
+
+Chat 使用 authenticated private Broadcast，不使用 public channel。Production Realtime private mode 已納入当前 baseline：
+
+- `chat_messages` 仍是 PostgreSQL canonical source。
+- Broadcast payload 只包含最小 invalidation identifiers。
+- Client 收到事件後必須透過 RLS 重新讀取 canonical row。
+- Membership 變更旋轉 Pet topic；Removed Member 的舊 channel 和 reconnect 都不得收到後續事件。
+
+## Family Remote Push
+
+Push device、outbox 和 delivery tables 位於 private schema。Client 只能透過受限 RPC 註冊／停用自己的 installation；收件人、membership、self-exclusion、TTL 和 delivery lifecycle 由 server-side workflow 決定。
+
+Production baseline 已包含 `family-push` worker 与 APNs／Expo Push configuration。本文件不記錄 token、Vault secret 或 provider credential。
+
+## RLS and Lifecycle Verification
+
+在 disposable local／test users 上驗證：
+
+- Owner／Member／Stranger 的 Pet、Journal、Care、Reminder、Schedule、Chat、Health 隔離。
+- Member 不能執行 Owner-only mutation。
+- Removed Member 立即失去 row、Storage、Realtime 和後續 Push 存取權。
+- Direct table writes、sender spoof、cross-Pet IDs 和 service-only RPC 都被拒絕。
+- Pet／Post／Account deletion 不留下 orphan rows 或 private Storage objects。
+- Push actor self、Removed Member、disabled token 與 expired backlog 不產生 delivery。
+
+Repository 的 `scripts/verify-*.mjs` 是 verifier 入口。Credentialed tests 只從 shell 讀取臨時帳戶，完成後立即清理；不得把 fixtures、密碼或 token 寫入 Git。
+
+## Production Checklist
+
+任何 Production migration／deploy 前必须確認：
+
+1. 当前 Git commit 与 migration list 已审阅。
+2. Local reset、lint、feature verifier 与 RLS regression PASS。
+3. Linked project 明確是預期 Production project。
+4. 不包含 destructive SQL、secret 或測試 fixture。
+5. 已取得本次 Production 操作授權。
+6. 執行後以 read-only 查询确认 migration／function version 与 health。
+
+文件更新、一般 lint、Expo test 或 local Supabase test 都不得隐式触发任何 Production mutation。

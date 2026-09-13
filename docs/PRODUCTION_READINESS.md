@@ -1,72 +1,94 @@
-# Production Readiness
+# HomeyPaw Production Readiness
 
-## Decisions
+## Current Release Status
 
-- Bundle ID: `com.zhushunli.homeypaw`, registered under Apple Team `8SSF5V63H9`.
-- App icon: approved “家庭環抱” candidate 2, exported at 1024×1024 without transparency.
-- Chat: hidden for 1.0 until a real private-family Chat exists.
-- Crash reporting: no Sentry in Phase 8. The lightweight redacting `logError()` adapter preserves an upgrade path.
-- Appearance: portrait-only, forced Light, dark-content status bar.
-- EAS: `@homeypaw/homeypaw` is linked, the production environment is configured, and the verified Distribution certificate and App Store provisioning profile are active. No production build has been created yet.
+- App Store `1.0.0`：**RELEASED**。
+- HomeyPaw `1.1.0` Build 4：automated release gate、TestFlight、雙裝置真機驗收、iPhone／iPad validation 全部完成。
+- App Store Review：**SUBMITTED — WAITING FOR REVIEW**。
+- Release mode：**MANUAL RELEASE**。即使審核通過，也必須由 release operator 人工發布。
+- Production Supabase：**LIVE**。
+- 本轮 documentation sync：Production、App code、database、Edge Functions 和 EAS resources 全部 **UNCHANGED**。
 
-## Permissions matrix
+不得把 `1.1.0` 描述為 approved、released 或 available on the App Store。
 
-| Capability            | Declared        | Purpose                               |
-| --------------------- | --------------- | ------------------------------------- |
-| Photo Library         | Yes             | Choose pet avatars and journal photos |
-| Local Notifications   | Runtime request | User-enabled care reminders           |
-| Exact alarm (Android) | Yes             | Local reminder scheduling             |
-| Camera                | Runtime request | Take journal photos                   |
-| Microphone            | No              | Not implemented                       |
-| Location              | No              | Location name is manual text          |
-| Contacts              | No              | Not implemented                       |
-| Tracking / IDFA       | No              | No advertising or tracking            |
-| Remote push           | No              | Local notifications only              |
+## Production Baseline
 
-## Known product boundaries
+| Area                  | Status    | Baseline                                                                                                |
+| --------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| Bundle identity       | PASS      | `com.zhushunli.homeypaw`                                                                                |
+| Version／build        | PASS      | `1.1.0 (4)`                                                                                             |
+| iPhone／iPad          | PASS      | Production build 與 real-device layout／navigation 已驗證                                               |
+| EAS project／profiles | PASS      | development、development-simulator、preview、production                                                 |
+| Apple signing         | PASS      | 既有 Distribution Certificate 與 active App Store Provisioning Profile                                  |
+| Push capability       | PASS      | Production `aps-environment`; Release build `get-task-allow=false`                                      |
+| Production migrations | COMPLETED | Versioned migrations 已部署至 current release baseline                                                  |
+| Edge Functions        | COMPLETED | Account／Pet／Post lifecycle、invite preview 與 `family-push`                                           |
+| Private Storage       | COMPLETED | Pet、Journal、Profile avatar buckets 与 RLS／signed URL                                                 |
+| Private Realtime      | COMPLETED | Authenticated private Broadcast；public access 不作为 Chat transport                                    |
+| Push worker／TTL      | COMPLETED | Server-side recipient validation、delivery lifecycle、invalid token handling 與 expired backlog cleanup |
+| TestFlight            | PASS      | Build 4 processing、installation 与 acceptance 完成                                                     |
+| Two-device acceptance | PASS      | Family sharing、Chat、Remote Push、Removed Member 與 Schedule flows                                     |
+| iPad validation       | PASS      | iPad layout、navigation 與 release-critical flows                                                       |
+| App Store Review      | WAITING   | Build 4 已提交，尚未批准                                                                                |
+| App Store release     | NOT RUN   | Manual release，等待审核完成                                                                            |
 
-- No offline mutation queue; cached reads remain available, writes must be retried online.
-- Notification changes from another device are reflected after the next foreground/mutation sync; there is no remote push or Realtime.
-- Family invitations do not use Universal Links yet.
-- Private family content is UGC. Owner removal/moderation exists; public-user report/block is not added because there is no public discovery or stranger messaging.
+## Permissions and Platform Capabilities
 
-## Phase 9 status
+| Capability            | Declared／runtime | Purpose                                          |
+| --------------------- | ----------------- | ------------------------------------------------ |
+| Photo Library         | Runtime request   | Pet／Profile avatar、Journal photos、save photo  |
+| Camera                | Runtime request   | User-triggered Journal photo                     |
+| Local Notifications   | Runtime request   | Device-local Care／Reminder scheduling           |
+| Remote Notifications  | Production        | Family Journal、Care、Health、Reminder activity  |
+| Exact alarm (Android) | Declared          | Android local reminder scheduling                |
+| Microphone            | No                | Not implemented                                  |
+| Device location       | No                | Journal location is user-entered text            |
+| Contacts              | No                | Not implemented                                  |
+| Tracking／IDFA        | No                | No advertising or cross-app tracking             |
+| Chat Push             | No                | Chat does not generate system Push Notifications |
 
-Phase 8 is complete. Public Privacy, Terms, Support, and Marketing pages are live at `https://homeypaw.vercel.app`, and the completed Development Build acceptance evidence remains recorded in the Phase 8 handoff.
+## Security and Privacy Gate
 
-Phase 9 remote identity and signing preparation are complete:
+- Private by default；Owner／Member authorization 由 Postgres RLS、restricted RPC 与 server-side Edge Functions 强制执行。
+- Storage buckets 不公开，媒体通过短期 signed URL 读取。
+- Realtime channels 是 private；broadcast 只触发 canonical row refetch。
+- Removed Member 后 row／Storage／Realtime／unread／Remote Push access 全部撤销，active Pet 与 scoped cache 被清理。
+- Family Push 的 recipient、membership、actor-self exclusion 与 TTL 都由服务器端确认；notification copy 不包含私人内容正文。
+- Client bundle 只包含 public Supabase configuration，永不包含 service-role／secret、数据库密码、Expo Access Token、Vault secret 或 Apple credential。
+- Production errors／logs 不得记录 password、token、signed URL、email、private message 或 request payload。
 
-1. EAS project `@homeypaw/homeypaw` is linked.
-2. Only the public Supabase URL and publishable key are configured in the project-scoped `production` environment.
-3. Bundle ID `com.zhushunli.homeypaw` and App Store Connect app `6806111286` exist under Apple Team `8SSF5V63H9`.
-4. EAS Managed Credentials reports the Distribution certificate and App Store provisioning profile active and ready to build.
+## Release Validation
 
-The remaining authorized step is the first production build. TestFlight upload, App Store metadata submission, DSA status, and App Review remain separate user-approved steps.
+Build 4 release record：
 
-The never-opened, naturally expired recovery-link case remains a documented deferred edge-case risk. It must not be described as passed.
+- TypeScript、ESLint、Prettier、i18n parity：PASS。
+- Chat client／UI／Realtime／RLS：PASS。
+- Removed Member UX／cold restart：PASS。
+- Journal、Home、Care、Health、Reminder recurrence／RLS：PASS。
+- Family Push、Push worker／TTL：PASS。
+- Schedule UI／RLS、Schedule → Reminder、occurrence reschedule：PASS。
+- Profile、iPad、Edge ACL／lifecycle：PASS。
+- `git diff --check`：PASS。
+- npm audit：critical `0`、high `0`；moderate `15` 為已知 transitive baseline。
 
-## Dependency audit
+詳細真機結果見 [REAL_DEVICE_TEST_MATRIX.md](REAL_DEVICE_TEST_MATRIX.md)。
 
-- `npm audit --omit=dev` currently reports 12 moderate findings and no high or critical findings.
-- The findings are inherited through Expo build/config tooling's `xcode` dependency and `uuid < 11.1.1`; they are not imported by HomeyPaw's runtime business code.
-- The automated `npm audit fix --force` proposal would install an incompatible Expo splash-screen version, so it must not be applied. Re-audit when the Expo SDK 57 dependency set receives a compatible upstream fix.
+## Product Boundaries and Deferred Work
 
-## App Review risk audit
+- Chat 是私人家庭文字 Chat，不提供图片、公开发现、陌生人 messaging 或 Chat system Push。
+- Cached reads 可離線顯示；offline mutations 沒有 background queue，使用者需在恢复网络后重试。
+- Journal comments／likes／reactions、Journal gallery、Chat images、Schedule advanced recurrence／series、notification history center 仍为 deferred。
+- 從未開啟、自然過期的 Password Recovery link 尚無獨立真機樣本，不得記為 PASS。
 
-- Support, Privacy Policy, Terms, and Marketing URLs are published and verified. The support email is `lenny996@163.com`.
-- Local notifications are used only for user-created care reminders. HomeyPaw does not request remote push tokens.
-- Photo Library and Camera permissions are user-triggered and have localized purpose strings. Microphone, contacts, precise location, tracking, and advertising permissions are not requested.
-- Account deletion is available inside the app and deletes the user's applicable private and shared data according to the documented lifecycle.
-- Family invite access remains authenticated, expiring, capacity-limited, and protected by RLS; invite codes must not be presented as public sharing links.
-- The Chat prototype has no production tab or reachable production screen. Its static route/code is still physically present in the export behind a compiled-false navigator guard and a page-level production redirect. App Store metadata must not claim real-time chat.
-- Crash reporting is intentionally deferred; production logs are sanitized and must never contain passwords, tokens, signed URLs, or private user content.
+## App Review and Manual Release
 
-## Automated verification snapshot
+当前可准确使用的状态语言：
 
-- TypeScript, ESLint, Prettier, i18n parity, and the Phase 8 production/security scan pass.
-- Expo Doctor passes all 18 checks; the resolved native config matches the intended identity, scheme, icon, Splash, permissions, and localized photo-purpose strings.
-- Production export succeeds for iOS, Android, and Web with the approved Supabase configuration. Expo static export still emits `chat-preview`, but the production navigator guard compiles to false and the page redirects away before rendering prototype content.
-- Browser smoke checks pass for Sign In, Forgot Password, and an invalid Reset Password callback, with no console errors in clean tabs.
-- Supabase migrations are aligned and linked database lint reports no schema errors. Credentialed RLS regression scripts still require the temporary test accounts at final release-candidate verification.
+```text
+HomeyPaw 1.1.0 Build 4
+Submitted to App Store Review
+Waiting for Review
+Manual release
+```
 
-Phase 9 may proceed to the first EAS production build only with explicit user authorization. Upload and submission remain separately gated.
+下一步只在 App Store Connect 状态变化后执行：处理 review feedback，或在审核通过后由 release operator 决定何时 manual release。不要在审核完成前宣称 `1.1.0` 已可用。

@@ -1,53 +1,92 @@
-# Roadmap
+# HomeyPaw Roadmap
 
-每個 Phase 必須保持可運行、完成檢查並經人工驗證後才進入下一階段。
+本文件保留 Phase 歷史，同時以 `COMPLETED`、`CURRENT`、`DEFERRED` 區分已交付、目前發布狀態與尚未承諾的後續工作。
 
-## Phase 0 — 工程基線（已完成）
+## CURRENT — 1.1.0 App Store Review
 
-Expo SDK 57、Expo Router、TypeScript strict、ESLint、Prettier、基礎目錄、環境變數範例及架構文件。
+- App Store `1.0.0` 已正式發布。
+- `1.1.0` Build 4 已完成 automated release gate、TestFlight、雙裝置真機驗收、iPhone 與 iPad 驗證。
+- Build 4 已提交 App Store Review，目前為 `Waiting for Review`。
+- `1.1.0` 採 manual release；審核通過不等於已發布。
+- Production Supabase 已上線。本次文件同步沒有修改 Production。
+- `main` 是目前唯一開發分支，不再使用 Phase feature branch／worktree workflow。
 
-## Phase 1 — Design System、Navigation、i18n（已完成）
+## COMPLETED — Product History
 
-建立設計 token、共用頁面骨架、正式導航和 `zh-HK`／英文語言資源。不建立業務資料流。
+### Phase 0 — 工程基線
 
-## Phase 2 — Supabase、Auth（已完成）
+Expo、Expo Router、TypeScript strict、ESLint、Prettier、基礎目錄、環境變數範例與架構文件。
 
-接入 Supabase Auth、session 持久化、註冊／登入／登出、個人資料、帳戶及資料刪除流程；建立 migrations 與 RLS 基線。
+### Phase 1 — Design System、Navigation、i18n
 
-Follow-up 已於 Phase 8 完成：Password Recovery／Email Confirmation deep link、設定新密碼畫面與 callback exchange。真實 Supabase redirect allow-list 與真機流程仍須在 Phase 8 驗收。
+設計 token、共用頁面骨架、正式導航，以及 `zh-HK`／English 語言資源。
 
-## Phase 3 — 寵物檔案（已完成）
+### Phase 2 — Supabase、Auth
 
-寵物 CRUD、私人頭像上傳、年齡與陪伴日數；以 `pet_members` 支援權限，V1 只開 owner。
+Supabase Auth、session persistence、註冊／登入／登出、Profile、Email confirmation、Password recovery deep link，以及 App 內帳戶刪除。
 
-## Phase 4 — 相片日記（已完成）
+### Phase 3 — Pet Profile
 
-1–9 張相片的選擇、壓縮、私人 Storage 上傳、重試與刪除；日記 CRUD、標籤、可選位置及圖片預覽。
+Pet CRUD、生日、私人頭像、Owner membership 與 RLS 基線。
 
-## Phase 4.5 — Family Sharing（已完成）
+### Phase 4 — Journal
 
-以 Pet 為共享邊界的安全 Invite、Owner／Member 權限、家庭成員列表、共享 Journal 作者與三使用者 RLS／Storage 隔離；已完成有效／錯誤／過期／撤銷／滿額／並發 Invite、移除 Member、方案 A 帳戶刪除與無 orphan 資料的真實驗收。
+文字及 1–9 張相片日記、私人 Storage、時間線、Photo Viewer、signed URL 與儲存相片。
 
-## Phase 5 — 首頁、時間線（已完成）
+### Phase 4.5 — Family Sharing
 
-多寵物切換、陪伴資訊、快速記錄、家庭近況、那年今日／最近回憶，以及具游標分頁、刷新、空白／skeleton／錯誤狀態的 Year → Month → Day 倒序生命時間軸。底部導航加入私密家庭 Chat 的誠實佔位；Reminder 改由 Home bell 進入普通受保護 route。
+1 Pet = 1 Family Space、Owner／Member、限時私人邀請、家庭成員上限、RLS／Storage 隔離、Removed Member revoke 與資料生命週期。
 
-## Phase 6 — Family Care Logs（已完成）
+### Phase 5 — Home、Timeline、Memories
 
-建立與 Journal 完全分離的家庭照顧記錄：餵食、散步、用藥、洗澡、梳毛美容與其他；包含 server-derived 本地日期、Owner／Member 權限、Home Today Care、快速新增與游標分頁歷史。已完成真實 migration、三使用者 RLS、65 條 UI 分頁、帳戶／毛孩 cascade、多裝置與 Dynamic Type 驗收。Reminder／Task 仍留在 Phase 7。
+Pet 切換、Today Care、家庭近況、回憶查詢，以及虛擬化的 Year → Month → Day Journal timeline。
 
-## Phase 7 — Family Reminders + Care Tasks（已完成）
+### Phase 6 — Family Care Logs
 
-建立共享 Care Task／Completion 與原子 Care Log 流程；支援 once／daily／weekly／monthly 固定時區 recurrence、Creator／Owner 權限、並發完成與 Undo。本機以 SQLite 映射未來 30 天 local notifications，包含首建 pre-prompt、拒絕／設定狀態、foreground／mutation／登出同步與安全 deep link。不建立 remote push、token 或 Realtime；完成真實 migration、三使用者 RLS、通知 lifecycle 與多尺寸驗收後才標記完成。
+餵食、散步、用藥、梳洗、玩耍與其他照顧記錄；包含時區、本地日期、Today Care 和歷史分頁。
 
-## Phase 8 — Product Polish + App Store Readiness（進行中）
+### Phase 7 — Family Reminders + Care Tasks
 
-正式 App identity／Icon／Splash、Error Boundary、網絡狀態、統一 feedback、Password Recovery deep link、圖片與長列表效能、可存取性、權限文案、Privacy／Terms／商店文案及 EAS profiles。完成公開 Support／政策網址、真實 iPhone development build、security regression 與 release export 後才可結束。
+Once／Daily／Weekly／Monthly recurrence、本機通知、家庭任務、Complete／Undo 與 Care Log integration。
 
-## Phase 9 — TestFlight
+### Phase 8 — Product Polish + App Store Readiness
 
-在使用者明確批准後建立／連接遠端 EAS project、Apple Bundle ID 與簽署，建立 TestFlight build，進行內部測試及回歸。不得在 Phase 8 提前執行。
+正式品牌、Icon／Splash、Error Boundary、網絡狀態、Auth deep link、效能、無障礙、公開 Privacy／Terms／Support 網站及 release checks。
 
-## Phase 10 — App Store 準備
+### Phase 9 — EAS、Apple、TestFlight
 
-完成 App Privacy、正式公開 Support／Privacy／Terms URL、最終商店素材與 App Review 提交清單。
+EAS project、Bundle ID、Apple signing、production build、TestFlight upload 與 Internal Testing 已建立並完成。`1.0.0` 已正式發布；後續 release 沿用相同正式身份與 credentials。
+
+### Phase 10A — Secure Family Chat
+
+以 PostgreSQL 為 canonical source 的私人家庭文字 Chat、private Supabase Realtime Broadcast、read state／unread badge、edit／delete、active Pet channel rotation，以及 Removed Member 零後續事件。
+
+Chat 不發送系統 Push Notifications。
+
+### Phase 11A — Family Care Schedule
+
+`care_shifts`／`care_shift_tasks`、Owner 管理、Member 認領／self schedule、多照顧者、具體 Care Task occurrence、claim／complete／cancel，以及 canceled occurrence rescheduling。
+
+### 1.1.0 Follow-ups
+
+- Family Remote Push：Journal、Care、Health、Reminder；server-side recipient validation、privacy-safe copy、actor self exclusion、Removed Member exclusion、delivery lifecycle 與 TTL。
+- Profile avatar。
+- Health、Birthday 與 Yearly recurrence。
+- iPad layout／navigation／真機驗證。
+- Schedule → Reminder return flow。
+- Chat unread、cached re-entry／SWR，以及 Journal background refetch hardening。
+- Removed Member active Pet persistence 與 revoked cache cleanup。
+- Production migrations、Edge Functions、Realtime private mode、APNs、TestFlight 與 release hardening。
+
+## DEFERRED
+
+以下項目尚未實作或承諾，不應出現在當前產品描述中：
+
+- Journal comments、likes、reactions。
+- Journal gallery。
+- Chat images。
+- Schedule advanced recurrence／series。
+- Notification history center。
+- 從未開啟、自然過期的 Password Recovery link 端到端真機樣本；已使用／失效連結的安全錯誤流程已覆蓋。
+
+新增 deferred scope 前必須先更新產品、安全、資料與測試設計，不以文件條目視為已排程功能。

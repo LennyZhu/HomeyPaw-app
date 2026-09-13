@@ -1,8 +1,8 @@
 # Phase 10A — Secure Family Chat
 
-Status: Security Review Round 2 local implementation and review only
-Production migration: **NOT APPLIED**
-Local migration: **NOT APPLIED**
+Status: **COMPLETED — included in HomeyPaw 1.1.0 Build 4**
+Production migration: **APPLIED**
+Local／RLS／Realtime verification: **PASS**
 
 ## Architecture
 
@@ -14,17 +14,10 @@ PostgreSQL is the only source of truth. Supabase Realtime carries small
 invalidation hints; the app always reads a created or updated message again
 through RLS before merging it into the query cache.
 
-The real UI is isolated behind `CHAT_ENABLED`. It requires both a development
-build and `EXPO_PUBLIC_CHAT_ENABLED=true`. A production bundle cannot enable
-the tab, and the page redirects when reached directly. The already released
-1.0.0 app, version, and build number are unchanged.
-
-Expo Router can still include the static `chat` and `chat-preview` modules in a
-production JavaScript bundle. The current release therefore relies on two
-non-bypassable UI guards (`href: null` plus a page redirect, with `__DEV__`
-compiled false), while database RLS/RPC/channel authorization remains the real
-security boundary. Physically removing those route modules would require a
-larger router/build split and is deferred rather than disguised.
+The production Chat UI is enabled in HomeyPaw 1.1.0. PostgreSQL
+RLS/RPC/channel authorization remains the security boundary; route visibility
+alone is never treated as authorization. The development-only `chat-preview`
+screen is not a production product surface.
 
 ## Additive schema
 
@@ -255,12 +248,11 @@ self-leave RPC to exercise separately in this repository.
 
 ## Production Realtime setting audit
 
-Repository audit found no existing HomeyPaw feature using public Broadcast,
-Presence, or `postgres_changes`; Phase 10A's two channel types both specify
-`private: true`. Therefore disabling Supabase Realtime **Allow public access**
-is compatible with the repository implementation and is recommended before a
-future Phase 10A production release. The actual production dashboard setting
-was not read or changed in this local-only round.
+Phase 10A's Pet and user-control channels both specify `private: true` and do
+not use public Broadcast, Presence, or `postgres_changes`. Production Realtime
+private mode is part of the deployed 1.1.0 baseline and was covered by the
+release security gate. This documentation sync does not read or change the
+Production dashboard setting.
 
 Manual device review must additionally cover:
 
@@ -275,11 +267,11 @@ Manual device review must additionally cover:
 
 ## Rollback strategy
 
-Before any future rollout, keep the feature flag off and back up the database.
-If the migration itself fails, its transaction rolls back atomically. If a
-post-migration issue is found, first keep Chat disabled; the additive tables can
-remain dormant without affecting existing pet, journal, care, or reminder
-features.
+For a future Chat schema change, review a database backup and rollback plan
+before deployment. A migration transaction rolls back atomically if it fails.
+If a post-deployment issue is found, disable the affected product entry point
+while preserving the canonical data until a separately reviewed remediation is
+ready.
 
 Dropping chat data is not an automatic rollback. Only after an explicit data
 retention decision and backup should a separately reviewed maintenance

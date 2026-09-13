@@ -1,9 +1,11 @@
 # Phase 10A initial audit
 
-Status: HISTORICAL AUDIT — the architecture/security gate was resolved when the
-versioned Private Realtime Broadcast design was approved. See
-`docs/PHASE10A_SECURE_FAMILY_CHAT.md` for the current implementation. Production
-deployment remains unapproved and unapplied.
+Status: **HISTORICAL AUDIT — SUPERSEDED.** The architecture/security gate was
+resolved by the versioned Private Realtime Broadcast design. Chat was later
+deployed and is included in HomeyPaw 1.1.0 Build 4. See
+`docs/PHASE10A_SECURE_FAMILY_CHAT.md` and `docs/PRODUCTION_READINESS.md` for the
+current implementation and release status; findings below describe the initial
+pre-implementation audit only.
 
 ## Scope and evidence
 

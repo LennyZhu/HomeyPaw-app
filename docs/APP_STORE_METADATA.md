@@ -1,8 +1,6 @@
-# App Store Metadata — Final Local Draft
+# App Store Metadata — HomeyPaw 1.1.0
 
-Updated on 2026-08-28. This remains a local metadata draft; the binary upload and
-Internal TestFlight setup do not mean these App Store fields have been submitted
-for review.
+Current release record for HomeyPaw `1.1.0` Build 4. The build has been submitted to App Store Review and is `Waiting for Review`. Release mode is manual; this document does not claim approval or release.
 
 ## App Record
 
@@ -10,12 +8,10 @@ for review.
 - Primary Language: Traditional Chinese (Hong Kong), if offered; otherwise Traditional Chinese
 - Bundle ID: `com.zhushunli.homeypaw`
 - SKU: `HOMEYPAW-IOS-001`
-- Version: `1.0.0`
-- Initial build: `1`
-- Price recommendation: Free
+- Version／build: `1.1.0 (4)`
+- Price: Free
 - Primary Category: Lifestyle
 - Secondary Category: Utilities
-- Copyright recommendation: `2026 SHUNLI ZHU` (confirm the exact seller-name formatting shown in App Store Connect before entry)
 - Support Email: `lenny996@163.com`
 - Support URL: `https://homeypaw.vercel.app/support`
 - Privacy Policy URL: `https://homeypaw.vercel.app/privacy`
@@ -25,90 +21,79 @@ for review.
 ## Traditional Chinese (Hong Kong)
 
 - Subtitle: `一家人的毛孩照顧與回憶`
-- Promotional Text: `把相片日記、今日照顧與家庭提醒，放在一個只屬於你和家人的毛孩空間。`
-- Keywords: `寵物日記,毛孩照顧,家庭共享,相片回憶,照顧提醒,成長記錄`
+- Promotional Text: `把相片日記、家庭照顧、提醒、排班與私人聊天，放在一個只屬於你和家人的毛孩空間。`
+- Keywords: `寵物日記,毛孩照顧,家庭共享,相片回憶,照顧提醒,家庭排班`
 
 ### Description
 
 HomeyPaw 是一家人共同照顧毛孩、保存生活回憶的私人空間。
 
-你可以建立毛孩檔案，透過相片日記記下生活片段和成長時間線；記錄餵食、散步、用藥、梳洗等日常照顧；並在自己的裝置上設定本機提醒，協助家人掌握待辦事項。
+你可以建立毛孩檔案，透過相片日記記下生活片段；記錄餵食、散步、用藥、梳洗及其他日常照顧；建立共享提醒與家庭排班；並在只限家庭成員的私人聊天室保持聯絡。
 
-透過限時私人邀請，你可以讓信任的家人加入同一個毛孩家庭。家庭內容只供已獲授權的成員查看，Owner 亦可管理成員和移除存取權限。
+透過限時私人邀請，你可以讓信任的家人加入同一個毛孩家庭。家庭內容只供仍獲授權的 Owner／Member 查看；Owner 可管理成員並移除存取權限。
 
 主要功能：
 
-- 毛孩檔案與頭像
-- 一至九張相片的日記與時間線
+- 毛孩檔案、生日與頭像
+- 一至九張相片的日記、時間線與相片瀏覽
 - 餵食、散步、用藥、梳洗及其他照顧記錄
-- 家庭照顧任務與本機提醒
-- 私人家庭邀請與角色權限
-- App 內帳戶永久刪除
+- Once、Daily、Weekly、Monthly、Yearly 提醒與本機通知
+- 家庭照顧排班、認領、完成、取消與重新安排
+- 私人家庭文字聊天與未讀狀態
+- Journal、Care、Health、Reminder 的家庭活動通知
+- 私人家庭邀請、Owner／Member 權限與 App 內永久刪除帳戶
 
-HomeyPaw 不提供醫療、獸醫或緊急照護建議。重要照護請諮詢合資格專業人士，並準備其他可靠提醒方式。
+Chat 不發送系統 Push Notifications。HomeyPaw 不提供醫療、獸醫或緊急照護建議；重要照護請諮詢合資格專業人士並準備可靠的備援提醒。
 
 ## English
 
 - Subtitle: `Family pet care & memories`
-- Promotional Text: `Keep photo journals, daily care, and family reminders together in one private place for your pet.`
-- Keywords: `pet care,journal,photo memories,family sharing,care reminders,pets`
+- Promotional Text: `Keep photo journals, shared care, reminders, schedules, and private family chat together in one space for your pet.`
+- Keywords: `pet care,journal,photo memories,family sharing,care reminders,schedule`
 
 ### Description
 
 HomeyPaw is a private place for families to care for a pet together and keep everyday memories.
 
-Create a pet profile, capture life moments in a photo journal and timeline, record feeding, walks, medication, grooming, and other daily care, and schedule local reminders on your own device.
+Create a pet profile, capture moments in a photo journal, record feeding, walks, medication, grooming, and other daily care, create shared reminders and family schedules, and stay connected in a private family chat.
 
-Invite trusted family members through a time-limited private invitation. Shared family content is available only to authorized members, and the Owner can manage members and remove access.
+Invite trusted family members through a time-limited private invitation. Family content is available only to authorized Owners and Members, and the Owner can manage members and remove access.
 
 Key features:
 
-- Pet profiles and avatars
-- Photo journals with one to nine photos and a timeline
+- Pet profiles, birthdays, and avatars
+- Photo journals with one to nine photos, timelines, and photo viewing
 - Feeding, walk, medication, grooming, and other care records
-- Family care tasks and local reminders
-- Private family invitations and role-based access
-- Permanent in-app account deletion
+- Once, daily, weekly, monthly, and yearly reminders with local notifications
+- Family care schedules with claim, complete, cancel, and reschedule flows
+- Private family text chat and unread state
+- Family activity notifications for Journal, Care, Health, and Reminder updates
+- Private invitations, Owner/Member roles, and permanent in-app account deletion
 
-HomeyPaw does not provide medical, veterinary, or emergency advice. Consult a qualified professional and use reliable backup reminders for important care.
+Chat does not send system push notifications. HomeyPaw does not provide medical, veterinary, or emergency advice; consult a qualified professional and use reliable backup reminders for important care.
 
-## TestFlight Test Information
+## TestFlight Result — Build 4
 
-### Beta App Description — Traditional Chinese (Hong Kong)
+- Production-signed TestFlight build `1.1.0 (4)`: PASS.
+- iPhone／iPad、雙裝置家庭協作、Remote Push、Schedule、Chat Realtime／unread／cache、Removed Member 與 account lifecycle：PASS。
+- Full automated release gate：PASS。
 
-HomeyPaw 是私人、只限邀請家庭使用的毛孩日記與照顧工具。此首個 Internal Testing build 用於驗證登入、相片日記、家庭共享、照顧記錄、本機提醒、離線恢復及帳戶刪除。此版本沒有 Chat、Realtime 或遠端推送；提醒只會排程在設定提醒的裝置上。
+## App Review Notes
 
-### What to Test — Traditional Chinese (Hong Kong)
-
-請重點測試：註冊、登入、確認電郵及重設密碼 Deep Link；建立毛孩；新增 1、3、9 張相片日記及查看縮圖；兩個帳戶加入同一家庭後互相查看 Journal/Care，並驗證 Owner 移除 Member 後立即失去權限；建立餵食、散步及其他 Care；設定約兩分鐘後的本機提醒，測試背景、鎖屏及冷啟動；離線後恢復、重試和重新登入；登出資料清理；App 內永久刪除帳戶。
-
-已知限制：提醒只屬本機，不會跨裝置同步推送。從未在 App 開啟過、已自然過期的 Recovery Link 端到端案例仍列為延後風險；其他 Password Recovery 流程已完成真機驗收。
-
-### Beta App Description — English
-
-HomeyPaw is a private, invite-only pet journal and family care tool. This first internal build validates authentication, photo journals, family sharing, care records, local reminders, offline recovery, and account deletion. This version has no Chat, Realtime, or remote push; reminders are scheduled only on the device where they are enabled.
-
-### What to Test — English
-
-Please focus on sign-up, sign-in, email confirmation, and password-recovery deep links; creating a pet; 1-, 3-, and 9-photo journal entries and thumbnails; two-account family visibility and immediate access loss after the Owner removes a Member; feeding, walk, and other care records; a local reminder scheduled about two minutes ahead while backgrounded, locked, and cold-started; offline recovery, retry, and session restoration; sign-out cleanup; and permanent in-app account deletion.
-
-Known limitation: reminders are device-local and are not delivered across devices. The end-to-end case for a naturally expired recovery link that was never opened remains a deferred risk; the rest of password recovery has passed real-device acceptance.
-
-## App Review Notes Draft
-
-- HomeyPaw is a private, invite-only family app; there is no public discovery or stranger messaging.
-- Local notifications are created only after a user enables a care reminder. No remote push token is requested.
+- HomeyPaw is a private, invite-only family app. It has no public discovery, public feed, stranger messaging, advertising, or tracking SDK.
+- The Chat tab is a real private-family text feature backed by PostgreSQL and authenticated private Realtime. Chat does not generate system push notifications.
+- Remote push is limited to privacy-safe family Journal, Care, Health, and Reminder activity. The actor does not receive their own push, and removed members receive no future push.
+- Local notifications are created for user-enabled care reminders. Notification navigation still passes Auth, membership, and RLS checks.
+- Camera and Photo Library access are requested only after the user chooses to take or select a photo. Camera capture does not request microphone access.
 - “Location” in a journal is manually entered text; the app does not request device location.
-- Camera and Photo Library access are requested only after the user chooses to take or select a journal photo. Camera capture does not request microphone access.
 - Account deletion is available at `Me → Account and security → Delete account`.
 - Medication entries are user-authored pet care records and reminders, not medical advice.
-- The production release has no Chat tab or reachable Chat screen, Realtime feature, advertising, tracking, or analytics SDK. Expo's static export may physically include the guarded Mock-only preview code, but it is not a production feature.
+- Version `1.1.0` uses manual release and is not yet available until review is approved and the release operator publishes it.
 
-## Submission-Time Fields Still Requiring Account Access
+## Submission Status
 
-- Confirm that App Store Connect displays the seller/legal name as `SHUNLI ZHU`, then use the recommended copyright formatting above.
-- Keep the existing App Store Connect identity: numeric app ID `6806111286`, Bundle ID `com.zhushunli.homeypaw`, and SKU `HOMEYPAW-IOS-001`.
-- Enter App Privacy and Age Rating answers using the companion inventories.
-- Add review contact details and, if Apple requests them, a valid review account and review instructions.
-- Upload final screenshots captured from the production-signed/TestFlight build.
-- Select the uploaded build and complete export-compliance prompts.
+- Metadata, App Privacy, age rating, screenshots and review information were prepared for Build 4.
+- Build 4 has been submitted to App Store Review.
+- Current state: `Waiting for Review`.
+- App Store Review: submitted, not approved.
+- App Store Release: not released; manual release remains pending.

@@ -1,5 +1,11 @@
 # Phase 9 Local Preparation
 
+> **Historical 1.0.0 release record.** The Build 1 identity, backend approval
+> questions and remaining-work list below describe the Phase 9 snapshot from
+> 2026-08-28. HomeyPaw 1.0.0 was later released. For the current 1.1.0 Build 4
+> status, see `docs/PRODUCTION_READINESS.md`; it has completed TestFlight and
+> real-device acceptance and is `Waiting for Review` under manual release.
+
 Updated 2026-08-28. This document began as the local-preparation record and now records the completed production-build, TestFlight-upload, and Internal Testing handoff.
 
 ## Result

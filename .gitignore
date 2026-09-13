@@ -36,6 +36,7 @@ yarn-error.*
 !.env.example
 .phase7-account-delete-fixture.json
 /supabase/.temp/
+/supabase/.branches/
 
 # test coverage
 coverage/
