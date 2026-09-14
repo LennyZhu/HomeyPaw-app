@@ -12,16 +12,16 @@
         "ios": {
           "CFBundleDisplayName": "HomeyPaw",
           "NSCameraUsageDescription": "HomeyPaw uses your camera only when you choose to take a photo for a pet journal entry.",
-          "NSPhotoLibraryUsageDescription": "HomeyPaw needs access to your photos so you can choose pet profile pictures and share memories.",
-          "NSPhotoLibraryAddUsageDescription": "HomeyPaw adds the current family journal photo only when you choose Save to Photos."
+          "NSPhotoLibraryUsageDescription": "HomeyPaw needs access to your photo library so you can choose pet profile pictures and share photo or video memories.",
+          "NSPhotoLibraryAddUsageDescription": "HomeyPaw adds the current family journal photo or video only when you choose Save to Photos."
         }
       },
       "zh-HK": {
         "ios": {
           "CFBundleDisplayName": "HomeyPaw",
           "NSCameraUsageDescription": "HomeyPaw 只會在你選擇拍照時使用相機，讓你為毛孩記錄生活回憶。",
-          "NSPhotoLibraryUsageDescription": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。",
-          "NSPhotoLibraryAddUsageDescription": "HomeyPaw 只會在你選擇「儲存到相片」時，將目前的家庭日記相片加入相片圖庫。"
+          "NSPhotoLibraryUsageDescription": "HomeyPaw 需要存取你的相片圖庫，讓你為毛孩選擇頭像及分享相片或影片回憶。",
+          "NSPhotoLibraryAddUsageDescription": "HomeyPaw 只會在你選擇「儲存到相片」時，將目前的家庭日記相片或影片加入相片圖庫。"
         }
       }
     },
@@ -73,7 +73,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。",
+          "photosPermission": "HomeyPaw 需要存取你的相片圖庫，讓你為毛孩選擇頭像及分享相片或影片回憶。",
           "cameraPermission": "HomeyPaw 只會在你選擇拍照時使用相機，讓你為毛孩記錄生活回憶。",
           "microphonePermission": false
         }
@@ -81,9 +81,9 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "HomeyPaw 需要存取你的相片，讓你為毛孩選擇頭像及分享生活回憶。",
-          "savePhotosPermission": "HomeyPaw 只會在你選擇「儲存到相片」時，將目前的家庭日記相片加入相片圖庫。",
-          "granularPermissions": ["photo"],
+          "photosPermission": "HomeyPaw 需要存取你的相片圖庫，讓你為毛孩選擇頭像及分享相片或影片回憶。",
+          "savePhotosPermission": "HomeyPaw 只會在你選擇「儲存到相片」時，將目前的家庭日記相片或影片加入相片圖庫。",
+          "granularPermissions": ["photo", "video"],
           "isAccessMediaLocationEnabled": false
         }
       ],
@@ -96,7 +96,9 @@
         }
       ],
       "expo-sqlite",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-video",
+      "react-native-compressor"
     ],
     "experiments": {
       "typedRoutes": true,

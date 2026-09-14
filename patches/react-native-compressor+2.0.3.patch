@@ -1,0 +1,23 @@
+diff --git a/node_modules/react-native-compressor/ios/Video/VideoMain.swift b/node_modules/react-native-compressor/ios/Video/VideoMain.swift
+index 4c6dd1a..8f8d71d 100644
+--- a/node_modules/react-native-compressor/ios/Video/VideoMain.swift
++++ b/node_modules/react-native-compressor/ios/Video/VideoMain.swift
+@@ -349,13 +349,11 @@ class VideoCompressor {
+             ]
+         }
+ 
+-        // Preserve source metadata (location, creation date, etc.) by forwarding
+-        // every available metadata format to the writer.
+-        var preservedMetadata: [AVMetadataItem] = asset.metadata
+-        for format in asset.availableMetadataFormats {
+-            preservedMetadata.append(contentsOf: asset.metadata(forFormat: format))
+-        }
+-        exporter.metadata = preservedMetadata
++        // HomeyPaw privacy: do not copy source metadata such as location,
++        // capture dates, device details, or user-authored QuickTime data.
++        // AVAssetWriter still generates the technical track/container metadata
++        // required for the newly encoded MP4.
++        exporter.metadata = []
+ 
+         compressorExports[uuid] = exporter
+         exporter.export(progressHandler: { (progress) in
