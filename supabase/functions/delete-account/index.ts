@@ -1,5 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+import {
+  cleanupVideoReferences,
+  type VideoCleanupReference,
+} from '../_shared/video-cleanup.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
@@ -158,8 +163,39 @@ Deno.serve(async (request) => {
   }
 
   const ownedPetIds = ownedMemberships.map((membership) => membership.pet_id);
+  const videoReferences: VideoCleanupReference[] = [];
 
   for (const petId of ownedPetIds) {
+    let videoOffset = 0;
+
+    while (true) {
+      const { data: videoRows, error: videoError } = await adminClient
+        .from('post_videos')
+        .select('storage_path, thumbnail_path, posts!inner(pet_id)')
+        .eq('posts.pet_id', petId)
+        .range(videoOffset, videoOffset + 499);
+
+      if (videoError) {
+        console.error('Owned pet journal video lookup failed.', {
+          code: videoError.code,
+        });
+        return jsonResponse({ error: 'Account deletion failed' }, 500);
+      }
+
+      videoReferences.push(
+        ...videoRows.map((video) => ({
+          storage_path: video.storage_path,
+          thumbnail_path: video.thumbnail_path,
+        })),
+      );
+
+      if (videoRows.length < 500) {
+        break;
+      }
+
+      videoOffset += videoRows.length;
+    }
+
     let offset = 0;
 
     while (true) {
@@ -201,6 +237,33 @@ Deno.serve(async (request) => {
   }
 
   try {
+    const authoredVideoPaths = await listStorageFiles(
+      adminClient,
+      'post-videos',
+      user.id,
+    );
+    const authoredThumbnailPaths = await listStorageFiles(
+      adminClient,
+      'post-video-thumbnails',
+      user.id,
+    );
+    const thumbnailsByStem = new Map(
+      authoredThumbnailPaths.map((path) => [
+        path.replace(/[.]jpg$/u, ''),
+        path,
+      ]),
+    );
+
+    for (const path of authoredVideoPaths) {
+      const thumbnailPath = thumbnailsByStem.get(path.replace(/[.]mp4$/u, ''));
+      if (thumbnailPath) {
+        videoReferences.push({
+          storage_path: path,
+          thumbnail_path: thumbnailPath,
+        });
+      }
+    }
+
     const postMediaPaths = await listStorageFiles(
       adminClient,
       'post-media',
@@ -263,5 +326,13 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Account deletion failed' }, 500);
   }
 
-  return jsonResponse({ deleted: true }, 200);
+  const videoCleanupComplete = await cleanupVideoReferences(
+    adminClient,
+    videoReferences,
+  );
+
+  return jsonResponse(
+    { deleted: true, videoCleanupPending: !videoCleanupComplete },
+    200,
+  );
 });

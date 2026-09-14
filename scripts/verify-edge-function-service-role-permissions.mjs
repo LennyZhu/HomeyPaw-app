@@ -9,10 +9,12 @@ if (
   throw new Error('SAFETY STOP: Edge Function ACL verification is local only.');
 }
 
-const migration = readFileSync(
+const permissionMigrations = [
   'supabase/migrations/20260912090000_edge_function_service_role_permissions.sql',
-  'utf8',
-);
+  'supabase/migrations/20260914120000_journal_video_backend_foundation.sql',
+]
+  .map((path) => readFileSync(path, 'utf8'))
+  .join('\n');
 
 function sql(statement) {
   return execFileSync(
@@ -48,10 +50,12 @@ function hasTablePrivilege(role, table, privilege) {
 }
 
 const serviceMatrix = {
+  media_cleanup_jobs: ['INSERT', 'SELECT', 'UPDATE'],
   pet_invites: ['SELECT'],
   pet_members: ['SELECT'],
   pets: ['DELETE', 'SELECT'],
   post_media: ['SELECT'],
+  post_videos: ['SELECT'],
   posts: ['DELETE', 'SELECT'],
   profiles: ['SELECT'],
 };
@@ -83,10 +87,12 @@ for (const [table, allowed] of Object.entries(serviceMatrix)) {
 }
 
 const authenticatedTablePrivileges = {
+  media_cleanup_jobs: [],
   pet_invites: [],
   pet_members: ['SELECT'],
   pets: ['DELETE', 'SELECT'],
   post_media: ['SELECT'],
+  post_videos: ['SELECT'],
   posts: ['SELECT'],
   profiles: ['SELECT'],
 };
@@ -107,17 +113,17 @@ for (const role of ['anon', 'authenticated']) {
 }
 
 expect(
-  !/\bgrant\s+(?:all|insert|update|truncate|references|trigger)\b/iu.test(
-    migration,
-  ),
-  'Permission migration grants an unnecessary table privilege.',
+  !/\bgrant\s+all\b/iu.test(permissionMigrations),
+  'Permission migrations grant ALL privileges.',
 );
 expect(
-  !/\bto\s+(?:anon|authenticated|public)\b/iu.test(migration),
-  'Permission migration widened a client role.',
+  !/\bgrant\s+(?:insert|update|delete|truncate|references|trigger)\b[^;]*\bto\s+(?:anon|authenticated|public)\b/iu.test(
+    permissionMigrations,
+  ),
+  'Permission migrations grant a client role a write privilege.',
 );
 console.log(
-  'PASS: service_role has the exact lifecycle Edge Function SELECT/DELETE matrix.',
+  'PASS: service_role has the exact lifecycle and cleanup privilege matrix.',
 );
 console.log(
   'PASS: anon/authenticated table privileges are unchanged and no broad grant exists.',

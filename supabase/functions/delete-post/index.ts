@@ -1,5 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+import { cleanupVideoReferences } from '../_shared/video-cleanup.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
@@ -96,7 +98,9 @@ Deno.serve(async (request) => {
 
   const { data: post, error: postError } = await adminClient
     .from('posts')
-    .select('id, pet_id, author_id, post_media(storage_path)')
+    .select(
+      'id, pet_id, author_id, post_media(storage_path), post_videos(storage_path, thumbnail_path)',
+    )
     .eq('id', body.postId)
     .maybeSingle();
 
@@ -134,6 +138,21 @@ Deno.serve(async (request) => {
   const storagePaths = post.post_media.map(
     (media: { storage_path: string }) => media.storage_path,
   );
+  const relatedVideos = post.post_videos as
+    | {
+        storage_path: string;
+        thumbnail_path: string;
+      }
+    | {
+        storage_path: string;
+        thumbnail_path: string;
+      }[]
+    | null;
+  const videoReferences = relatedVideos
+    ? Array.isArray(relatedVideos)
+      ? relatedVideos
+      : [relatedVideos]
+    : [];
 
   for (let index = 0; index < storagePaths.length; index += 100) {
     const { error: storageError } = await adminClient.storage
@@ -160,5 +179,13 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Post deletion failed' }, 500);
   }
 
-  return jsonResponse({ deleted: true }, 200);
+  const videoCleanupComplete = await cleanupVideoReferences(
+    adminClient,
+    videoReferences,
+  );
+
+  return jsonResponse(
+    { deleted: true, videoCleanupPending: !videoCleanupComplete },
+    200,
+  );
 });

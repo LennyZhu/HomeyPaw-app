@@ -1,5 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
+import {
+  cleanupVideoReferences,
+  type VideoCleanupReference,
+} from '../_shared/video-cleanup.ts';
+
 const corsHeaders = {
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
@@ -128,6 +133,36 @@ Deno.serve(async (request) => {
   }
 
   let mediaOffset = 0;
+  let videoOffset = 0;
+  const videoReferences: VideoCleanupReference[] = [];
+
+  while (true) {
+    const { data: videoRows, error: videoError } = await adminClient
+      .from('post_videos')
+      .select('storage_path, thumbnail_path, posts!inner(pet_id)')
+      .eq('posts.pet_id', body.petId)
+      .range(videoOffset, videoOffset + 499);
+
+    if (videoError) {
+      console.error('Pet journal video lookup failed.', {
+        code: videoError.code,
+      });
+      return jsonResponse({ error: 'Pet deletion failed' }, 500);
+    }
+
+    videoReferences.push(
+      ...videoRows.map((video) => ({
+        storage_path: video.storage_path,
+        thumbnail_path: video.thumbnail_path,
+      })),
+    );
+
+    if (videoRows.length < 500) {
+      break;
+    }
+
+    videoOffset += videoRows.length;
+  }
 
   while (true) {
     const { data: mediaRows, error: mediaError } = await adminClient
@@ -190,5 +225,13 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Pet deletion failed' }, 500);
   }
 
-  return jsonResponse({ deleted: true }, 200);
+  const videoCleanupComplete = await cleanupVideoReferences(
+    adminClient,
+    videoReferences,
+  );
+
+  return jsonResponse(
+    { deleted: true, videoCleanupPending: !videoCleanupComplete },
+    200,
+  );
 });

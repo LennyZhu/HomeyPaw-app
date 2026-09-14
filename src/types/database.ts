@@ -51,6 +51,45 @@ export type Database = {
           },
         ];
       };
+      media_cleanup_jobs: {
+        Row: {
+          attempt_count: number;
+          bucket_id: string;
+          completed_at: string | null;
+          created_at: string;
+          id: number;
+          last_error: string | null;
+          next_attempt_at: string;
+          reason: string;
+          source_post_id: string | null;
+          storage_path: string;
+        };
+        Insert: {
+          attempt_count?: number;
+          bucket_id: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: never;
+          last_error?: string | null;
+          next_attempt_at?: string;
+          reason: string;
+          source_post_id?: string | null;
+          storage_path: string;
+        };
+        Update: {
+          attempt_count?: number;
+          bucket_id?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          id?: never;
+          last_error?: string | null;
+          next_attempt_at?: string;
+          reason?: string;
+          source_post_id?: string | null;
+          storage_path?: string;
+        };
+        Relationships: [];
+      };
       care_logs: {
         Row: {
           care_type: Database['public']['Enums']['care_type'];
@@ -334,6 +373,53 @@ export type Database = {
           },
         ];
       };
+      post_videos: {
+        Row: {
+          created_at: string;
+          duration_ms: number;
+          file_size_bytes: number;
+          height: number;
+          id: string;
+          mime_type: string;
+          post_id: string;
+          storage_path: string;
+          thumbnail_path: string;
+          width: number;
+        };
+        Insert: {
+          created_at?: string;
+          duration_ms: number;
+          file_size_bytes: number;
+          height: number;
+          id: string;
+          mime_type: string;
+          post_id: string;
+          storage_path: string;
+          thumbnail_path: string;
+          width: number;
+        };
+        Update: {
+          created_at?: string;
+          duration_ms?: number;
+          file_size_bytes?: number;
+          height?: number;
+          id?: string;
+          mime_type?: string;
+          post_id?: string;
+          storage_path?: string;
+          thumbnail_path?: string;
+          width?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'post_videos_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: true;
+            referencedRelation: 'posts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       posts: {
         Row: {
           author_id: string;
@@ -451,6 +537,10 @@ export type Database = {
         Args: { target_shift_id: string };
         Returns: Database['public']['Tables']['care_shifts']['Row'];
       };
+      claim_media_cleanup_jobs: {
+        Args: { job_limit?: number };
+        Returns: Database['public']['Tables']['media_cleanup_jobs']['Row'][];
+      };
       complete_care_shift_task: {
         Args: {
           care_log_id: string;
@@ -541,6 +631,10 @@ export type Database = {
           result_completed_by: string;
           result_completion_id: string;
         }[];
+      };
+      complete_media_cleanup_job: {
+        Args: { target_job_id: number };
+        Returns: undefined;
       };
       create_care_task: {
         Args: {
@@ -684,6 +778,23 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['posts']['Row'];
       };
+      create_post_v2: {
+        Args: {
+          media_items?: Json;
+          post_content: string | null;
+          post_event_date: string;
+          post_id: string;
+          post_location_name: string | null;
+          post_pet_id: string;
+          post_tag: Database['public']['Enums']['post_tag'] | null;
+          video_item?: Json | null;
+        };
+        Returns: Database['public']['Tables']['posts']['Row'];
+      };
+      fail_media_cleanup_job: {
+        Args: { failure_message: string; target_job_id: number };
+        Returns: undefined;
+      };
       get_pet_members: {
         Args: { target_pet_id: string };
         Returns: {
@@ -749,6 +860,18 @@ export type Database = {
           post_location_name: string | null;
           post_tag: Database['public']['Enums']['post_tag'] | null;
           target_post_id: string;
+        };
+        Returns: Database['public']['Tables']['posts']['Row'];
+      };
+      update_post_v2: {
+        Args: {
+          media_items?: Json;
+          post_content: string | null;
+          post_event_date: string;
+          post_location_name: string | null;
+          post_tag: Database['public']['Enums']['post_tag'] | null;
+          target_post_id: string;
+          video_item?: Json | null;
         };
         Returns: Database['public']['Tables']['posts']['Row'];
       };
@@ -852,4 +975,5 @@ export type PetSpecies = Database['public']['Enums']['pet_species'];
 export type PetMemberRole = Database['public']['Enums']['pet_member_role'];
 export type Post = Database['public']['Tables']['posts']['Row'];
 export type PostMedia = Database['public']['Tables']['post_media']['Row'];
+export type PostVideo = Database['public']['Tables']['post_videos']['Row'];
 export type PostTag = Database['public']['Enums']['post_tag'];
