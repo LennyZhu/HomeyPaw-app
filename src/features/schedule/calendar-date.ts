@@ -65,6 +65,25 @@ export function shiftCalendarMonth(value: string, amount: number) {
   return toCalendarDate(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
 }
 
+export function shiftCalendarDateByMonth(value: string, amount: number) {
+  const parts = parseCalendarDate(value);
+  if (!parts) throw new Error(`Invalid date-only value: ${value}`);
+  const targetMonth = new Date(
+    Date.UTC(parts.year, parts.month - 1 + amount, 1),
+  );
+  const targetYear = targetMonth.getUTCFullYear();
+  const targetMonthIndex = targetMonth.getUTCMonth();
+  const daysInTargetMonth = new Date(
+    Date.UTC(targetYear, targetMonthIndex + 1, 0),
+  ).getUTCDate();
+
+  return toCalendarDate(
+    targetYear,
+    targetMonthIndex + 1,
+    Math.min(parts.day, daysInTargetMonth),
+  );
+}
+
 export function getCalendarMonthRange(value: string) {
   const start = startOfCalendarMonth(value);
   return { end: startOfNextCalendarMonth(start), start };

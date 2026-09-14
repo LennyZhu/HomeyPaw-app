@@ -10,6 +10,7 @@ import {
   getLocalDateInTimeZone,
   getSixWeekCalendarRange,
   parseCalendarDate,
+  shiftCalendarDateByMonth,
   shiftCalendarMonth,
 } from '../src/features/schedule/calendar-date.ts';
 import { getUserAvatarInitial } from '../src/components/avatar-initial.ts';
@@ -95,6 +96,13 @@ assert.deepEqual(getCalendarMonthRange('2026-12-20'), {
   start: '2026-12-01',
 });
 assert.equal(shiftCalendarMonth('2026-12-01', 1), '2027-01-01');
+assert.equal(shiftCalendarDateByMonth('2026-09-14', 1), '2026-10-14');
+assert.equal(shiftCalendarDateByMonth('2024-01-31', 1), '2024-02-29');
+assert.equal(shiftCalendarDateByMonth('2023-03-31', -1), '2023-02-28');
+assert.equal(
+  [1, 1, -1, 1, -1, -1].reduce(shiftCalendarDateByMonth, '2026-09-14'),
+  '2026-09-14',
+);
 assert.equal(addCalendarDays('2024-02-28', 1), '2024-02-29');
 assert.equal(parseCalendarDate('2026-02-29'), null);
 assert.equal(formatCalendarDate('2026-09-11', 'zh-HK'), '2026年9月11日');
@@ -395,6 +403,19 @@ assert(scheduleScreen.includes('<FlatList'));
 assert(scheduleScreen.includes('getSixWeekCalendarRange'));
 assert(scheduleScreen.includes("AppState.addEventListener('change'"));
 assert(scheduleScreen.includes('<RefreshControl'));
+assert(scheduleScreen.includes('refreshing={isManualRefreshing}'));
+assert(
+  scheduleScreen.includes('runManualRefresh(setIsManualRefreshing, refresh)'),
+);
+assert(scheduleScreen.includes('scheduleQuery.data !== undefined'));
+assert(scheduleScreen.includes('isInitialScheduleLoading'));
+assert(scheduleScreen.includes('isBackgroundScheduleFetching'));
+assert(scheduleScreen.includes('isUpdating={isBackgroundScheduleFetching}'));
+assert(!scheduleScreen.includes('scheduleQuery.isRefetching'));
+assert(!scheduleScreen.includes('membersQuery.isRefetching'));
+assert(
+  !scheduleScreen.match(/key=\{(?:currentMonth|monthKey|month|rangeKey)\}/u),
+);
 assert(scheduleScreen.includes('groupCareScheduleByAssignee'));
 assert(scheduleScreen.includes('setGroupExpansion'));
 assert(scheduleScreen.includes('<ScheduleMonthCalendar'));

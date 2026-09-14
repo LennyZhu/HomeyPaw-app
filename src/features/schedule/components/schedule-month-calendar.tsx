@@ -22,6 +22,7 @@ import type { CareScheduleItem } from '../care-schedule-types';
 
 type Props = {
   fixedSixWeeks?: boolean;
+  isUpdating?: boolean;
   items: CareScheduleItem[];
   month: string;
   onNextMonth?: (() => void) | undefined;
@@ -33,6 +34,7 @@ type Props = {
 
 export function ScheduleMonthCalendar({
   fixedSixWeeks = false,
+  isUpdating = false,
   items,
   month,
   onNextMonth,
@@ -48,7 +50,7 @@ export function ScheduleMonthCalendar({
   const itemsByDate = scheduleItemsByDate(items);
 
   return (
-    <View style={styles.calendar}>
+    <View accessibilityState={{ busy: isUpdating }} style={styles.calendar}>
       <View style={styles.monthHeader}>
         <AppText
           accessibilityRole="header"

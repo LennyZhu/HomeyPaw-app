@@ -31,12 +31,14 @@ import { PetAvatar } from '@/features/pets/components/pet-avatar';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { TaskCompletionModal } from '@/features/reminders/components/task-completion-modal';
+import { runManualRefresh } from '@/lib/manual-refresh';
 import { lightColors, radius, spacing } from '@/theme';
 
 import {
   formatCalendarDate,
   getSixWeekCalendarRange,
   parseCalendarDate,
+  shiftCalendarDateByMonth,
   shiftCalendarMonth,
   startOfCalendarMonth,
 } from './calendar-date';
@@ -53,6 +55,7 @@ import {
 import { isScheduleBackendUnavailable } from './care-schedule-api';
 import {
   clearCareSchedulePetCache,
+  invalidateCareSchedule,
   useCareScheduleRange,
   useClaimCareShift,
   useCompleteCareShiftTask,
@@ -83,6 +86,7 @@ export default function ScheduleScreen() {
   );
   const [month, setMonth] = useState(() => startOfCalendarMonth(selectedDate));
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [completionTarget, setCompletionTarget] =
     useState<CareScheduleItem | null>(null);
   const [groupExpansion, setGroupExpansion] = useState<Record<string, boolean>>(
@@ -95,9 +99,16 @@ export default function ScheduleScreen() {
     startLocalDate: range.start,
   });
   const membersQuery = usePetMembers(petId);
-  const refetchSchedule = scheduleQuery.refetch;
   const refetchMembers = membersQuery.refetch;
   const refetchPets = petsState.refetch;
+  const hasScheduleData = scheduleQuery.data !== undefined;
+  const isInitialScheduleLoading =
+    Boolean(pet) && !hasScheduleData && scheduleQuery.isPending;
+  const isBackgroundScheduleFetching =
+    Boolean(pet) &&
+    hasScheduleData &&
+    scheduleQuery.isFetching &&
+    !isManualRefreshing;
   const claimShift = useClaimCareShift(petId ?? '');
   const completeTask = useCompleteCareShiftTask(petId ?? '');
   const role = getScheduleRole(membersQuery.data ?? [], user?.id);
@@ -146,8 +157,19 @@ export default function ScheduleScreen() {
   }, [petId, queryClient, refetchPets, router, showFeedback, t, user?.id]);
 
   const refresh = useCallback(async () => {
-    await Promise.all([refetchSchedule(), refetchMembers(), refetchPets()]);
-  }, [refetchMembers, refetchPets, refetchSchedule]);
+    await Promise.all([
+      petId
+        ? invalidateCareSchedule(queryClient, user?.id, petId)
+        : Promise.resolve(),
+      refetchMembers(),
+      refetchPets(),
+    ]);
+  }, [petId, queryClient, refetchMembers, refetchPets, user?.id]);
+
+  const manualRefresh = useCallback(
+    () => runManualRefresh(setIsManualRefreshing, refresh),
+    [refresh],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -169,9 +191,8 @@ export default function ScheduleScreen() {
   }, [handleAccessLoss, scheduleQuery.error]);
 
   const moveMonth = (amount: number) => {
-    const nextMonth = shiftCalendarMonth(month, amount);
-    setMonth(nextMonth);
-    setSelectedDate(nextMonth);
+    setMonth((current) => shiftCalendarMonth(current, amount));
+    setSelectedDate((current) => shiftCalendarDateByMonth(current, amount));
   };
 
   const claim = async (shift: CareScheduleShift) => {
@@ -276,6 +297,7 @@ export default function ScheduleScreen() {
         <View style={styles.calendarCard}>
           <ScheduleMonthCalendar
             fixedSixWeeks
+            isUpdating={isBackgroundScheduleFetching}
             items={scheduleQuery.data ?? []}
             month={month}
             onNextMonth={() => moveMonth(1)}
@@ -354,7 +376,7 @@ export default function ScheduleScreen() {
           data={scheduleQuery.isError ? [] : selectedGroups}
           keyExtractor={(group) => group.key}
           ListEmptyComponent={
-            scheduleQuery.isPending ? (
+            isInitialScheduleLoading ? (
               <View
                 accessibilityLabel={t('schedule.loading')}
                 style={styles.loadingList}
@@ -380,10 +402,8 @@ export default function ScheduleScreen() {
           ListHeaderComponent={header}
           refreshControl={
             <RefreshControl
-              onRefresh={() => void refresh()}
-              refreshing={
-                scheduleQuery.isRefetching || membersQuery.isRefetching
-              }
+              onRefresh={() => void manualRefresh()}
+              refreshing={isManualRefreshing}
               tintColor={lightColors.primary}
             />
           }
