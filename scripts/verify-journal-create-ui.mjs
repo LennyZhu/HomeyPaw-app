@@ -18,14 +18,24 @@ assert.equal(journal.includes("t('journal.timelineSubtitle'"), false);
 assert.equal(journal.includes("t('posts.list.noPetSubtitle')"), false);
 assert.equal(journal.includes("t('posts.list.add')"), false);
 assert.equal(journal.includes('styles.addButton'), false);
-assert.ok(journal.includes('styles.petSelector'));
-assert.ok(journal.includes('styles.filterButton'));
+assert.equal(journal.includes('PetSwitcherModal'), false);
+assert.equal(journal.includes('styles.petSelector'), false);
+assert.equal(journal.includes('setCurrentPetId'), false);
+assert.equal(journal.includes("router.push('/pets/new')"), false);
+assert.ok(journal.includes('const petId = petsState.currentPetId'));
+assert.ok(journal.includes('usePosts(petId, dateRange)'));
+assert.ok(journal.includes('usePetPostAuthors(petId)'));
+assert.ok(journal.includes('styles.titleRow'));
+assert.ok(journal.includes('styles.filterAction'));
+assert.equal(journal.includes('styles.filterButton'), false);
+assert.equal(journal.includes('name="calendar-outline"'), false);
 assert.ok(journal.includes("router.push('/posts/new')"));
 
 for (const scrollBehavior of [
   'contentOffset={{ x: 0, y: initialScrollOffset }}',
-  'key={listStateKey}',
+  'ref={listRef}',
   'maintainVisibleContentPosition',
+  'listRef.current?.scrollToOffset',
   'setJournalScrollOffset',
   'postsQuery.fetchNextPage()',
 ]) {

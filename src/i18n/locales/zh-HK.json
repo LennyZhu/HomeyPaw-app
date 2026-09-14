@@ -175,7 +175,6 @@
       "apply": "套用日期範圍",
       "clear": "清除日期篩選",
       "accessibility": "按日期篩選日記。目前範圍：{{range}}",
-      "petAccessibility": "按毛孩篩選日記。目前毛孩：{{name}}",
       "invalidRange": "請選擇有效日期，開始日期不可遲於結束日期。",
       "emptyTitle": "此日期範圍沒有日記",
       "emptyBody": "{{range}} 期間沒有建立日記。"

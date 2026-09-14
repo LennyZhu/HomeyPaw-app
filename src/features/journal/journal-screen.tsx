@@ -2,7 +2,7 @@ import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { type Href, useRouter } from 'expo-router';
 import type { TFunction } from 'i18next';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -20,7 +20,6 @@ import { EmptyState } from '@/components/empty-state';
 import { LoadingView } from '@/components/loading-view';
 import { useAuth } from '@/features/auth/auth-context';
 import { usePetPostAuthors } from '@/features/family/family-queries';
-import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { parseDateOnly } from '@/features/pets/pet-dates';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { PostMediaPreview } from '@/features/posts/components/post-media-preview';
@@ -65,9 +64,10 @@ export default function JournalScreen() {
   const setDateRange = useJournalFilterStore((state) => state.setFilter);
   const listStateKey = createJournalListStateKey(user?.id, petId, dateRange);
   const initialScrollOffset = getJournalScrollOffset(listStateKey);
+  const listRef = useRef<FlatList<TimelineItem>>(null);
+  const renderedListStateKey = useRef(listStateKey);
   const postsQuery = usePosts(petId, dateRange);
   const authorsQuery = usePetPostAuthors(petId);
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
   const [photoViewer, setPhotoViewer] = useState<{
@@ -119,6 +119,15 @@ export default function JournalScreen() {
   const accessibleDateRangeLabel = dateRange
     ? formatAccessibleJournalDateRange(dateRange, i18n.language)
     : t('journal.filter.all');
+
+  useEffect(() => {
+    if (renderedListStateKey.current === listStateKey) return;
+    renderedListStateKey.current = listStateKey;
+    listRef.current?.scrollToOffset({
+      animated: false,
+      offset: initialScrollOffset,
+    });
+  }, [initialScrollOffset, listStateKey]);
 
   if (petsState.isPending) {
     return <LoadingView label={t('pets.loading.list')} />;
@@ -177,10 +186,8 @@ export default function JournalScreen() {
           ) : (
             <View style={styles.emptyState}>
               <EmptyState
-                actionLabel={t('pets.empty.action')}
                 body={t('posts.empty.noPetBody')}
                 icon="paw-outline"
-                onActionPress={() => router.push('/pets/new')}
                 title={t('posts.empty.noPetTitle')}
               />
             </View>
@@ -196,42 +203,16 @@ export default function JournalScreen() {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <AppText accessibilityRole="header" variant="largeTitle">
-              {t('journal.title')}
-            </AppText>
+            <View style={styles.titleRow}>
+              <AppText
+                accessibilityRole="header"
+                style={styles.title}
+                variant="largeTitle"
+              >
+                {t('journal.title')}
+              </AppText>
 
-            {petsState.currentPet ? (
-              <View style={styles.browseControls}>
-                <Pressable
-                  accessibilityLabel={t('journal.filter.petAccessibility', {
-                    name: petsState.currentPet.name,
-                  })}
-                  accessibilityRole="button"
-                  onPress={() => setIsSwitcherOpen(true)}
-                  style={({ pressed }) => [
-                    styles.petSelector,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Ionicons
-                    color={lightColors.secondary}
-                    name="paw-outline"
-                    size={20}
-                  />
-                  <AppText
-                    ellipsizeMode="tail"
-                    numberOfLines={1}
-                    style={styles.petName}
-                    variant="headline"
-                  >
-                    {petsState.currentPet.name}
-                  </AppText>
-                  <Ionicons
-                    color={lightColors.textSecondary}
-                    name="chevron-down"
-                    size={18}
-                  />
-                </Pressable>
+              {petsState.currentPet ? (
                 <Pressable
                   accessibilityLabel={t('journal.filter.accessibility', {
                     range: accessibleDateRangeLabel,
@@ -239,20 +220,14 @@ export default function JournalScreen() {
                   accessibilityRole="button"
                   onPress={() => setIsDateFilterOpen(true)}
                   style={({ pressed }) => [
-                    styles.filterButton,
-                    dateRange && styles.filterButtonActive,
+                    styles.filterAction,
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Ionicons
-                    color={lightColors.primary}
-                    name="calendar-outline"
-                    size={18}
-                  />
                   <AppText
                     ellipsizeMode="tail"
                     numberOfLines={1}
-                    style={styles.filterLabel}
+                    style={styles.filterActionLabel}
                     tone={dateRange ? 'brand' : 'secondary'}
                     variant="subheadline"
                   >
@@ -264,8 +239,8 @@ export default function JournalScreen() {
                     size={16}
                   />
                 </Pressable>
-              </View>
-            ) : null}
+              ) : null}
+            </View>
           </View>
         }
         contentContainerStyle={styles.listContent}
@@ -274,7 +249,6 @@ export default function JournalScreen() {
         extraData={mediaUrlsQuery.data}
         initialNumToRender={8}
         keyboardDismissMode="on-drag"
-        key={listStateKey}
         keyExtractor={(item) => item.id}
         maintainVisibleContentPosition={{ minIndexForVisible: 0 }}
         maxToRenderPerBatch={8}
@@ -297,6 +271,7 @@ export default function JournalScreen() {
             tintColor={lightColors.primary}
           />
         }
+        ref={listRef}
         renderItem={({ item }) => {
           if (item.kind === 'year') {
             return (
@@ -343,20 +318,6 @@ export default function JournalScreen() {
         windowSize={7}
       />
 
-      <PetSwitcherModal
-        currentPetId={petId}
-        onAddPet={() => {
-          setIsSwitcherOpen(false);
-          router.push('/pets/new');
-        }}
-        onClose={() => setIsSwitcherOpen(false)}
-        onSelectPet={(selectedPetId) => {
-          petsState.setCurrentPetId(selectedPetId);
-          setIsSwitcherOpen(false);
-        }}
-        pets={petsState.pets}
-        visible={isSwitcherOpen}
-      />
       {isDateFilterOpen ? (
         <JournalDateFilterModal
           onApply={(range) => setDateRange(journalContextKey, range)}
@@ -544,52 +505,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
   },
   header: {
-    gap: spacing.md,
     paddingTop: spacing.md,
   },
-  browseControls: {
-    width: '100%',
-    maxWidth: 520,
-    alignItems: 'stretch',
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  petSelector: {
+  titleRow: {
     minHeight: 52,
-    minWidth: 0,
     alignItems: 'center',
-    backgroundColor: lightColors.surface,
-    borderColor: lightColors.border,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    flex: 2,
     flexDirection: 'row',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    gap: spacing.md,
   },
-  petName: { minWidth: 0, flex: 1, flexShrink: 1 },
-  filterButton: {
-    minHeight: 52,
-    minWidth: 112,
-    maxWidth: 180,
+  title: { flex: 1 },
+  filterAction: {
+    minHeight: 44,
+    maxWidth: 160,
     alignItems: 'center',
-    backgroundColor: lightColors.surface,
-    borderColor: lightColors.border,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    flex: 1,
-    flexShrink: 1,
     gap: spacing.xs,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    justifyContent: 'flex-end',
+    paddingLeft: spacing.md,
   },
-  filterButtonActive: {
-    backgroundColor: lightColors.primarySoft,
-    borderColor: lightColors.primarySoft,
-  },
-  filterLabel: { minWidth: 0, flex: 1, flexShrink: 1 },
+  filterActionLabel: { minWidth: 0, flexShrink: 1 },
   year: { marginBottom: spacing.md, marginTop: spacing.xl },
   month: { marginBottom: spacing.lg, marginTop: spacing.xs },
   dayRow: {
