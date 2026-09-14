@@ -14,6 +14,23 @@ export function getPhotoViewerIndexFromOffset(
   return clampPhotoViewerIndex(Math.round(offset / pageWidth), photoCount);
 }
 
+export function getPhotoViewerPageOffset(
+  index: number,
+  pageWidth: number,
+  photoCount: number,
+) {
+  if (!Number.isFinite(pageWidth) || pageWidth <= 0) return 0;
+  return clampPhotoViewerIndex(index, photoCount) * pageWidth;
+}
+
+export function getPhotoViewerPageLayout(index: number, pageWidth: number) {
+  return {
+    index,
+    length: pageWidth,
+    offset: index * pageWidth,
+  };
+}
+
 export function shouldCaptureZoomedPhotoPan(scale: number) {
   'worklet';
   return scale > photoZoomPagingThreshold;

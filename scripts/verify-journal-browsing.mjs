@@ -114,6 +114,14 @@ console.log('PASS: Scroll state keys isolate user, pet, and date filter.');
 assert.equal(viewerState.getPhotoViewerIndexFromOffset(0, 390, 5), 0);
 assert.equal(viewerState.getPhotoViewerIndexFromOffset(410, 390, 5), 1);
 assert.equal(viewerState.getPhotoViewerIndexFromOffset(1_950, 390, 5), 4);
+assert.deepEqual(viewerState.getPhotoViewerPageLayout(2, 390), {
+  index: 2,
+  length: 390,
+  offset: 780,
+});
+assert.equal(viewerState.getPhotoViewerPageOffset(2, 390, 5), 780);
+assert.equal(viewerState.getPhotoViewerPageOffset(9, 390, 5), 1_560);
+assert.equal(viewerState.getPhotoViewerPageOffset(2, 0, 5), 0);
 assert.equal(viewerState.shouldCaptureZoomedPhotoPan(1), false);
 assert.equal(viewerState.shouldCaptureZoomedPhotoPan(2.5), true);
 assert.equal(viewerState.clampZoomedPhotoOffset(500, 390, 2), 195);
@@ -176,16 +184,22 @@ console.log(
 
 assert(viewer.includes('horizontal'));
 assert(viewer.includes('pagingEnabled'));
+assert(viewer.includes('onLayout={handlePagerLayout}'));
+assert(viewer.includes('getPhotoViewerPageLayout(index, pagerViewport.width)'));
+assert(viewer.includes('removeClippedSubviews={false}'));
 assert(viewer.includes('scrollEnabled={!isCurrentPhotoZoomed}'));
 assert(viewer.includes('scheduleOnRN('));
 assert(viewer.includes('setIsCurrentPhotoZoomed(false)'));
-assert(viewer.includes('index === currentIndex ? setIsCurrentPhotoZoomed'));
+assert.match(viewer, /index === currentIndex\s*\?\s*setIsCurrentPhotoZoomed/);
 assert(viewer.includes('? Gesture.Simultaneous(pinch, zoomedPan, doubleTap)'));
 assert(viewer.includes(': Gesture.Simultaneous(pinch, doubleTap)'));
 assert(viewer.includes('getCurrentPostPhoto(media, mediaUrls, currentIndex)'));
 assert(viewer.includes("t('posts.photos.previous')"));
 assert(viewer.includes("t('posts.photos.next')"));
 assert(viewer.includes('{media.length > 1 ? ('));
+assert(!viewer.includes('useWindowDimensions'));
+assert(!viewer.includes('scrollToIndex'));
+assert(!viewer.includes('key={`${item.id}-${width}-${height}'));
 console.log(
   'PASS: Viewer hides single-photo navigation while preserving multi-photo buttons, swipe, page indicator, zoom pan, and Save to Photos through currentIndex.',
 );

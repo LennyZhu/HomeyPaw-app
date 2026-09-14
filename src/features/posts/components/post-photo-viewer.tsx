@@ -10,8 +10,8 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  useWindowDimensions,
   View,
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
@@ -39,6 +39,8 @@ import {
   clampPhotoViewerIndex,
   clampZoomedPhotoOffset,
   getPhotoViewerIndexFromOffset,
+  getPhotoViewerPageLayout,
+  getPhotoViewerPageOffset,
   shouldCaptureZoomedPhotoPan,
 } from '../photo-viewer-state';
 import {
@@ -69,12 +71,14 @@ export function PostPhotoViewer({
   visible,
 }: PostPhotoViewerProps) {
   const { t } = useTranslation();
-  const { height, width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<PostMedia>>(null);
   const [currentIndex, setCurrentIndex] = useState(() =>
     clampPhotoViewerIndex(initialIndex, media.length),
   );
+  const currentIndexRef = useRef(currentIndex);
+  const pageWidthRef = useRef(0);
+  const [pagerViewport, setPagerViewport] = useState({ height: 0, width: 0 });
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
   const [isCurrentPhotoZoomed, setIsCurrentPhotoZoomed] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{
@@ -90,10 +94,17 @@ export function PostPhotoViewer({
   useEffect(() => {
     if (!visible || media.length === 0) return;
     const nextIndex = clampPhotoViewerIndex(initialIndex, media.length);
+    currentIndexRef.current = nextIndex;
+    const pageWidth = pageWidthRef.current;
     const frame = requestAnimationFrame(() => {
       setCurrentIndex(nextIndex);
       setIsCurrentPhotoZoomed(false);
-      listRef.current?.scrollToIndex({ animated: false, index: nextIndex });
+      if (pageWidth > 0) {
+        listRef.current?.scrollToOffset({
+          animated: false,
+          offset: getPhotoViewerPageOffset(nextIndex, pageWidth, media.length),
+        });
+      }
     });
     return () => cancelAnimationFrame(frame);
   }, [initialIndex, media.length, visible]);
@@ -108,32 +119,64 @@ export function PostPhotoViewer({
   );
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible || pagerViewport.width <= 0 || media.length === 0) return;
+    const nextIndex = clampPhotoViewerIndex(
+      currentIndexRef.current,
+      media.length,
+    );
+    currentIndexRef.current = nextIndex;
     const frame = requestAnimationFrame(() => {
+      setCurrentIndex(nextIndex);
       setIsCurrentPhotoZoomed(false);
-      listRef.current?.scrollToIndex({ animated: false, index: currentIndex });
+      listRef.current?.scrollToOffset({
+        animated: false,
+        offset: getPhotoViewerPageOffset(
+          nextIndex,
+          pagerViewport.width,
+          media.length,
+        ),
+      });
     });
     return () => cancelAnimationFrame(frame);
-  }, [width, height, visible, currentIndex]);
+  }, [media.length, pagerViewport.width, visible]);
 
   if (!visible) return null;
 
   const goToIndex = (index: number) => {
     const nextIndex = clampPhotoViewerIndex(index, media.length);
+    currentIndexRef.current = nextIndex;
     setCurrentIndex(nextIndex);
     setIsCurrentPhotoZoomed(false);
     setSaveFeedback(null);
-    listRef.current?.scrollToIndex({ animated: true, index: nextIndex });
+    listRef.current?.scrollToOffset({
+      animated: true,
+      offset: getPhotoViewerPageOffset(
+        nextIndex,
+        pagerViewport.width,
+        media.length,
+      ),
+    });
   };
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const nextIndex = getPhotoViewerIndexFromOffset(
       event.nativeEvent.contentOffset.x,
-      width,
+      pagerViewport.width,
       media.length,
     );
+    currentIndexRef.current = nextIndex;
     setCurrentIndex(nextIndex);
     setIsCurrentPhotoZoomed(false);
     setSaveFeedback(null);
+  };
+  const handlePagerLayout = (event: LayoutChangeEvent) => {
+    const { height, width } = event.nativeEvent.layout;
+    if (width <= 0 || height <= 0) return;
+    pageWidthRef.current = width;
+    setPagerViewport((current) =>
+      current.width === width && current.height === height
+        ? current
+        : { height, width },
+    );
   };
   const currentPhoto = getCurrentPostPhoto(media, mediaUrls, currentIndex);
   const showSaveFeedback = (message: string, tone: 'error' | 'success') => {
@@ -236,45 +279,49 @@ export function PostPhotoViewer({
             </Pressable>
           ) : null}
 
-          <FlatList
-            data={media}
-            decelerationRate="fast"
-            extraData={{ currentIndex, mediaUrls }}
-            getItemLayout={(_, index) => ({
-              index,
-              length: width,
-              offset: width * index,
-            })}
-            horizontal
-            initialScrollIndex={clampPhotoViewerIndex(
-              initialIndex,
-              media.length,
-            )}
-            keyExtractor={(item) => item.id}
-            onMomentumScrollEnd={handleScrollEnd}
-            pagingEnabled
-            ref={listRef}
-            renderItem={({ item, index }) => (
-              <ZoomablePostPhoto
-                key={`${item.id}-${width}-${height}-${mediaUrls[item.storage_path] ?? 'pending'}`}
-                hasLoadError={hasLoadError}
-                index={index}
-                isLoading={isLoading}
-                item={item}
-                onImageError={onImageError}
-                onZoomChange={
-                  index === currentIndex ? setIsCurrentPhotoZoomed : undefined
+          <View onLayout={handlePagerLayout} style={styles.pages}>
+            {pagerViewport.width > 0 && pagerViewport.height > 0 ? (
+              <FlatList
+                data={media}
+                decelerationRate="fast"
+                extraData={{ currentIndex, mediaUrls }}
+                getItemLayout={(_, index) =>
+                  getPhotoViewerPageLayout(index, pagerViewport.width)
                 }
-                total={media.length}
-                uri={mediaUrls[item.storage_path]}
-                viewportHeight={height}
-                width={width}
+                horizontal
+                initialScrollIndex={clampPhotoViewerIndex(
+                  initialIndex,
+                  media.length,
+                )}
+                keyExtractor={(item) => item.id}
+                onMomentumScrollEnd={handleScrollEnd}
+                pagingEnabled
+                ref={listRef}
+                removeClippedSubviews={false}
+                renderItem={({ item, index }) => (
+                  <ZoomablePostPhoto
+                    hasLoadError={hasLoadError}
+                    index={index}
+                    isLoading={isLoading}
+                    item={item}
+                    onImageError={onImageError}
+                    onZoomChange={
+                      index === currentIndex
+                        ? setIsCurrentPhotoZoomed
+                        : undefined
+                    }
+                    total={media.length}
+                    uri={mediaUrls[item.storage_path]}
+                    viewportHeight={pagerViewport.height}
+                    width={pagerViewport.width}
+                  />
+                )}
+                showsHorizontalScrollIndicator={false}
+                scrollEnabled={!isCurrentPhotoZoomed}
+                style={styles.pages}
               />
-            )}
-            showsHorizontalScrollIndicator={false}
-            scrollEnabled={!isCurrentPhotoZoomed}
-            style={styles.pages}
-          />
+            ) : null}
+          </View>
 
           {media.length > 1 ? (
             <View
@@ -438,7 +485,7 @@ function ZoomablePostPhoto({
   }));
 
   return (
-    <View style={[styles.page, { width }]}>
+    <View style={[styles.page, { height: viewportHeight, width }]}>
       {canShowImage ? (
         <GestureDetector gesture={zoomGesture}>
           <Animated.View style={[styles.zoomSurface, animatedStyle]}>
@@ -537,7 +584,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   pages: { flex: 1 },
-  page: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  page: { alignItems: 'center', justifyContent: 'center' },
   zoomSurface: { width: '100%', height: '78%' },
   image: { width: '100%', height: '100%' },
   imageLoader: { position: 'absolute' },
