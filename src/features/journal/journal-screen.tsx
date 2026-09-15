@@ -24,10 +24,12 @@ import { parseDateOnly } from '@/features/pets/pet-dates';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { PostMediaPreview } from '@/features/posts/components/post-media-preview';
 import { PostPhotoViewer } from '@/features/posts/components/post-photo-viewer';
+import { PostVideoThumbnail } from '@/features/posts/components/post-video-thumbnail';
 import { getRelativeDateKind } from '@/features/posts/post-date-label';
 import {
   type PostWithMedia,
   usePostMediaUrls,
+  usePostVideoThumbnailUrls,
   usePosts,
 } from '@/features/posts/post-queries';
 import { lightColors, layout, radius, spacing } from '@/theme';
@@ -90,12 +92,24 @@ export default function JournalScreen() {
     [posts],
   );
   const mediaUrlsQuery = usePostMediaUrls(previewPaths);
+  const videoThumbnailPaths = useMemo(
+    () =>
+      posts.flatMap((post) =>
+        post.post_videos ? [post.post_videos.thumbnail_path] : [],
+      ),
+    [posts],
+  );
+  const videoThumbnailUrlsQuery = usePostVideoThumbnailUrls(
+    videoThumbnailPaths,
+    petId,
+  );
   const lastMediaRecoveryAt = useRef(0);
   const recoverMediaUrls = useCallback(() => {
     if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
     lastMediaRecoveryAt.current = Date.now();
     void mediaUrlsQuery.refetch();
-  }, [mediaUrlsQuery]);
+    void videoThumbnailUrlsQuery.refetch();
+  }, [mediaUrlsQuery, videoThumbnailUrlsQuery]);
   const authorNames = useMemo(
     () =>
       Object.fromEntries(
@@ -109,9 +123,14 @@ export default function JournalScreen() {
   const refreshJournal = useCallback(
     () =>
       runManualRefresh(setIsManualRefreshing, () =>
-        Promise.all([postsQuery.refetch(), authorsQuery.refetch()]),
+        Promise.all([
+          postsQuery.refetch(),
+          authorsQuery.refetch(),
+          mediaUrlsQuery.refetch(),
+          videoThumbnailUrlsQuery.refetch(),
+        ]),
       ),
-    [authorsQuery, postsQuery],
+    [authorsQuery, mediaUrlsQuery, postsQuery, videoThumbnailUrlsQuery],
   );
   const dateRangeLabel = dateRange
     ? formatCompactJournalDateRange(dateRange, i18n.language)
@@ -302,9 +321,13 @@ export default function JournalScreen() {
             <TimelinePost
               authorName={authorNames[item.post.author_id]}
               mediaUrls={mediaUrlsQuery.data ?? {}}
+              videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
               onMediaError={recoverMediaUrls}
               onOpenPhoto={(initialIndex) =>
                 setPhotoViewer({ initialIndex, media: item.post.post_media })
+              }
+              onOpenVideo={() =>
+                router.push(`/posts/${item.post.id}/video` as Href)
               }
               onPress={() => router.push(`/posts/${item.post.id}` as Href)}
               post={item.post}
@@ -414,15 +437,19 @@ function getDayLabel(
 function TimelinePost({
   authorName,
   mediaUrls,
+  videoThumbnailUrls,
   onMediaError,
   onOpenPhoto,
+  onOpenVideo,
   onPress,
   post,
 }: {
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
+  videoThumbnailUrls: Record<string, string>;
   onMediaError: () => void;
   onOpenPhoto: (index: number) => void;
+  onOpenVideo: () => void;
   onPress: () => void;
   post: PostWithMedia;
 }) {
@@ -459,6 +486,16 @@ function TimelinePost({
         onImageError={onMediaError}
         onPhotoPress={onOpenPhoto}
       />
+      {post.post_videos ? (
+        <PostVideoThumbnail
+          onImageError={onMediaError}
+          onPress={onOpenVideo}
+          thumbnailUrl={
+            videoThumbnailUrls[post.post_videos.thumbnail_path] ?? null
+          }
+          video={post.post_videos}
+        />
+      ) : null}
       {post.content ? (
         <View style={styles.contentCopy}>
           <AppText numberOfLines={3}>{post.content}</AppText>

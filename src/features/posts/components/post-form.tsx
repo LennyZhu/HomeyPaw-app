@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
+import { appCapabilities } from '@/config/capabilities';
 import { PetDateField } from '@/features/pets/components/pet-date-field';
 import { lightColors, radius, spacing, typography } from '@/theme';
 
@@ -48,29 +49,62 @@ import {
   type PostComposerAction,
 } from './post-composer-action-modal';
 import { PostPhotoEditor } from './post-photo-editor';
+import {
+  cancelJournalVideoCompression,
+  compressJournalVideo,
+  generateJournalVideoThumbnail,
+  getJournalVideoFailureStage,
+  logJournalVideoComposerError,
+  pickJournalVideo,
+  removeJournalVideoLocalFiles,
+  removeJournalVideoTempFiles,
+  type JournalVideoPipelineStage,
+} from '../video/post-video-pipeline';
+import {
+  type PostVideoDraft,
+  videoDraftThumbnailUri,
+} from '../video/post-video-storage';
 
 type PostFormProps = {
   initialMedia?: PostMediaDraft[];
+  initialVideo?: PostVideoDraft | null;
   initialValues: PostFormValues;
-  onSubmit: (values: PostFormValues, media: PostMediaDraft[]) => Promise<void>;
+  onCancelPublish?: () => void;
+  onLocalVideoProcessingChange?: (
+    isProcessing: boolean,
+    cancel: (() => void) | null,
+  ) => void;
+  onSubmit: (
+    values: PostFormValues,
+    media: PostMediaDraft[],
+    video: PostVideoDraft | null,
+  ) => Promise<void>;
   submitLabel: string;
   progress?: PublishProgress | null;
   submitError?: string | null;
+  submitDisabled?: boolean;
 };
 
 const emptyInitialMedia: PostMediaDraft[] = [];
 
 export function PostForm({
   initialMedia = emptyInitialMedia,
+  initialVideo = null,
   initialValues,
+  onCancelPublish,
+  onLocalVideoProcessingChange,
   onSubmit,
   progress,
   submitError,
+  submitDisabled = false,
   submitLabel,
 }: PostFormProps) {
   const { t } = useTranslation();
   const schema = useMemo(() => createPostFormSchema(t), [t]);
   const [media, setMedia] = useState(initialMedia);
+  const [video, setVideo] = useState<PostVideoDraft | null>(initialVideo);
+  const [videoProgress, setVideoProgress] = useState<number | null>(null);
+  const [isProcessingVideo, setIsProcessingVideo] = useState(false);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [permissionNotice, setPermissionNotice] = useState<string | null>(null);
   const [showPhotoSettings, setShowPhotoSettings] = useState(false);
@@ -79,6 +113,9 @@ export function PostForm({
   const [photoSourceMenuVisible, setPhotoSourceMenuVisible] = useState(false);
   const [photoActionsId, setPhotoActionsId] = useState<string | null>(null);
   const mediaRef = useRef(media);
+  const videoRef = useRef(video);
+  const compressionCancellationId = useRef<string | null>(null);
+  const compressionCancelRequested = useRef(false);
   const cleanupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const photoPickerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -105,6 +142,10 @@ export function PostForm({
   }, [media]);
 
   useEffect(() => {
+    videoRef.current = video;
+  }, [video]);
+
+  useEffect(() => {
     if (cleanupTimerRef.current) {
       clearTimeout(cleanupTimerRef.current);
       cleanupTimerRef.current = null;
@@ -122,6 +163,9 @@ export function PostForm({
           if (item.kind === 'new') {
             removePostPhotoEditTemp(item.editTempUri);
           }
+        }
+        if (videoRef.current?.kind === 'new') {
+          removeJournalVideoTempFiles(videoRef.current);
         }
       }, 0);
     };
@@ -166,7 +210,96 @@ export function PostForm({
   };
 
   const showPhotoSourceMenu = () => {
+    if (video) {
+      setMediaError(t('posts.video.removeBeforePhotos'));
+      return;
+    }
     setPhotoSourceMenuVisible(true);
+  };
+
+  const selectVideo = async () => {
+    if (media.length > 0) {
+      setMediaError(t('posts.video.removePhotosFirst'));
+      return;
+    }
+    setMediaError(null);
+    setPermissionNotice(null);
+    compressionCancelRequested.current = false;
+    let processedUri: string | null = null;
+    let stage: JournalVideoPipelineStage = 'picker';
+    try {
+      const picked = await pickJournalVideo();
+      if (!picked) return;
+      setIsProcessingVideo(true);
+      setVideoProgress(0);
+      stage = 'compress';
+      const processed = await compressJournalVideo(picked.uri, {
+        onCancellationId: (id) => {
+          compressionCancellationId.current = id;
+        },
+        onProgress: setVideoProgress,
+      });
+      processedUri = processed.uri;
+      if (compressionCancelRequested.current) {
+        removeJournalVideoLocalFiles([processed.uri]);
+        return;
+      }
+      stage = 'generate_thumbnail';
+      const thumbnail = await generateJournalVideoThumbnail(processed);
+      stage = 'prepare_upload';
+      const nextVideo: PostVideoDraft = {
+        ...processed,
+        id: Crypto.randomUUID(),
+        kind: 'new',
+        thumbnail,
+      };
+      setVideo((current) => {
+        if (current?.kind === 'new') removeJournalVideoTempFiles(current);
+        return nextVideo;
+      });
+      processedUri = null;
+    } catch (error) {
+      if (processedUri) removeJournalVideoLocalFiles([processedUri]);
+      if (compressionCancelRequested.current) return;
+      stage = getJournalVideoFailureStage(error) ?? stage;
+      logJournalVideoComposerError(error, stage);
+      const code = error instanceof Error ? error.message : '';
+      setMediaError(
+        code === 'VIDEO_DURATION_LIMIT_EXCEEDED' ||
+          code === 'VIDEO_OUTPUT_DURATION_LIMIT_EXCEEDED'
+          ? t('posts.video.tooLong')
+          : code === 'VIDEO_LIBRARY_PERMISSION_REQUIRED'
+            ? t('posts.video.permissionDenied')
+            : code === 'VIDEO_OUTPUT_SIZE_LIMIT_EXCEEDED'
+              ? t('posts.video.tooLarge')
+              : t('posts.video.processingError'),
+      );
+      setShowPhotoSettings(code === 'VIDEO_LIBRARY_PERMISSION_REQUIRED');
+    } finally {
+      compressionCancellationId.current = null;
+      setIsProcessingVideo(false);
+      setVideoProgress(null);
+    }
+  };
+
+  const cancelVideoProcessing = () => {
+    compressionCancelRequested.current = true;
+    if (compressionCancellationId.current) {
+      cancelJournalVideoCompression(compressionCancellationId.current);
+    }
+  };
+
+  useEffect(() => {
+    onLocalVideoProcessingChange?.(
+      isProcessingVideo,
+      isProcessingVideo ? cancelVideoProcessing : null,
+    );
+  }, [isProcessingVideo, onLocalVideoProcessingChange]);
+
+  const removeVideo = () => {
+    if (video?.kind === 'new') removeJournalVideoTempFiles(video);
+    setVideo(null);
+    setMediaError(null);
   };
 
   const selectPhotoSource = (source: PostPhotoSource) => {
@@ -234,15 +367,15 @@ export function PostForm({
   };
 
   const submit = handleSubmit(async (values) => {
-    if (!values.content.trim() && media.length === 0) {
+    if (!values.content.trim() && media.length === 0 && !video) {
       setMediaError(t('posts.validation.contentOrPhoto'));
       return;
     }
 
     setMediaError(null);
-    await onSubmit(values, media);
+    await onSubmit(values, media, video);
   });
-  const isBusy = isSubmitting || isPicking;
+  const isBusy = isSubmitting || isPicking || isProcessingVideo;
   const addPhotoPresentation = getPostPhotoAddPresentation(
     media.length,
     maximumPostMedia,
@@ -302,107 +435,228 @@ export function PostForm({
     <View style={styles.form}>
       {submitError ? <AppText tone="error">{submitError}</AppText> : null}
 
-      <View style={styles.field}>
-        <View style={styles.photoHeader}>
-          <AppText style={styles.photoHeaderLabel} variant="subheadline">
-            {t('posts.fields.photos')}
-          </AppText>
-          <AppText
-            accessibilityLabel={t('posts.photos.countAccessibility', {
-              count: media.length,
-              maximum: maximumPostMedia,
-            })}
-            style={styles.photoCount}
-            tone="tertiary"
-            variant="footnote"
-          >
-            {t('posts.photos.count', {
-              count: media.length,
-              maximum: maximumPostMedia,
-            })}
-          </AppText>
-        </View>
+      <View style={styles.mediaSection}>
+        {media.length === 0 && !video ? (
+          <>
+            <View style={styles.emptyMediaIntro}>
+              <AppText variant="subheadline">
+                {t('posts.media.optionalLabel')}
+              </AppText>
+              <AppText tone="secondary" variant="footnote">
+                {t('posts.media.helper')}
+              </AppText>
+            </View>
+            <View style={styles.mediaAddActions}>
+              <MediaAddAction
+                accessibilityLabel={t('posts.media.addPhotosAccessibility')}
+                busy={isPicking}
+                disabled={isBusy}
+                icon="add"
+                label={t('posts.media.addPhotos')}
+                onPress={showPhotoSourceMenu}
+              />
+              {appCapabilities.journalVideoCreationEnabled ? (
+                <MediaAddAction
+                  accessibilityLabel={t('posts.media.addVideoAccessibility')}
+                  busy={isProcessingVideo}
+                  disabled={isBusy}
+                  icon="play"
+                  label={t('posts.media.addVideo')}
+                  onPress={() => void selectVideo()}
+                />
+              ) : null}
+            </View>
+          </>
+        ) : null}
 
         {media.length > 0 ? (
-          <View style={styles.photoGrid}>
-            {media.map((item, index) => (
-              <View key={item.id} style={styles.photoTile}>
+          <>
+            <View style={styles.mediaHeader}>
+              <AppText variant="subheadline">{t('posts.fields.media')}</AppText>
+              <AppText
+                accessibilityLabel={t('posts.photos.countAccessibility', {
+                  count: media.length,
+                  maximum: maximumPostMedia,
+                })}
+                tone="secondary"
+                variant="footnote"
+              >
+                {t('posts.photos.count', {
+                  count: media.length,
+                  maximum: maximumPostMedia,
+                })}
+              </AppText>
+            </View>
+            <View style={styles.photoGrid}>
+              {media.map((item, index) => (
+                <View key={item.id} style={styles.photoTile}>
+                  <Pressable
+                    accessibilityLabel={t('posts.photoEditor.editPosition', {
+                      position: index + 1,
+                    })}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: isBusy }}
+                    disabled={isBusy}
+                    onPress={() => openPhotoEditor(item)}
+                    style={({ pressed }) => [
+                      styles.photoPressable,
+                      pressed && styles.photoPressed,
+                    ]}
+                  >
+                    <Image
+                      accessible={false}
+                      cachePolicy={item.kind === 'new' ? 'none' : 'disk'}
+                      contentFit="cover"
+                      recyclingKey={item.id}
+                      source={item.uri}
+                      style={styles.photo}
+                    />
+                  </Pressable>
+                  <View style={styles.photoPosition}>
+                    <AppText tone="onPrimary" variant="caption">
+                      {index + 1}
+                    </AppText>
+                  </View>
+                  <PhotoOverlayAction
+                    disabled={isBusy}
+                    icon="ellipsis-horizontal"
+                    label={t('posts.photos.actions', {
+                      position: index + 1,
+                    })}
+                    onPress={() => setPhotoActionsId(item.id)}
+                  />
+                </View>
+              ))}
+              {addPhotoPresentation === 'tile' ? (
                 <Pressable
-                  accessibilityLabel={t('posts.photoEditor.editPosition', {
-                    position: index + 1,
-                  })}
+                  accessibilityLabel={t('posts.media.addPhotosAccessibility')}
+                  accessibilityRole="button"
+                  accessibilityState={{ busy: isPicking, disabled: isBusy }}
+                  disabled={isBusy}
+                  onPress={showPhotoSourceMenu}
+                  style={({ pressed }) => [
+                    styles.addPhotoTile,
+                    pressed && styles.pressed,
+                    isBusy && styles.disabled,
+                  ]}
+                >
+                  {isPicking ? (
+                    <ActivityIndicator color={lightColors.primary} />
+                  ) : (
+                    <Ionicons
+                      color={lightColors.primary}
+                      name="add"
+                      size={28}
+                    />
+                  )}
+                  <AppText
+                    numberOfLines={2}
+                    style={styles.addPhotoLabel}
+                    tone="brand"
+                    variant="subheadline"
+                  >
+                    {t('posts.media.addPhotos')}
+                  </AppText>
+                </Pressable>
+              ) : null}
+            </View>
+            <View style={styles.photoMediaFooter}>
+              {appCapabilities.journalVideoCreationEnabled ? (
+                <Pressable
+                  accessibilityLabel={t('posts.media.switchToVideo')}
                   accessibilityRole="button"
                   accessibilityState={{ disabled: isBusy }}
                   disabled={isBusy}
-                  onPress={() => openPhotoEditor(item)}
+                  onPress={() => void selectVideo()}
                   style={({ pressed }) => [
-                    styles.photoPressable,
-                    pressed && styles.photoPressed,
+                    styles.mediaSwitchAction,
+                    pressed && styles.pressed,
+                    isBusy && styles.disabled,
                   ]}
                 >
-                  <Image
-                    accessible={false}
-                    cachePolicy={item.kind === 'new' ? 'none' : 'disk'}
-                    contentFit="cover"
-                    recyclingKey={item.id}
-                    source={item.uri}
-                    style={styles.photo}
-                  />
-                </Pressable>
-                <View style={styles.photoPosition}>
-                  <AppText tone="onPrimary" variant="caption">
-                    {index + 1}
+                  <AppText tone="secondary" variant="footnote">
+                    {t('posts.media.switchToVideo')}
                   </AppText>
-                </View>
-                <PhotoOverlayAction
-                  disabled={isBusy}
-                  icon="ellipsis-horizontal"
-                  label={t('posts.photos.actions', {
-                    position: index + 1,
-                  })}
-                  onPress={() => setPhotoActionsId(item.id)}
-                />
+                </Pressable>
+              ) : null}
+            </View>
+          </>
+        ) : null}
+
+        {video ? (
+          <>
+            <AppText variant="subheadline">{t('posts.fields.media')}</AppText>
+            <View style={styles.videoCard}>
+              <Image
+                accessible={false}
+                cachePolicy={video.kind === 'new' ? 'none' : 'memory-disk'}
+                contentFit="cover"
+                source={videoDraftThumbnailUri(video)}
+                style={styles.videoThumbnail}
+              />
+              <View style={styles.videoOverlay} pointerEvents="none">
+                <Ionicons color={lightColors.onPrimary} name="play" size={26} />
               </View>
-            ))}
-            {addPhotoPresentation === 'tile' ? (
+              <View style={styles.videoDuration} pointerEvents="none">
+                <AppText tone="onPrimary" variant="caption">
+                  {formatVideoDuration(video.durationMs)}
+                </AppText>
+              </View>
+            </View>
+            <View style={styles.videoPreviewActions}>
+              {appCapabilities.journalVideoCreationEnabled ? (
+                <Pressable
+                  accessibilityLabel={t('posts.video.replace')}
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: isBusy }}
+                  disabled={isBusy}
+                  onPress={() => void selectVideo()}
+                  style={({ pressed }) => [
+                    styles.previewAction,
+                    pressed && styles.pressed,
+                    isBusy && styles.disabled,
+                  ]}
+                >
+                  <AppText tone="brand" variant="subheadline">
+                    {t('posts.video.replace')}
+                  </AppText>
+                </Pressable>
+              ) : null}
               <Pressable
-                accessibilityLabel={t('posts.photos.add')}
+                accessibilityLabel={t('posts.video.remove')}
                 accessibilityRole="button"
-                accessibilityState={{ busy: isPicking, disabled: isBusy }}
+                accessibilityState={{ disabled: isBusy }}
                 disabled={isBusy}
-                onPress={showPhotoSourceMenu}
+                onPress={removeVideo}
                 style={({ pressed }) => [
-                  styles.addPhotoTile,
+                  styles.previewAction,
                   pressed && styles.pressed,
                   isBusy && styles.disabled,
                 ]}
               >
-                {isPicking ? (
-                  <ActivityIndicator color={lightColors.primary} />
-                ) : (
-                  <Ionicons color={lightColors.primary} name="add" size={28} />
-                )}
-                <AppText
-                  numberOfLines={2}
-                  style={styles.addPhotoLabel}
-                  tone="brand"
-                  variant="subheadline"
-                >
-                  {t('posts.photos.add')}
+                <AppText tone="error" variant="subheadline">
+                  {t('posts.video.remove')}
                 </AppText>
               </Pressable>
-            ) : null}
-          </View>
+            </View>
+          </>
         ) : null}
 
-        {addPhotoPresentation === 'button' ? (
-          <AppButton
-            disabled={isSubmitting}
-            label={t('posts.photos.add')}
-            loading={isPicking}
-            onPress={showPhotoSourceMenu}
-            variant="secondary"
-          />
+        {isProcessingVideo ? (
+          <View style={styles.processingRow}>
+            <AppText accessibilityLiveRegion="polite" tone="secondary">
+              {t('posts.video.processing', {
+                progress: Math.round((videoProgress ?? 0) * 100),
+              })}
+            </AppText>
+            <Pressable
+              accessibilityLabel={t('common.cancel')}
+              accessibilityRole="button"
+              onPress={cancelVideoProcessing}
+            >
+              <AppText tone="brand">{t('common.cancel')}</AppText>
+            </Pressable>
+          </View>
         ) : null}
         {permissionNotice ? (
           <AppText tone="warning" variant="footnote">
@@ -507,14 +761,27 @@ export function PostForm({
         <AppText accessibilityLiveRegion="polite" tone="secondary">
           {progress.stage === 'saving'
             ? t('posts.progress.saving')
-            : t(`posts.progress.${progress.stage}`, {
-                completed: progress.completed,
-                total: progress.total,
-              })}
+            : progress.stage === 'video-uploading'
+              ? t('posts.video.uploading', {
+                  progress: Math.round(progress.progress * 100),
+                })
+              : t(`posts.progress.${progress.stage}`, {
+                  completed: progress.completed,
+                  total: progress.total,
+                })}
         </AppText>
       ) : null}
 
+      {progress?.stage === 'video-uploading' && onCancelPublish ? (
+        <AppButton
+          label={t('common.cancel')}
+          onPress={onCancelPublish}
+          variant="ghost"
+        />
+      ) : null}
+
       <AppButton
+        disabled={submitDisabled}
         label={submitLabel}
         loading={isSubmitting}
         onPress={() => void submit()}
@@ -546,6 +813,55 @@ export function PostForm({
         />
       ) : null}
     </View>
+  );
+}
+
+function formatVideoDuration(durationMs: number) {
+  const seconds = Math.max(0, Math.round(durationMs / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function MediaAddAction({
+  accessibilityLabel,
+  busy,
+  disabled,
+  icon,
+  label,
+  onPress,
+}: {
+  accessibilityLabel: string;
+  busy: boolean;
+  disabled: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={{ busy, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.mediaAddAction,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
+      ]}
+    >
+      {busy ? (
+        <ActivityIndicator color={lightColors.primary} />
+      ) : (
+        <Ionicons color={lightColors.primary} name={icon} size={20} />
+      )}
+      <AppText
+        style={styles.mediaAddActionLabel}
+        tone="brand"
+        variant="subheadline"
+      >
+        {label}
+      </AppText>
+    </Pressable>
   );
 }
 
@@ -611,13 +927,40 @@ const styles = StyleSheet.create({
   field: {
     gap: spacing.sm,
   },
-  photoHeader: {
+  mediaSection: {
+    gap: spacing.md,
+  },
+  emptyMediaIntro: {
+    gap: spacing.xs,
+  },
+  mediaAddActions: {
+    alignItems: 'stretch',
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  mediaAddAction: {
+    minHeight: 50,
+    minWidth: 0,
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: lightColors.surface,
+    borderColor: lightColors.border,
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  mediaAddActionLabel: { flexShrink: 1, textAlign: 'center' },
+  mediaHeader: {
+    minHeight: 44,
     alignItems: 'center',
     flexDirection: 'row',
+    gap: spacing.md,
     justifyContent: 'space-between',
   },
-  photoHeaderLabel: { flex: 1 },
-  photoCount: { flexShrink: 0, textAlign: 'right' },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -681,6 +1024,19 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   addPhotoLabel: { maxWidth: '100%', textAlign: 'center' },
+  photoMediaFooter: {
+    minHeight: 44,
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    justifyContent: 'flex-end',
+  },
+  mediaSwitchAction: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
   disabled: {
     opacity: 0.3,
   },
@@ -718,5 +1074,50 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.62,
+  },
+  processingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  videoCard: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: lightColors.surfaceSecondary,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+  },
+  videoThumbnail: { height: '100%', width: '100%' },
+  videoOverlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    alignSelf: 'center',
+    backgroundColor: lightColors.overlay,
+    borderRadius: radius.full,
+    height: 54,
+    justifyContent: 'center',
+    top: '36%',
+    width: 54,
+  },
+  videoDuration: {
+    position: 'absolute',
+    backgroundColor: lightColors.overlay,
+    borderRadius: radius.sm,
+    bottom: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    right: spacing.sm,
+  },
+  videoPreviewActions: {
+    minHeight: 44,
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  previewAction: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
   },
 });

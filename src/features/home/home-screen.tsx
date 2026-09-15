@@ -31,6 +31,7 @@ import { invalidateCareSchedule } from '@/features/schedule/care-schedule-querie
 import {
   type PostWithMedia,
   usePostMediaUrls,
+  usePostVideoThumbnailUrls,
   usePosts,
 } from '@/features/posts/post-queries';
 import { lightColors, radius, spacing } from '@/theme';
@@ -82,12 +83,24 @@ export default function HomeScreen() {
     [recentPosts],
   );
   const mediaUrlsQuery = usePostMediaUrls(previewPaths);
+  const videoThumbnailPaths = useMemo(
+    () =>
+      recentPosts.flatMap((post) =>
+        post.post_videos ? [post.post_videos.thumbnail_path] : [],
+      ),
+    [recentPosts],
+  );
+  const videoThumbnailUrlsQuery = usePostVideoThumbnailUrls(
+    videoThumbnailPaths,
+    petId,
+  );
   const lastMediaRecoveryAt = useRef(0);
   const recoverMediaUrls = useCallback(() => {
     if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
     lastMediaRecoveryAt.current = Date.now();
     void mediaUrlsQuery.refetch();
-  }, [mediaUrlsQuery]);
+    void videoThumbnailUrlsQuery.refetch();
+  }, [mediaUrlsQuery, videoThumbnailUrlsQuery]);
   const authorNames = useMemo(
     () =>
       Object.fromEntries(
@@ -351,6 +364,7 @@ export default function HomeScreen() {
                     authorName={authorNames[post.author_id]}
                     key={post.id}
                     mediaUrls={mediaUrlsQuery.data ?? {}}
+                    videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
                     onMediaError={recoverMediaUrls}
                     onPress={() => router.push(`/posts/${post.id}` as Href)}
                     post={post}
@@ -454,18 +468,21 @@ function HomeSection({
 function RecentActivity({
   authorName,
   mediaUrls,
+  videoThumbnailUrls,
   onMediaError,
   onPress,
   post,
 }: {
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
+  videoThumbnailUrls: Record<string, string>;
   onMediaError: () => void;
   onPress: () => void;
   post: PostWithMedia;
 }) {
   const { i18n, t } = useTranslation();
   const firstMedia = post.post_media[0];
+  const video = post.post_videos;
   return (
     <Pressable
       accessibilityRole="button"
@@ -483,6 +500,22 @@ function RecentActivity({
           style={styles.activityImage}
           transition={140}
         />
+      ) : video ? (
+        <View style={styles.activityVideo}>
+          <Image
+            accessibilityLabel={t('posts.video.preview')}
+            cachePolicy="memory-disk"
+            contentFit="cover"
+            onError={onMediaError}
+            recyclingKey={video.id}
+            source={videoThumbnailUrls[video.thumbnail_path] ?? null}
+            style={styles.activityImage}
+            transition={140}
+          />
+          <View style={styles.activityPlay} pointerEvents="none">
+            <Ionicons color={lightColors.onPrimary} name="play" size={18} />
+          </View>
+        </View>
       ) : (
         <View style={styles.activityIcon}>
           <Ionicons
@@ -659,6 +692,21 @@ const styles = StyleSheet.create({
     height: 54,
     backgroundColor: lightColors.surfaceSecondary,
     borderRadius: radius.md,
+  },
+  activityVideo: {
+    width: 54,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityPlay: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    backgroundColor: lightColors.overlay,
+    borderRadius: radius.full,
+    justifyContent: 'center',
   },
   activityIcon: {
     width: 54,

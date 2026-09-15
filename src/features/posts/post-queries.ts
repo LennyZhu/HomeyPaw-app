@@ -15,7 +15,7 @@ import {
 } from '@/features/journal/journal-browsing';
 import { toDateOnly } from '@/features/pets/pet-dates';
 import { requireSupabase } from '@/lib/supabase/client';
-import type { Post, PostMedia } from '@/types/database';
+import type { Post, PostMedia, PostVideo } from '@/types/database';
 
 import { createPostMediaSignedUrls } from './post-media';
 import {
@@ -25,8 +25,16 @@ import {
 } from './post-publishing';
 import type { PostFormValues } from './post-schema';
 import type { PostMediaDraft } from './post-media';
+import {
+  createPostVideoSignedUrl,
+  createPostVideoThumbnailSignedUrls,
+  type PostVideoDraft,
+} from './video/post-video-storage';
 
-export type PostWithMedia = Post & { post_media: PostMedia[] };
+export type PostWithMedia = Post & {
+  post_media: PostMedia[];
+  post_videos: PostVideo | null;
+};
 export type PetMemory = {
   kind: 'on_this_day' | 'recent';
   postId: string;
@@ -66,7 +74,29 @@ export const postKeys = {
   ) => ['posts', userId, 'memory', petId, localToday] as const,
   mediaUrls: (userId: string | undefined, paths: string[]) =>
     ['posts', userId, 'media-urls', ...paths] as const,
+  videoThumbnailUrls: (
+    userId: string | undefined,
+    petId: string | null,
+    paths: string[],
+  ) => ['posts', userId, 'video-thumbnail-urls', petId, ...paths] as const,
+  videoUrl: (userId: string | undefined, petId: string | null, path: string) =>
+    ['posts', userId, 'video-url', petId, path] as const,
 };
+
+type PostWithRelations = Post & {
+  post_media: PostMedia[] | null;
+  post_videos: PostVideo | PostVideo[] | null;
+};
+
+function normalizePost(post: PostWithRelations): PostWithMedia {
+  return {
+    ...post,
+    post_media: post.post_media ?? [],
+    post_videos: Array.isArray(post.post_videos)
+      ? (post.post_videos[0] ?? null)
+      : post.post_videos,
+  };
+}
 
 async function fetchPetMemory(
   petId: string,
@@ -98,7 +128,7 @@ async function fetchPostPage(
 ): Promise<PostPage> {
   let query = requireSupabase()
     .from('posts')
-    .select('*, post_media(*)')
+    .select('*, post_media(*), post_videos(*)')
     .eq('pet_id', petId)
     .order('event_date', { ascending: false })
     .order('created_at', { ascending: false })
@@ -126,7 +156,9 @@ async function fetchPostPage(
   }
 
   const hasNextPage = data.length > postPageSize;
-  const posts = data.slice(0, postPageSize) as PostWithMedia[];
+  const posts = data
+    .slice(0, postPageSize)
+    .map((post) => normalizePost(post as PostWithRelations));
   const lastPost = posts.at(-1);
 
   return {
@@ -145,7 +177,7 @@ async function fetchPostPage(
 async function fetchPost(postId: string) {
   const { data, error } = await requireSupabase()
     .from('posts')
-    .select('*, post_media(*)')
+    .select('*, post_media(*), post_videos(*)')
     .eq('id', postId)
     .order('position', { ascending: true, referencedTable: 'post_media' })
     .maybeSingle();
@@ -154,7 +186,7 @@ async function fetchPost(postId: string) {
     throw error;
   }
 
-  return data as PostWithMedia | null;
+  return data ? normalizePost(data as PostWithRelations) : null;
 }
 
 async function deletePost(postId: string) {
@@ -221,10 +253,45 @@ export function usePostMediaUrls(storagePaths: string[]) {
   });
 }
 
+export function usePostVideoThumbnailUrls(
+  storagePaths: string[],
+  petId: string | null,
+) {
+  const { user } = useAuth();
+  const stablePaths = [...new Set(storagePaths)].sort();
+
+  return useQuery({
+    enabled: Boolean(user && stablePaths.length > 0),
+    gcTime: 3_600_000,
+    queryFn: () => createPostVideoThumbnailSignedUrls(stablePaths),
+    queryKey: postKeys.videoThumbnailUrls(user?.id, petId, stablePaths),
+    staleTime: 3_000_000,
+  });
+}
+
+export function usePostVideoUrl(
+  storagePath: string | null,
+  petId: string | null,
+  enabled: boolean,
+) {
+  const { user } = useAuth();
+
+  return useQuery({
+    enabled: Boolean(user && enabled && storagePath),
+    gcTime: 600_000,
+    queryFn: () => createPostVideoSignedUrl(storagePath!),
+    queryKey: postKeys.videoUrl(user?.id, petId, storagePath ?? ''),
+    retry: 1,
+    staleTime: 540_000,
+  });
+}
+
 type CreatePostInput = {
   media: PostMediaDraft[];
   petId: string;
+  signal?: AbortSignal;
   values: PostFormValues;
+  video: PostVideoDraft | null;
   onProgress?: (progress: PublishProgress) => void;
 };
 
@@ -257,6 +324,7 @@ export function useCreatePost() {
 
 type UpdatePostInput = CreatePostInput & {
   originalMedia: PostMedia[];
+  originalVideo: PostVideo | null;
   post: Post;
 };
 

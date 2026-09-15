@@ -5,6 +5,7 @@
     "loading": "Loading…",
     "back": "Back",
     "cancel": "Cancel",
+    "keepEditing": "Keep editing",
     "done": "Done",
     "continue": "Continue",
     "close": "Close",
@@ -219,6 +220,7 @@
   "posts": {
     "authorWithDate": "{{author}} · {{date}} · {{time}}",
     "fields": {
+      "media": "Media",
       "photos": "Photos",
       "content": "Note",
       "eventDate": "Entry date",
@@ -244,7 +246,7 @@
       "contentTooLong": "The note cannot exceed 4,000 characters.",
       "locationTooLong": "The place name cannot exceed 160 characters.",
       "dateInvalid": "Choose a valid date no later than today.",
-      "contentOrPhoto": "Add a note or at least one photo."
+      "contentOrPhoto": "Add a note, photo, or video."
     },
     "photos": {
       "add": "Add photo",
@@ -282,6 +284,45 @@
       "savePermissionDenied": "Photo saving permission was not granted.",
       "savePermissionBlocked": "Allow HomeyPaw to add photos in system settings, then try again."
     },
+    "media": {
+      "optionalLabel": "Media (optional)",
+      "helper": "Up to 9 photos or one video up to 15 sec",
+      "addPhotos": "Add photos",
+      "addVideo": "Add video",
+      "addPhotosAccessibility": "Add photos, up to 9 photos",
+      "addVideoAccessibility": "Add video, up to 15 seconds",
+      "switchToVideo": "Switch to video"
+    },
+    "video": {
+      "label": "Video",
+      "choose": "Choose video",
+      "replace": "Replace video",
+      "remove": "Remove video",
+      "removePhotosFirst": "Remove the selected photos before choosing a video.",
+      "removeBeforePhotos": "Remove the selected video before adding photos.",
+      "processing": "Processing video… {{progress}}%",
+      "uploading": "Uploading video… {{progress}}%",
+      "tooLong": "Choose a video that is 15 seconds or shorter.",
+      "tooLarge": "The processed video is larger than 25 MB. Choose another video.",
+      "permissionDenied": "Video access was not granted. You can allow HomeyPaw to access videos in system settings.",
+      "processingError": "We couldn't prepare this video. Please try another video.",
+      "preview": "Journal video thumbnail",
+      "play": "Play journal video",
+      "pause": "Pause journal video",
+      "loading": "Loading video…",
+      "buffering": "Buffering…",
+      "playbackError": "This video couldn't be played. Check your connection and try again.",
+      "save": "Save video",
+      "saveSuccess": "Video saved to Photos.",
+      "saveError": "Unable to save the video. Please try again.",
+      "uploadCancelled": "Video upload was cancelled. Your prepared video is still here.",
+      "publishUncertain": "HomeyPaw could not confirm the publish result. Reconnect and reopen Journal before trying again.",
+      "cancelTitle": "Discard video progress?",
+      "cancelBody": "The current video operation will stop and uploaded temporary files will be cleaned up.",
+      "discard": "Discard",
+      "publishInProgressTitle": "Publishing journal",
+      "publishInProgressBody": "Please wait while HomeyPaw securely finishes this journal entry."
+    },
     "photoEditor": {
       "title": "Edit photo",
       "edit": "Edit Photo",
@@ -318,7 +359,7 @@
     },
     "edit": {
       "title": "Edit journal entry",
-      "subtitle": "Photos you keep will not be uploaded again.",
+      "subtitle": "Media you keep will not be uploaded again.",
       "saved": "Journal entry updated."
     },
     "list": {
@@ -331,11 +372,11 @@
       "body": "Save the first little moment from {{name}}'s life.",
       "action": "New entry",
       "noPetTitle": "No pets yet",
-      "noPetBody": "Create a pet profile, then you can keep a private photo journal for them."
+      "noPetBody": "Create a pet profile, then you can keep a private journal for them."
     },
     "delete": {
       "title": "Delete this journal entry?",
-      "body": "The entry and its photos will be permanently deleted. This cannot be undone.",
+      "body": "The entry and its media will be permanently deleted. This cannot be undone.",
       "action": "Delete Journal"
     },
     "actions": {
@@ -351,12 +392,12 @@
     "errors": {
       "load": "We couldn't load the journal. Try again shortly.",
       "notFound": "This journal entry was not found, or you do not have access.",
-      "mediaLoad": "We couldn't securely load the journal photos. Try again shortly.",
-      "publish": "Publishing failed. Your selected photos are still here, so you can retry.",
-      "publishCleanup": "Publishing failed and cleanup of uploaded photos could not be confirmed. Your selections remain in the form; reconnect and retry.",
+      "mediaLoad": "We couldn't securely load the journal media. Try again shortly.",
+      "publish": "Publishing failed. Your selected media is still here, so you can retry.",
+      "publishCleanup": "Publishing failed and cleanup of uploaded media could not be confirmed. Your selections remain in the form; reconnect and retry.",
       "update": "Saving failed. The original entry was not replaced, so you can retry.",
-      "updateCleanup": "Saving failed and cleanup of newly uploaded photos could not be confirmed. The original entry remains; reconnect and retry.",
-      "removedMediaCleanup": "The entry was saved, but cleanup of removed photos could not be confirmed. Account and pet deletion will still clean private media again.",
+      "updateCleanup": "Saving failed and cleanup of newly uploaded media could not be confirmed. The original entry remains; reconnect and retry.",
+      "removedMediaCleanup": "The entry was saved, but cleanup of removed media could not be confirmed. Account and pet deletion will still clean private media again.",
       "delete": "The journal entry was not deleted. Try again shortly.",
       "authorOnly": "Only the author can edit this journal entry."
     }

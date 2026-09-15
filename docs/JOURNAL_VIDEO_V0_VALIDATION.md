@@ -1,14 +1,13 @@
 # Journal Video V0 manual validation
 
-This spike is isolated from Journal and performs no upload. It must be removed
-or converted into production code after the dependency decision.
+This record preserves the completed V0 native pipeline and privacy validation procedure. The spike route has been removed after its validated code was moved into the formal Journal feature.
 
-## Open the spike
+## Archived spike
 
-1. Build a new iOS Development Build because `expo-video` and
-   `react-native-compressor` add native modules.
-2. Sign in to the Development Build.
-3. Open `pawday://dev/journal-video-spike`.
+The temporary `pawday://dev/journal-video-spike` route was removed when V1B
+moved the verified code into `src/features/posts/video`. The matrix below is the
+record used to qualify the native dependencies and remains useful for future
+dependency upgrades.
 
 ## Run the matrix
 
@@ -33,15 +32,14 @@ For each sample, record the selected and compressed JSON shown on screen. Check:
 - cancellation returns control without leaving the screen stuck
 - saving the compressed video to Photos succeeds
 
-The optional remote URL field is only for a non-Production test asset. No URL is
-provided or contacted by the spike itself.
+The V0 spike did not contact Supabase or any other remote service.
 
 ## Known static finding
 
-`react-native-compressor@2.0.3` outputs MP4/H.264/AAC on iOS, but its native
+`react-native-compressor@2.0.3` outputs MP4/H.264/AAC on iOS. Its native
 implementation retains source frame rates up to 60 fps and exposes no 30 fps
-limit. The manual matrix must confirm whether this is acceptable or whether the
-project needs a fork/native transcoder before implementation.
+limit. The completed V0 device matrix accepted this behavior, so V1 keeps the
+validated pipeline without a fork or a separate native transcoder.
 
 ## Video metadata privacy
 
@@ -69,7 +67,7 @@ Copy the compressed output itself to the Mac, then run the dependency-free
 AVFoundation inspector:
 
 ```sh
-xcrun swift spikes/journal-video-v0/inspect-video-metadata.swift "/path/to/compressed.mp4"
+xcrun swift scripts/inspect-journal-video-metadata.swift "/path/to/compressed.mp4"
 ```
 
 Review every `[PRIVACY]` and `[TIMESTAMP REVIEW]` line. The output must contain

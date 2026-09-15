@@ -115,6 +115,7 @@
     "verify:photo-editor": "node --experimental-strip-types scripts/verify-photo-editor.mjs",
     "verify:ipad-layout": "node --experimental-strip-types scripts/verify-ipad-layout.mjs",
     "verify:journal-video-backend": "node scripts/verify-journal-video-backend.mjs",
+    "verify:journal-video-client": "node scripts/verify-journal-video-client.mjs",
     "process:journal-video-cleanup": "node scripts/process-journal-video-cleanup.mjs",
     "postinstall": "node scripts/apply-package-patches.mjs"
   },

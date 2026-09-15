@@ -144,9 +144,6 @@ function RootNavigator() {
         >
           <Stack.Screen name="chat-preview" />
         </Stack.Protected>
-        <Stack.Protected guard={__DEV__}>
-          <Stack.Screen name="dev/journal-video-spike" />
-        </Stack.Protected>
         <Stack.Protected
           guard={Boolean(
             !session &&

@@ -21,7 +21,13 @@ import { lightColors, radius, spacing } from '@/theme';
 
 import { PostActionsModal } from './components/post-actions-modal';
 import { PostPhotoViewer } from './components/post-photo-viewer';
-import { useDeletePost, usePost, usePostMediaUrls } from './post-queries';
+import { PostVideoThumbnail } from './components/post-video-thumbnail';
+import {
+  useDeletePost,
+  usePost,
+  usePostMediaUrls,
+  usePostVideoThumbnailUrls,
+} from './post-queries';
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,12 +42,19 @@ export default function PostDetailScreen() {
   const paths =
     postQuery.data?.post_media.map((item) => item.storage_path) ?? [];
   const urlsQuery = usePostMediaUrls(paths);
+  const videoThumbnailPath =
+    postQuery.data?.post_videos?.thumbnail_path ?? null;
+  const videoThumbnailUrlsQuery = usePostVideoThumbnailUrls(
+    videoThumbnailPath ? [videoThumbnailPath] : [],
+    postQuery.data?.pet_id ?? null,
+  );
   const lastMediaRecoveryAt = useRef(0);
   const recoverMediaUrls = useCallback(() => {
     if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
     lastMediaRecoveryAt.current = Date.now();
     void urlsQuery.refetch();
-  }, [urlsQuery]);
+    void videoThumbnailUrlsQuery.refetch();
+  }, [urlsQuery, videoThumbnailUrlsQuery]);
   const post = postQuery.data;
   const membersQuery = usePetMembers(post?.pet_id ?? null);
   const authorsQuery = usePetPostAuthors(post?.pet_id ?? null);
@@ -252,6 +265,18 @@ export default function PostDetailScreen() {
             </Pressable>
           ))}
         </View>
+      ) : null}
+
+      {post.post_videos ? (
+        <PostVideoThumbnail
+          onImageError={recoverMediaUrls}
+          onPress={() => router.push(`/posts/${post.id}/video` as Href)}
+          thumbnailUrl={
+            videoThumbnailUrlsQuery.data?.[post.post_videos.thumbnail_path] ??
+            null
+          }
+          video={post.post_videos}
+        />
       ) : null}
 
       {post.content ? (

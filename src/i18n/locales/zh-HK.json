@@ -5,6 +5,7 @@
     "loading": "載入中…",
     "back": "返回",
     "cancel": "取消",
+    "keepEditing": "繼續編輯",
     "done": "完成",
     "continue": "繼續",
     "close": "關閉",
@@ -219,6 +220,7 @@
   "posts": {
     "authorWithDate": "{{author}} · {{date}} · {{time}}",
     "fields": {
+      "media": "媒體",
       "photos": "相片",
       "content": "文字",
       "eventDate": "記錄日期",
@@ -244,7 +246,7 @@
       "contentTooLong": "文字不可超過 4,000 個字元。",
       "locationTooLong": "地點名稱不可超過 160 個字元。",
       "dateInvalid": "請選擇今天或之前的有效日期。",
-      "contentOrPhoto": "請加入文字或至少一張相片。"
+      "contentOrPhoto": "請加入文字、相片或影片。"
     },
     "photos": {
       "add": "新增相片",
@@ -282,6 +284,45 @@
       "savePermissionDenied": "未取得儲存相片權限。",
       "savePermissionBlocked": "請在系統設定中允許 HomeyPaw 加入相片，然後再試。"
     },
+    "media": {
+      "optionalLabel": "媒體（可選）",
+      "helper": "最多 9 張相片，或 1 段 15 秒內影片",
+      "addPhotos": "添加相片",
+      "addVideo": "添加影片",
+      "addPhotosAccessibility": "添加相片，最多可選擇 9 張",
+      "addVideoAccessibility": "添加影片，最長 15 秒",
+      "switchToVideo": "切換為影片"
+    },
+    "video": {
+      "label": "影片",
+      "choose": "選擇影片",
+      "replace": "更換影片",
+      "remove": "移除影片",
+      "removePhotosFirst": "請先移除已選相片，再選擇影片。",
+      "removeBeforePhotos": "請先移除已選影片，再加入相片。",
+      "processing": "正在處理影片… {{progress}}%",
+      "uploading": "正在上傳影片… {{progress}}%",
+      "tooLong": "請選擇 15 秒或以下的影片。",
+      "tooLarge": "處理後的影片超過 25 MB，請選擇另一段影片。",
+      "permissionDenied": "未取得影片權限。你可以在系統設定中允許 HomeyPaw 存取影片。",
+      "processingError": "暫時無法處理這段影片，請選擇另一段影片再試。",
+      "preview": "日記影片縮圖",
+      "play": "播放日記影片",
+      "pause": "暫停日記影片",
+      "loading": "正在載入影片…",
+      "buffering": "正在緩衝…",
+      "playbackError": "暫時無法播放影片，請檢查網絡後再試。",
+      "save": "儲存影片",
+      "saveSuccess": "影片已儲存到相片。",
+      "saveError": "無法儲存影片，請稍後再試。",
+      "uploadCancelled": "影片上傳已取消，處理好的影片仍然保留。",
+      "publishUncertain": "HomeyPaw 暫時無法確認發布結果。請重新連線並開啟日記確認後再試。",
+      "cancelTitle": "放棄影片進度？",
+      "cancelBody": "目前的影片操作將會停止，已上傳的暫存檔案亦會清理。",
+      "discard": "放棄",
+      "publishInProgressTitle": "正在發布日記",
+      "publishInProgressBody": "HomeyPaw 正在安全完成這篇日記，請稍候。"
+    },
     "photoEditor": {
       "title": "編輯相片",
       "edit": "編輯相片",
@@ -318,7 +359,7 @@
     },
     "edit": {
       "title": "編輯日記",
-      "subtitle": "未更改的相片不會重新上傳。",
+      "subtitle": "未更改的媒體不會重新上傳。",
       "saved": "日記已更新。"
     },
     "list": {
@@ -331,11 +372,11 @@
       "body": "寫下 {{name}} 的第一個生活片段。",
       "action": "新增日記",
       "noPetTitle": "還沒有毛孩",
-      "noPetBody": "建立毛孩檔案後，就可以為牠保存私人相片日記。"
+      "noPetBody": "建立毛孩檔案後，就可以為牠保存私人日記。"
     },
     "delete": {
       "title": "刪除這篇日記？",
-      "body": "日記和相關相片將永久刪除，無法復原。",
+      "body": "日記和相關媒體將永久刪除，無法復原。",
       "action": "刪除日記"
     },
     "actions": {
@@ -351,12 +392,12 @@
     "errors": {
       "load": "暫時無法載入日記，請稍後再試。",
       "notFound": "找不到這篇日記，或你沒有權限查看。",
-      "mediaLoad": "暫時無法安全載入日記相片，請稍後再試。",
-      "publish": "發布失敗。你選擇的相片仍然保留，可以直接重試。",
-      "publishCleanup": "發布失敗，而且暫時無法確認已上傳相片的清理狀態。相片仍保留在表單；請保持網絡連線後重試。",
+      "mediaLoad": "暫時無法安全載入日記媒體，請稍後再試。",
+      "publish": "發布失敗。你選擇的媒體仍然保留，可以直接重試。",
+      "publishCleanup": "發布失敗，而且暫時無法確認已上傳媒體的清理狀態。選擇仍保留在表單；請保持網絡連線後重試。",
       "update": "儲存失敗。原有日記沒有被取代，你可以直接重試。",
-      "updateCleanup": "儲存失敗，而且暫時無法確認新增相片的清理狀態。原有日記仍保留；請保持網絡連線後重試。",
-      "removedMediaCleanup": "日記已儲存，但已移除相片的伺服器清理暫時未能確認；帳戶或毛孩刪除流程仍會再次清理私人媒體。",
+      "updateCleanup": "儲存失敗，而且暫時無法確認新增媒體的清理狀態。原有日記仍保留；請保持網絡連線後重試。",
+      "removedMediaCleanup": "日記已儲存，但已移除媒體的伺服器清理暫時未能確認；帳戶或毛孩刪除流程仍會再次清理私人媒體。",
       "delete": "日記未能刪除，請稍後再試。",
       "authorOnly": "只有日記作者可以編輯這篇內容。"
     }
