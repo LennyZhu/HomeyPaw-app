@@ -107,7 +107,10 @@ export async function fetchChatMessageById(messageId: string) {
   return data;
 }
 
-async function fetchChatMembers(petId: string): Promise<ChatMemberSummary[]> {
+async function fetchChatMembers(
+  petId: string,
+  queryClient: QueryClient,
+): Promise<ChatMemberSummary[]> {
   const { data, error } = await requireSupabase().rpc('get_pet_chat_members', {
     target_pet_id: petId,
   });
@@ -116,9 +119,10 @@ async function fetchChatMembers(petId: string): Promise<ChatMemberSummary[]> {
   const avatarPaths = data.flatMap((member) =>
     member.member_avatar_url ? [member.member_avatar_url] : [],
   );
-  const signedUrls = await createProfileAvatarSignedUrls(avatarPaths).catch(
-    () => ({}),
-  );
+  const signedUrls = await createProfileAvatarSignedUrls(
+    queryClient,
+    avatarPaths,
+  ).catch(() => ({}) as Record<string, string>);
 
   return data.map((member) => ({
     avatarPath: member.member_avatar_url,
@@ -286,9 +290,10 @@ export function useChatMessages(petId: string | null, enabled: boolean) {
 
 export function useChatMembers(petId: string | null, enabled: boolean) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   return useQuery({
     enabled: Boolean(user && petId && enabled),
-    queryFn: () => fetchChatMembers(petId!),
+    queryFn: () => fetchChatMembers(petId!, queryClient),
     queryKey: chatKeys.members(user?.id, petId ?? ''),
     retry: false,
   });

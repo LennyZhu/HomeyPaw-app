@@ -19,6 +19,7 @@ import {
   usePetPostAuthors,
 } from '@/features/family/family-queries';
 import { HomeSectionHeader } from '@/features/home/components/home-section-header';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { formatDateOnly, getCompanionDays } from '@/features/pets/pet-dates';
@@ -34,6 +35,7 @@ import {
   usePostVideoThumbnailUrls,
   usePosts,
 } from '@/features/posts/post-queries';
+import { postMediaBucket } from '@/features/posts/post-media';
 import { lightColors, radius, spacing } from '@/theme';
 import type { CareLog } from '@/types/database';
 import { useAuth } from '@/features/auth/auth-context';
@@ -94,13 +96,22 @@ export default function HomeScreen() {
     videoThumbnailPaths,
     petId,
   );
-  const lastMediaRecoveryAt = useRef(0);
-  const recoverMediaUrls = useCallback(() => {
-    if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
-    lastMediaRecoveryAt.current = Date.now();
-    void mediaUrlsQuery.refetch();
+  const mediaRecoveryAt = useRef(new Map<string, number>());
+  const recoverPhotoUrl = useCallback(
+    (storagePath: string) => {
+      const lastRecoveryAt = mediaRecoveryAt.current.get(storagePath) ?? 0;
+      if (Date.now() - lastRecoveryAt < 60_000) return;
+      mediaRecoveryAt.current.set(storagePath, Date.now());
+      void mediaUrlsQuery.refetchPath(storagePath);
+    },
+    [mediaUrlsQuery],
+  );
+  const lastVideoThumbnailRecoveryAt = useRef(0);
+  const recoverVideoThumbnailUrl = useCallback(() => {
+    if (Date.now() - lastVideoThumbnailRecoveryAt.current < 60_000) return;
+    lastVideoThumbnailRecoveryAt.current = Date.now();
     void videoThumbnailUrlsQuery.refetch();
-  }, [mediaUrlsQuery, videoThumbnailUrlsQuery]);
+  }, [videoThumbnailUrlsQuery]);
   const authorNames = useMemo(
     () =>
       Object.fromEntries(
@@ -365,7 +376,8 @@ export default function HomeScreen() {
                     key={post.id}
                     mediaUrls={mediaUrlsQuery.data ?? {}}
                     videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
-                    onMediaError={recoverMediaUrls}
+                    onPhotoError={recoverPhotoUrl}
+                    onVideoThumbnailError={recoverVideoThumbnailUrl}
                     onPress={() => router.push(`/posts/${post.id}` as Href)}
                     post={post}
                   />
@@ -469,14 +481,16 @@ function RecentActivity({
   authorName,
   mediaUrls,
   videoThumbnailUrls,
-  onMediaError,
+  onPhotoError,
+  onVideoThumbnailError,
   onPress,
   post,
 }: {
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
   videoThumbnailUrls: Record<string, string>;
-  onMediaError: () => void;
+  onPhotoError: (storagePath: string) => void;
+  onVideoThumbnailError: () => void;
   onPress: () => void;
   post: PostWithMedia;
 }) {
@@ -494,9 +508,13 @@ function RecentActivity({
           accessibilityLabel={t('posts.photos.entryPhoto', { position: 1 })}
           cachePolicy="memory-disk"
           contentFit="cover"
-          onError={onMediaError}
+          onError={() => onPhotoError(firstMedia.storage_path)}
           recyclingKey={firstMedia.id}
-          source={mediaUrls[firstMedia.storage_path] ?? null}
+          source={createStorageImageSource(
+            postMediaBucket,
+            firstMedia.storage_path,
+            mediaUrls[firstMedia.storage_path],
+          )}
           style={styles.activityImage}
           transition={140}
         />
@@ -506,7 +524,7 @@ function RecentActivity({
             accessibilityLabel={t('posts.video.preview')}
             cachePolicy="memory-disk"
             contentFit="cover"
-            onError={onMediaError}
+            onError={onVideoThumbnailError}
             recyclingKey={video.id}
             source={videoThumbnailUrls[video.thumbnail_path] ?? null}
             style={styles.activityImage}

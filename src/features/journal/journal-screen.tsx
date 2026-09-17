@@ -103,13 +103,22 @@ export default function JournalScreen() {
     videoThumbnailPaths,
     petId,
   );
-  const lastMediaRecoveryAt = useRef(0);
-  const recoverMediaUrls = useCallback(() => {
-    if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
-    lastMediaRecoveryAt.current = Date.now();
-    void mediaUrlsQuery.refetch();
+  const mediaRecoveryAt = useRef(new Map<string, number>());
+  const recoverPhotoUrl = useCallback(
+    (storagePath: string) => {
+      const lastRecoveryAt = mediaRecoveryAt.current.get(storagePath) ?? 0;
+      if (Date.now() - lastRecoveryAt < 60_000) return;
+      mediaRecoveryAt.current.set(storagePath, Date.now());
+      void mediaUrlsQuery.refetchPath(storagePath);
+    },
+    [mediaUrlsQuery],
+  );
+  const lastVideoThumbnailRecoveryAt = useRef(0);
+  const recoverVideoThumbnailUrl = useCallback(() => {
+    if (Date.now() - lastVideoThumbnailRecoveryAt.current < 60_000) return;
+    lastVideoThumbnailRecoveryAt.current = Date.now();
     void videoThumbnailUrlsQuery.refetch();
-  }, [mediaUrlsQuery, videoThumbnailUrlsQuery]);
+  }, [videoThumbnailUrlsQuery]);
   const authorNames = useMemo(
     () =>
       Object.fromEntries(
@@ -126,11 +135,10 @@ export default function JournalScreen() {
         Promise.all([
           postsQuery.refetch(),
           authorsQuery.refetch(),
-          mediaUrlsQuery.refetch(),
           videoThumbnailUrlsQuery.refetch(),
         ]),
       ),
-    [authorsQuery, mediaUrlsQuery, postsQuery, videoThumbnailUrlsQuery],
+    [authorsQuery, postsQuery, videoThumbnailUrlsQuery],
   );
   const dateRangeLabel = dateRange
     ? formatCompactJournalDateRange(dateRange, i18n.language)
@@ -322,7 +330,8 @@ export default function JournalScreen() {
               authorName={authorNames[item.post.author_id]}
               mediaUrls={mediaUrlsQuery.data ?? {}}
               videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
-              onMediaError={recoverMediaUrls}
+              onPhotoError={recoverPhotoUrl}
+              onVideoThumbnailError={recoverVideoThumbnailUrl}
               onOpenPhoto={(initialIndex) =>
                 setPhotoViewer({ initialIndex, media: item.post.post_media })
               }
@@ -357,7 +366,7 @@ export default function JournalScreen() {
           media={photoViewer.media}
           mediaUrls={mediaUrlsQuery.data ?? {}}
           onClose={() => setPhotoViewer(null)}
-          onImageError={recoverMediaUrls}
+          onImageError={recoverPhotoUrl}
           visible
         />
       ) : null}
@@ -438,7 +447,8 @@ function TimelinePost({
   authorName,
   mediaUrls,
   videoThumbnailUrls,
-  onMediaError,
+  onPhotoError,
+  onVideoThumbnailError,
   onOpenPhoto,
   onOpenVideo,
   onPress,
@@ -447,7 +457,8 @@ function TimelinePost({
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
   videoThumbnailUrls: Record<string, string>;
-  onMediaError: () => void;
+  onPhotoError: (storagePath: string) => void;
+  onVideoThumbnailError: () => void;
   onOpenPhoto: (index: number) => void;
   onOpenVideo: () => void;
   onPress: () => void;
@@ -483,12 +494,12 @@ function TimelinePost({
       <PostMediaPreview
         media={post.post_media}
         mediaUrls={mediaUrls}
-        onImageError={onMediaError}
+        onImageError={onPhotoError}
         onPhotoPress={onOpenPhoto}
       />
       {post.post_videos ? (
         <PostVideoThumbnail
-          onImageError={onMediaError}
+          onImageError={onVideoThumbnailError}
           onPress={onOpenVideo}
           thumbnailUrl={
             videoThumbnailUrls[post.post_videos.thumbnail_path] ?? null

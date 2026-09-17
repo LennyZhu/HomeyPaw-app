@@ -7,6 +7,8 @@ import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
 import { IconButton } from '@/components/icon-button';
 import type { PetMemberSummary } from '@/features/family/family-queries';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, spacing } from '@/theme';
 
 import { formatScheduleTime } from '../calendar-date';
@@ -77,11 +79,11 @@ export function ScheduleShiftCard({
               accessibilityLabel={assigneeName}
               name={assigneeName}
               size={44}
-              source={
-                shift.assigneeAvatarUrl
-                  ? { uri: shift.assigneeAvatarUrl }
-                  : undefined
-              }
+              source={createStorageImageSource(
+                profileAvatarBucket,
+                shift.assigneeAvatarPath ?? '',
+                shift.assigneeAvatarUrl,
+              )}
             />
           )}
           <View style={styles.headerCopy}>

@@ -119,18 +119,14 @@ console.log(
   'PASS: long email is one line with tail truncation while accessibility retains the full value.',
 );
 
-assert(profileForm.includes('profileAvatarKeys.signed(user.id, uploadedPath)'));
 assert(profileForm.includes('selectedAvatar.uri'));
-assert(
-  profileAvatar.includes(
-    'queryKey: profileAvatarKeys.signed(user?.id, objectPath)',
-  ),
-);
-assert(profileAvatar.includes('staleTime: 3_000_000'));
+assert(profileForm.includes('createStorageImageSource('));
+assert(profileAvatar.includes('useStorageSignedUrl(profileAvatarBucket'));
+assert(profileAvatar.includes('getStorageSignedUrls('));
 assert(!profileAvatar.includes('Date.now()'));
-assert(useProfile.includes("Object.hasOwn(values, 'avatar_url')"));
+assert(!useProfile.includes('profileAvatarKeys.all'));
 console.log(
-  'PASS: edit saves prime the new avatar cache and signed URL refresh remains resource-scoped.',
+  'PASS: profile avatars use stable image identity and the shared resource-scoped signed URL cache.',
 );
 
 for (const route of [

@@ -1,12 +1,13 @@
 import { ModalScreen } from '@/components/modal-screen';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import type { ImageSource } from 'expo-image';
 import { Modal, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
 import { IconButton } from '@/components/icon-button';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, spacing } from '@/theme';
 
 import type { ChatMemberSummary } from '../chat-queries';
@@ -62,11 +63,11 @@ export function ChatMembersModal({
                 })}
                 name={member.displayName}
                 size={46}
-                source={
-                  member.avatarUrl
-                    ? ({ uri: member.avatarUrl } satisfies ImageSource)
-                    : undefined
-                }
+                source={createStorageImageSource(
+                  profileAvatarBucket,
+                  member.avatarPath ?? '',
+                  member.avatarUrl,
+                )}
               />
               <View style={styles.memberCopy}>
                 <AppText variant="headline">{member.displayName}</AppText>

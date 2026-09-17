@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
-import type { ImageSource } from 'expo-image';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -23,6 +22,8 @@ import {
   useContentLayout,
 } from '@/components/content-container';
 import { modalSupportedOrientations } from '@/config/orientation';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, shadows, spacing } from '@/theme';
 
 import {
@@ -251,11 +252,11 @@ export const ProductionChatMessageList = forwardRef<
                       )}
                       name={authorName}
                       size={34}
-                      source={
-                        member?.avatarUrl
-                          ? ({ uri: member.avatarUrl } satisfies ImageSource)
-                          : undefined
-                      }
+                      source={createStorageImageSource(
+                        profileAvatarBucket,
+                        member?.avatarPath ?? '',
+                        member?.avatarUrl,
+                      )}
                     />
                   )
                 ) : null}

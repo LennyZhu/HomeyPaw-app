@@ -229,27 +229,6 @@ export async function removePostMedia(storagePaths: string[]) {
   }
 }
 
-export async function createPostMediaSignedUrls(storagePaths: string[]) {
-  if (storagePaths.length === 0) {
-    return {} as Record<string, string>;
-  }
-
-  const { data, error } = await requireSupabase()
-    .storage.from(postMediaBucket)
-    .createSignedUrls(storagePaths, 3600);
-
-  if (error) {
-    throw error;
-  }
-
-  return Object.fromEntries(
-    data.flatMap((item, index) => {
-      const path = storagePaths[index];
-      return path && item.signedUrl ? [[path, item.signedUrl]] : [];
-    }),
-  );
-}
-
 export function existingMediaToDraft(
   media: PostMedia,
   signedUrl: string,

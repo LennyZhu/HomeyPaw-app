@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { LoadingView } from '@/components/loading-view';
 import { useAuth } from '@/features/auth/auth-context';
 import { AuthField } from '@/features/auth/components/auth-field';
@@ -25,6 +26,7 @@ import type { ProfileUpdate } from '@/types/database';
 import {
   removeProfileAvatar,
   profileAvatarKeys,
+  profileAvatarBucket,
   uploadProfileAvatar,
   useProfileAvatarUrl,
 } from '../profile-avatar';
@@ -158,10 +160,6 @@ export function ProfileForm({
           avatar: selectedAvatar,
           userId: user.id,
         });
-        queryClient.setQueryData(
-          profileAvatarKeys.signed(user.id, uploadedPath),
-          selectedAvatar.uri,
-        );
       }
 
       const updates: ProfileUpdate = {};
@@ -243,8 +241,12 @@ export function ProfileForm({
           source={
             selectedAvatar
               ? { uri: selectedAvatar.uri }
-              : !avatarRemoved && avatarQuery.data
-                ? { uri: avatarQuery.data }
+              : !avatarRemoved && avatarQuery.data && profile?.avatar_url
+                ? createStorageImageSource(
+                    profileAvatarBucket,
+                    profile.avatar_url,
+                    avatarQuery.data,
+                  )
                 : undefined
           }
         />

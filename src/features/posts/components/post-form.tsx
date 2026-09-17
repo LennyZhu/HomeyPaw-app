@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { appCapabilities } from '@/config/capabilities';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { PetDateField } from '@/features/pets/components/pet-date-field';
 import { lightColors, radius, spacing, typography } from '@/theme';
 
@@ -29,6 +30,7 @@ import {
 import {
   maximumPostMedia,
   pickPostPhotos,
+  postMediaBucket,
   type PostPhotoSource,
   type PostMediaDraft,
 } from '../post-media';
@@ -508,7 +510,15 @@ export function PostForm({
                       cachePolicy={item.kind === 'new' ? 'none' : 'disk'}
                       contentFit="cover"
                       recyclingKey={item.id}
-                      source={item.uri}
+                      source={
+                        item.kind === 'existing'
+                          ? createStorageImageSource(
+                              postMediaBucket,
+                              item.storagePath,
+                              item.uri,
+                            )
+                          : item.uri
+                      }
                       style={styles.photo}
                     />
                   </Pressable>

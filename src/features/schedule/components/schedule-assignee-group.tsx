@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import type { PetMemberSummary } from '@/features/family/family-queries';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -91,11 +93,11 @@ export function ScheduleAssigneeGroup({
             accessibilityLabel={name}
             name={name}
             size={42}
-            source={
-              group.assigneeAvatarUrl
-                ? { uri: group.assigneeAvatarUrl }
-                : undefined
-            }
+            source={createStorageImageSource(
+              profileAvatarBucket,
+              group.assigneeAvatarPath ?? '',
+              group.assigneeAvatarUrl,
+            )}
           />
         )}
         <View style={styles.headerCopy}>

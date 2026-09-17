@@ -12,6 +12,8 @@ import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import {
   usePetMembers,
   usePetPostAuthors,
@@ -22,6 +24,7 @@ import { lightColors, radius, spacing } from '@/theme';
 import { PostActionsModal } from './components/post-actions-modal';
 import { PostPhotoViewer } from './components/post-photo-viewer';
 import { PostVideoThumbnail } from './components/post-video-thumbnail';
+import { postMediaBucket } from './post-media';
 import {
   useDeletePost,
   usePost,
@@ -48,13 +51,22 @@ export default function PostDetailScreen() {
     videoThumbnailPath ? [videoThumbnailPath] : [],
     postQuery.data?.pet_id ?? null,
   );
-  const lastMediaRecoveryAt = useRef(0);
-  const recoverMediaUrls = useCallback(() => {
-    if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
-    lastMediaRecoveryAt.current = Date.now();
-    void urlsQuery.refetch();
+  const mediaRecoveryAt = useRef(new Map<string, number>());
+  const recoverPhotoUrl = useCallback(
+    (storagePath: string) => {
+      const lastRecoveryAt = mediaRecoveryAt.current.get(storagePath) ?? 0;
+      if (Date.now() - lastRecoveryAt < 60_000) return;
+      mediaRecoveryAt.current.set(storagePath, Date.now());
+      void urlsQuery.refetchPath(storagePath);
+    },
+    [urlsQuery],
+  );
+  const lastVideoThumbnailRecoveryAt = useRef(0);
+  const recoverVideoThumbnailUrl = useCallback(() => {
+    if (Date.now() - lastVideoThumbnailRecoveryAt.current < 60_000) return;
+    lastVideoThumbnailRecoveryAt.current = Date.now();
     void videoThumbnailUrlsQuery.refetch();
-  }, [urlsQuery, videoThumbnailUrlsQuery]);
+  }, [videoThumbnailUrlsQuery]);
   const post = postQuery.data;
   const membersQuery = usePetMembers(post?.pet_id ?? null);
   const authorsQuery = usePetPostAuthors(post?.pet_id ?? null);
@@ -183,11 +195,11 @@ export default function PostDetailScreen() {
             accessibilityLabel={authorAvatarLabel}
             name={authorName}
             size={40}
-            source={
-              authorMember?.avatarUrl
-                ? { uri: authorMember.avatarUrl }
-                : undefined
-            }
+            source={createStorageImageSource(
+              profileAvatarBucket,
+              authorMember?.avatarPath ?? '',
+              authorMember?.avatarUrl,
+            )}
           />
         </View>
         <View style={styles.authorCopy}>
@@ -233,9 +245,13 @@ export default function PostDetailScreen() {
           <Image
             cachePolicy="memory-disk"
             contentFit="contain"
-            onError={recoverMediaUrls}
+            onError={() => recoverPhotoUrl(post.post_media[0]!.storage_path)}
             recyclingKey={post.post_media[0]!.id}
-            source={urlsQuery.data?.[post.post_media[0]!.storage_path] ?? null}
+            source={createStorageImageSource(
+              postMediaBucket,
+              post.post_media[0]!.storage_path,
+              urlsQuery.data?.[post.post_media[0]!.storage_path],
+            )}
             style={styles.singlePhoto}
             transition={180}
           />
@@ -256,9 +272,13 @@ export default function PostDetailScreen() {
               <Image
                 cachePolicy="memory-disk"
                 contentFit="cover"
-                onError={recoverMediaUrls}
+                onError={() => recoverPhotoUrl(media.storage_path)}
                 recyclingKey={media.id}
-                source={urlsQuery.data?.[media.storage_path] ?? null}
+                source={createStorageImageSource(
+                  postMediaBucket,
+                  media.storage_path,
+                  urlsQuery.data?.[media.storage_path],
+                )}
                 style={styles.photo}
                 transition={180}
               />
@@ -269,7 +289,7 @@ export default function PostDetailScreen() {
 
       {post.post_videos ? (
         <PostVideoThumbnail
-          onImageError={recoverMediaUrls}
+          onImageError={recoverVideoThumbnailUrl}
           onPress={() => router.push(`/posts/${post.id}/video` as Href)}
           thumbnailUrl={
             videoThumbnailUrlsQuery.data?.[post.post_videos.thumbnail_path] ??
@@ -320,7 +340,7 @@ export default function PostDetailScreen() {
           media={post.post_media}
           mediaUrls={urlsQuery.data ?? {}}
           onClose={() => setViewerIndex(null)}
-          onImageError={recoverMediaUrls}
+          onImageError={recoverPhotoUrl}
           visible
         />
       ) : null}

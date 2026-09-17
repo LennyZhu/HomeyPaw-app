@@ -12,6 +12,8 @@ import {
 } from '@/components/content-container';
 import { modalSupportedOrientations } from '@/config/orientation';
 import type { PetMemberSummary } from '@/features/family/family-queries';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, shadows, spacing } from '@/theme';
 
 import {
@@ -25,6 +27,7 @@ type Props = {
   onChange: (userId: string | null) => void;
   role: PetMemberSummary['role'] | null;
   selectedFallback?: {
+    avatarPath: string | null;
     avatarUrl: string | null;
     displayName: string | null;
     userId: string | null;
@@ -51,6 +54,7 @@ export function ScheduleAssigneeSelector({
     options.find((option) => option.userId === value) ??
     (value && selectedFallback?.userId === value
       ? {
+          avatarPath: selectedFallback.avatarPath,
           avatarUrl: selectedFallback.avatarUrl,
           displayName:
             selectedFallback.displayName ?? t('schedule.form.unknownAssignee'),
@@ -195,7 +199,11 @@ function AssigneeIdentity({
         accessibilityLabel={option.displayName}
         name={option.displayName}
         size={34}
-        source={option.avatarUrl ? { uri: option.avatarUrl } : undefined}
+        source={createStorageImageSource(
+          profileAvatarBucket,
+          option.avatarPath ?? '',
+          option.avatarUrl,
+        )}
       />
       <AppText numberOfLines={1} style={styles.name}>
         {option.displayName}

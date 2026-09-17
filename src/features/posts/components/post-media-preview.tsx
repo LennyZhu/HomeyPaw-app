@@ -3,13 +3,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { lightColors, radius, spacing } from '@/theme';
 import type { PostMedia } from '@/types/database';
+
+import { postMediaBucket } from '../post-media';
 
 type PostMediaPreviewProps = {
   media: PostMedia[];
   mediaUrls: Record<string, string>;
-  onImageError?: () => void;
+  onImageError?: (storagePath: string) => void;
   onPhotoPress?: (index: number) => void;
 };
 
@@ -38,10 +41,16 @@ export function PostMediaPreview({
           cachePolicy="memory-disk"
           contentFit={visible.length === 1 ? 'contain' : 'cover'}
           recyclingKey={item.id}
-          source={mediaUrls[item.storage_path] ?? null}
+          source={createStorageImageSource(
+            postMediaBucket,
+            item.storage_path,
+            mediaUrls[item.storage_path],
+          )}
           style={styles.image}
           transition={160}
-          {...(onImageError ? { onError: onImageError } : {})}
+          {...(onImageError
+            ? { onError: () => onImageError(item.storage_path) }
+            : {})}
         />
         {index === 3 && media.length > 4 ? (
           <View

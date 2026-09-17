@@ -32,8 +32,11 @@ import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/app-text';
 import { IconButton } from '@/components/icon-button';
 import { modalSupportedOrientations } from '@/config/orientation';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { lightColors, layout, radius, spacing } from '@/theme';
 import type { PostMedia } from '@/types/database';
+
+import { postMediaBucket } from '../post-media';
 
 import {
   clampPhotoViewerIndex,
@@ -56,7 +59,7 @@ type PostPhotoViewerProps = {
   media: PostMedia[];
   mediaUrls: Record<string, string>;
   onClose: () => void;
-  onImageError?: () => void;
+  onImageError?: (storagePath: string) => void;
   visible: boolean;
 };
 
@@ -394,7 +397,7 @@ function ZoomablePostPhoto({
   index: number;
   isLoading: boolean;
   item: PostMedia;
-  onImageError: (() => void) | undefined;
+  onImageError: ((storagePath: string) => void) | undefined;
   onZoomChange: ((isZoomed: boolean) => void) | undefined;
   total: number;
   uri: string | undefined;
@@ -499,11 +502,15 @@ function ZoomablePostPhoto({
               contentFit="contain"
               onError={() => {
                 setFailedUri(uri ?? null);
-                onImageError?.();
+                onImageError?.(item.storage_path);
               }}
               onLoad={() => setLoadedUri(uri ?? null)}
               recyclingKey={`${item.id}-${uri}`}
-              source={{ uri: uri! }}
+              source={createStorageImageSource(
+                postMediaBucket,
+                item.storage_path,
+                uri,
+              )}
               style={styles.image}
             />
           </Animated.View>

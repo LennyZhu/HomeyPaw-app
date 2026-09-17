@@ -1,17 +1,22 @@
-import { useQuery } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 import { decode } from 'base64-arraybuffer';
 import * as Crypto from 'expo-crypto';
 
-import { useAuth } from '@/features/auth/auth-context';
 import type { PreparedAvatarImage } from '@/features/media/avatar-image';
+import {
+  getStorageSignedUrls,
+  storageSignedUrlKeys,
+  useStorageSignedUrl,
+} from '@/features/media/storage-signed-url';
 import { requireSupabase } from '@/lib/supabase/client';
 
 export const profileAvatarBucket = 'profile-avatars';
 
 export const profileAvatarKeys = {
-  all: (userId: string | undefined) => ['profile-avatar', userId] as const,
-  signed: (userId: string | undefined, objectPath: string | null) =>
-    [...profileAvatarKeys.all(userId), objectPath] as const,
+  all: (_userId: string | undefined) =>
+    storageSignedUrlKeys.bucket(profileAvatarBucket),
+  signed: (_userId: string | undefined, objectPath: string | null) =>
+    storageSignedUrlKeys.path(profileAvatarBucket, objectPath ?? ''),
 };
 
 export async function uploadProfileAvatar({
@@ -43,32 +48,13 @@ export async function removeProfileAvatar(objectPath: string) {
   if (error) throw error;
 }
 
-export async function createProfileAvatarSignedUrls(objectPaths: string[]) {
-  const paths = [...new Set(objectPaths.filter(Boolean))];
-  if (paths.length === 0) return {};
-
-  const { data, error } = await requireSupabase()
-    .storage.from(profileAvatarBucket)
-    .createSignedUrls(paths, 3600);
-  if (error) throw error;
-
-  return Object.fromEntries(
-    data.flatMap((item) =>
-      item.signedUrl ? [[item.path, item.signedUrl] as const] : [],
-    ),
-  );
+export function createProfileAvatarSignedUrls(
+  queryClient: QueryClient,
+  objectPaths: string[],
+) {
+  return getStorageSignedUrls(queryClient, profileAvatarBucket, objectPaths);
 }
 
 export function useProfileAvatarUrl(objectPath: string | null) {
-  const { user } = useAuth();
-  return useQuery({
-    enabled: Boolean(user && objectPath),
-    gcTime: 3_600_000,
-    queryFn: async () => {
-      const urls = await createProfileAvatarSignedUrls([objectPath!]);
-      return urls[objectPath!] ?? null;
-    },
-    queryKey: profileAvatarKeys.signed(user?.id, objectPath),
-    staleTime: 3_000_000,
-  });
+  return useStorageSignedUrl(profileAvatarBucket, objectPath);
 }
