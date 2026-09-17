@@ -69,6 +69,7 @@ export function useCareScheduleRange(input: {
   startLocalDate: string;
 }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   return useQuery({
     retry: false,
     enabled: Boolean(user && input.petId),
@@ -76,6 +77,7 @@ export function useCareScheduleRange(input: {
       fetchCareScheduleRange({
         endLocalDate: input.endLocalDate,
         petId: input.petId!,
+        queryClient,
         startLocalDate: input.startLocalDate,
       }),
     queryKey: careScheduleKeys.range(

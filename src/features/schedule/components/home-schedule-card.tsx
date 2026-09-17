@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { useAuth } from '@/features/auth/auth-context';
 import { HomeSectionHeader } from '@/features/home/components/home-section-header';
 import { lightColors, radius, spacing } from '@/theme';
@@ -177,11 +179,11 @@ export function HomeScheduleCard({
                         accessibilityLabel={name}
                         name={name}
                         size={30}
-                        source={
-                          group.assigneeAvatarUrl
-                            ? { uri: group.assigneeAvatarUrl }
-                            : undefined
-                        }
+                        source={createStorageImageSource(
+                          profileAvatarBucket,
+                          group.assigneeAvatarPath ?? '',
+                          group.assigneeAvatarUrl,
+                        )}
                       />
                     )}
                     <AppText style={styles.shiftName} variant="headline">

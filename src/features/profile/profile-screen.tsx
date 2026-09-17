@@ -11,10 +11,11 @@ import { useFeedback } from '@/components/feedback-provider';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { lightColors, radius, spacing } from '@/theme';
 
 import { useProfile } from './use-profile';
-import { useProfileAvatarUrl } from './profile-avatar';
+import { profileAvatarBucket, useProfileAvatarUrl } from './profile-avatar';
 import { getProfilePresentationState } from './profile-query-state';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -134,7 +135,15 @@ export default function ProfileScreen() {
               accessibilityLabel={t('profile.avatar')}
               name={profile.display_name}
               size={82}
-              source={avatarQuery.data ? { uri: avatarQuery.data } : undefined}
+              source={
+                profile.avatar_url && avatarQuery.data
+                  ? createStorageImageSource(
+                      profileAvatarBucket,
+                      profile.avatar_url,
+                      avatarQuery.data,
+                    )
+                  : undefined
+              }
             />
             <View style={styles.profileCopy}>
               <AppText variant="title2">{profile.display_name}</AppText>

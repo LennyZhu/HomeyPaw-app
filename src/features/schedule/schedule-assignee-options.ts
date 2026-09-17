@@ -1,4 +1,5 @@
 export type ScheduleAssigneeMember = {
+  avatarPath: string | null;
   avatarUrl: string | null;
   displayName: string;
   role: string;
@@ -8,11 +9,13 @@ export type ScheduleAssigneeMember = {
 export type ScheduleAssigneeOption =
   | {
       avatarUrl: null;
+      avatarPath: null;
       displayName: null;
       userId: null;
     }
   | {
       avatarUrl: string | null;
+      avatarPath: string | null;
       displayName: string;
       userId: string;
     };
@@ -28,19 +31,23 @@ export function getScheduleAssigneeOptions(
 
   if (role === 'owner') {
     return [
-      { avatarUrl: null, displayName: null, userId: null },
-      ...currentMembers.map(({ avatarUrl, displayName, userId }) => ({
-        avatarUrl,
-        displayName,
-        userId,
-      })),
+      { avatarPath: null, avatarUrl: null, displayName: null, userId: null },
+      ...currentMembers.map(
+        ({ avatarPath, avatarUrl, displayName, userId }) => ({
+          avatarPath,
+          avatarUrl,
+          displayName,
+          userId,
+        }),
+      ),
     ];
   }
 
   if (role === 'member') {
     return currentMembers
       .filter((member) => member.userId === currentUserId)
-      .map(({ avatarUrl, displayName, userId }) => ({
+      .map(({ avatarPath, avatarUrl, displayName, userId }) => ({
+        avatarPath,
         avatarUrl,
         displayName,
         userId,

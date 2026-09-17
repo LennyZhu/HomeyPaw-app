@@ -298,6 +298,7 @@ export default function EditScheduleScreen() {
               onChange={setAssigneeOverride}
               role={role}
               selectedFallback={{
+                avatarPath: shift.assigneeAvatarPath,
                 avatarUrl: shift.assigneeAvatarUrl,
                 displayName: shift.assigneeDisplayName,
                 userId: shift.assigneeUserId,

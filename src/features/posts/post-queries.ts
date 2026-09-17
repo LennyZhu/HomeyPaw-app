@@ -8,6 +8,7 @@ import {
 
 import { useAuth } from '@/features/auth/auth-context';
 import { familyKeys } from '@/features/family/family-queries';
+import { useStorageSignedUrls } from '@/features/media/storage-signed-url';
 import {
   createJournalDateRangeKey,
   toJournalCreatedAtBounds,
@@ -17,7 +18,7 @@ import { toDateOnly } from '@/features/pets/pet-dates';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { Post, PostMedia } from '@/types/database';
 
-import { createPostMediaSignedUrls } from './post-media';
+import { postMediaBucket } from './post-media';
 import {
   publishPost,
   savePostEdit,
@@ -64,8 +65,6 @@ export const postKeys = {
     petId: string | null,
     localToday: string,
   ) => ['posts', userId, 'memory', petId, localToday] as const,
-  mediaUrls: (userId: string | undefined, paths: string[]) =>
-    ['posts', userId, 'media-urls', ...paths] as const,
 };
 
 async function fetchPetMemory(
@@ -209,16 +208,7 @@ export function usePost(postId: string) {
 }
 
 export function usePostMediaUrls(storagePaths: string[]) {
-  const { user } = useAuth();
-  const stablePaths = [...new Set(storagePaths)].sort();
-
-  return useQuery({
-    enabled: Boolean(user && stablePaths.length > 0),
-    gcTime: 3_600_000,
-    queryFn: () => createPostMediaSignedUrls(stablePaths),
-    queryKey: postKeys.mediaUrls(user?.id, stablePaths),
-    staleTime: 3_000_000,
-  });
+  return useStorageSignedUrls(postMediaBucket, storagePaths);
 }
 
 type CreatePostInput = {

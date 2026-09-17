@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { IconButton } from '@/components/icon-button';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -152,11 +154,11 @@ export function ScheduleMonthCalendar({
                           accessibilityLabel={member.displayName ?? ''}
                           name={member.displayName ?? ''}
                           size={18}
-                          source={
-                            member.avatarUrl
-                              ? { uri: member.avatarUrl }
-                              : undefined
-                          }
+                          source={createStorageImageSource(
+                            profileAvatarBucket,
+                            member.avatarPath ?? '',
+                            member.avatarUrl,
+                          )}
                         />
                       </View>
                     ))}

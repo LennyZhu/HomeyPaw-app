@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
 import { petKeys } from '@/features/pets/pet-queries';
@@ -59,7 +64,10 @@ function normalizeInviteCode(code: string) {
   return code.trim().toUpperCase();
 }
 
-async function fetchPetMembers(petId: string): Promise<PetMemberSummary[]> {
+async function fetchPetMembers(
+  petId: string,
+  queryClient: QueryClient,
+): Promise<PetMemberSummary[]> {
   const { data, error } = await requireSupabase().rpc('get_pet_members', {
     target_pet_id: petId,
   });
@@ -71,9 +79,10 @@ async function fetchPetMembers(petId: string): Promise<PetMemberSummary[]> {
   const avatarPaths = data.flatMap((member) =>
     member.member_avatar_path ? [member.member_avatar_path] : [],
   );
-  const signedUrls = await createProfileAvatarSignedUrls(avatarPaths).catch(
-    () => ({}),
-  );
+  const signedUrls = await createProfileAvatarSignedUrls(
+    queryClient,
+    avatarPaths,
+  ).catch(() => ({}) as Record<string, string>);
 
   return data.map((member) => ({
     avatarPath: member.member_avatar_path,
@@ -196,10 +205,11 @@ async function removeMember(petId: string, userId: string) {
 
 export function usePetMembers(petId: string | null) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   return useQuery({
     enabled: Boolean(user && petId),
-    queryFn: () => fetchPetMembers(petId!),
+    queryFn: () => fetchPetMembers(petId!, queryClient),
     queryKey: familyKeys.members(user?.id, petId ?? ''),
   });
 }

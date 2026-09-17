@@ -19,6 +19,7 @@ import {
   usePetPostAuthors,
 } from '@/features/family/family-queries';
 import { HomeSectionHeader } from '@/features/home/components/home-section-header';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { formatDateOnly, getCompanionDays } from '@/features/pets/pet-dates';
@@ -33,6 +34,7 @@ import {
   usePostMediaUrls,
   usePosts,
 } from '@/features/posts/post-queries';
+import { postMediaBucket } from '@/features/posts/post-media';
 import { lightColors, radius, spacing } from '@/theme';
 import type { CareLog } from '@/types/database';
 import { useAuth } from '@/features/auth/auth-context';
@@ -82,12 +84,16 @@ export default function HomeScreen() {
     [recentPosts],
   );
   const mediaUrlsQuery = usePostMediaUrls(previewPaths);
-  const lastMediaRecoveryAt = useRef(0);
-  const recoverMediaUrls = useCallback(() => {
-    if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
-    lastMediaRecoveryAt.current = Date.now();
-    void mediaUrlsQuery.refetch();
-  }, [mediaUrlsQuery]);
+  const mediaRecoveryAt = useRef(new Map<string, number>());
+  const recoverPhotoUrl = useCallback(
+    (storagePath: string) => {
+      const lastRecoveryAt = mediaRecoveryAt.current.get(storagePath) ?? 0;
+      if (Date.now() - lastRecoveryAt < 60_000) return;
+      mediaRecoveryAt.current.set(storagePath, Date.now());
+      void mediaUrlsQuery.refetchPath(storagePath);
+    },
+    [mediaUrlsQuery],
+  );
   const authorNames = useMemo(
     () =>
       Object.fromEntries(
@@ -351,7 +357,7 @@ export default function HomeScreen() {
                     authorName={authorNames[post.author_id]}
                     key={post.id}
                     mediaUrls={mediaUrlsQuery.data ?? {}}
-                    onMediaError={recoverMediaUrls}
+                    onPhotoError={recoverPhotoUrl}
                     onPress={() => router.push(`/posts/${post.id}` as Href)}
                     post={post}
                   />
@@ -454,13 +460,13 @@ function HomeSection({
 function RecentActivity({
   authorName,
   mediaUrls,
-  onMediaError,
+  onPhotoError,
   onPress,
   post,
 }: {
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
-  onMediaError: () => void;
+  onPhotoError: (storagePath: string) => void;
   onPress: () => void;
   post: PostWithMedia;
 }) {
@@ -477,9 +483,13 @@ function RecentActivity({
           accessibilityLabel={t('posts.photos.entryPhoto', { position: 1 })}
           cachePolicy="memory-disk"
           contentFit="cover"
-          onError={onMediaError}
+          onError={() => onPhotoError(firstMedia.storage_path)}
           recyclingKey={firstMedia.id}
-          source={mediaUrls[firstMedia.storage_path] ?? null}
+          source={createStorageImageSource(
+            postMediaBucket,
+            firstMedia.storage_path,
+            mediaUrls[firstMedia.storage_path],
+          )}
           style={styles.activityImage}
           transition={140}
         />

@@ -13,7 +13,9 @@ import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { usePet } from '@/features/pets/pet-queries';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, spacing } from '@/theme';
 
 import {
@@ -202,7 +204,11 @@ export default function PetMembersScreen() {
               })}
               name={member.displayName}
               size={52}
-              source={member.avatarUrl ? { uri: member.avatarUrl } : undefined}
+              source={createStorageImageSource(
+                profileAvatarBucket,
+                member.avatarPath ?? '',
+                member.avatarUrl,
+              )}
             />
             <View style={styles.memberCopy}>
               <AppText variant="headline">{member.displayName}</AppText>

@@ -1,3 +1,5 @@
+import type { QueryClient } from '@tanstack/react-query';
+
 import { SCHEDULE_ENABLED } from '@/config/features';
 import { logError } from '@/lib/logger';
 import { requireSupabase as requireConfiguredSupabase } from '@/lib/supabase/client';
@@ -35,6 +37,7 @@ export function isScheduleBackendUnavailable(error: unknown) {
 export async function fetchCareScheduleRange(input: {
   endLocalDate: string;
   petId: string;
+  queryClient: QueryClient;
   startLocalDate: string;
 }): Promise<CareScheduleItem[]> {
   const { data, error } = await requireSupabase().rpc(
@@ -47,10 +50,11 @@ export async function fetchCareScheduleRange(input: {
   );
   if (error) throw error;
   const avatarUrls = await createProfileAvatarSignedUrls(
+    input.queryClient,
     data.flatMap((item) =>
       item.assignee_avatar_path ? [item.assignee_avatar_path] : [],
     ),
-  ).catch(() => ({}));
+  ).catch(() => ({}) as Record<string, string>);
 
   return data.map((item) => ({
     ...item,

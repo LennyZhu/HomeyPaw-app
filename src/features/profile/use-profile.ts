@@ -5,7 +5,6 @@ import { useAuth } from '@/features/auth/auth-context';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { Profile, ProfileUpdate } from '@/types/database';
 
-import { profileAvatarKeys } from './profile-avatar';
 import { profileKeys } from './profile-query-state';
 
 async function fetchProfile(userId: string) {
@@ -36,7 +35,6 @@ export function useProfile() {
 
       const queryKey = profileKeys.detail(user.id);
       await queryClient.cancelQueries({ queryKey });
-      const previousProfile = queryClient.getQueryData<Profile>(queryKey);
       const { data, error: updateError } = await requireSupabase()
         .from('profiles')
         .update(values)
@@ -49,22 +47,12 @@ export function useProfile() {
       }
 
       queryClient.setQueryData<Profile>(queryKey, data);
-      const avatarChanged =
-        Object.hasOwn(values, 'avatar_url') &&
-        previousProfile?.avatar_url !== data.avatar_url;
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['family', user.id] }),
         queryClient.invalidateQueries({ queryKey: ['chat', user.id] }),
         queryClient.invalidateQueries({
           queryKey: ['care-schedule', user.id],
         }),
-        ...(avatarChanged
-          ? [
-              queryClient.invalidateQueries({
-                queryKey: profileAvatarKeys.all(user.id),
-              }),
-            ]
-          : []),
       ]).catch(() => undefined);
       return data;
     },

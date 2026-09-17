@@ -1,17 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
+import {
+  storageSignedUrlKeys,
+  useStorageSignedUrl,
+} from '@/features/media/storage-signed-url';
 import { requireSupabase } from '@/lib/supabase/client';
 import type { Pet, PetUpdate } from '@/types/database';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
 
-import { createPetAvatarSignedUrl } from './pet-avatar';
+import { petAvatarBucket } from './pet-avatar';
 import type { PetFormValues } from './pet-schema';
 
 export const petKeys = {
   all: (userId: string | undefined) => ['pets', userId] as const,
-  avatar: (userId: string | undefined, objectPath: string | null) =>
-    ['pet-avatar', userId, objectPath] as const,
+  avatar: (_userId: string | undefined, objectPath: string | null) =>
+    storageSignedUrlKeys.path(petAvatarBucket, objectPath ?? ''),
   detail: (userId: string | undefined, petId: string) =>
     ['pet', userId, petId] as const,
 };
@@ -145,15 +149,7 @@ export function usePet(petId: string) {
 }
 
 export function usePetAvatarUrl(objectPath: string | null) {
-  const { user } = useAuth();
-
-  return useQuery({
-    enabled: Boolean(user && objectPath),
-    gcTime: 3_600_000,
-    queryFn: () => createPetAvatarSignedUrl(objectPath!),
-    queryKey: petKeys.avatar(user?.id, objectPath),
-    staleTime: 3_000_000,
-  });
+  return useStorageSignedUrl(petAvatarBucket, objectPath);
 }
 
 export function useCreatePet() {

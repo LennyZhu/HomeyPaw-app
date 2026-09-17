@@ -90,12 +90,16 @@ export default function JournalScreen() {
     [posts],
   );
   const mediaUrlsQuery = usePostMediaUrls(previewPaths);
-  const lastMediaRecoveryAt = useRef(0);
-  const recoverMediaUrls = useCallback(() => {
-    if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
-    lastMediaRecoveryAt.current = Date.now();
-    void mediaUrlsQuery.refetch();
-  }, [mediaUrlsQuery]);
+  const mediaRecoveryAt = useRef(new Map<string, number>());
+  const recoverPhotoUrl = useCallback(
+    (storagePath: string) => {
+      const lastRecoveryAt = mediaRecoveryAt.current.get(storagePath) ?? 0;
+      if (Date.now() - lastRecoveryAt < 60_000) return;
+      mediaRecoveryAt.current.set(storagePath, Date.now());
+      void mediaUrlsQuery.refetchPath(storagePath);
+    },
+    [mediaUrlsQuery],
+  );
   const authorNames = useMemo(
     () =>
       Object.fromEntries(
@@ -327,7 +331,7 @@ export default function JournalScreen() {
             <TimelinePost
               authorName={authorNames[item.post.author_id]}
               mediaUrls={mediaUrlsQuery.data ?? {}}
-              onMediaError={recoverMediaUrls}
+              onPhotoError={recoverPhotoUrl}
               onOpenPhoto={(initialIndex) =>
                 setPhotoViewer({ initialIndex, media: item.post.post_media })
               }
@@ -373,7 +377,7 @@ export default function JournalScreen() {
           media={photoViewer.media}
           mediaUrls={mediaUrlsQuery.data ?? {}}
           onClose={() => setPhotoViewer(null)}
-          onImageError={recoverMediaUrls}
+          onImageError={recoverPhotoUrl}
           visible
         />
       ) : null}
@@ -453,14 +457,14 @@ function getDayLabel(
 function TimelinePost({
   authorName,
   mediaUrls,
-  onMediaError,
+  onPhotoError,
   onOpenPhoto,
   onPress,
   post,
 }: {
   authorName: string | undefined;
   mediaUrls: Record<string, string>;
-  onMediaError: () => void;
+  onPhotoError: (storagePath: string) => void;
   onOpenPhoto: (index: number) => void;
   onPress: () => void;
   post: PostWithMedia;
@@ -495,7 +499,7 @@ function TimelinePost({
       <PostMediaPreview
         media={post.post_media}
         mediaUrls={mediaUrls}
-        onImageError={onMediaError}
+        onImageError={onPhotoError}
         onPhotoPress={onOpenPhoto}
       />
       {post.content ? (

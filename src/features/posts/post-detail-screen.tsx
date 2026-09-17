@@ -12,15 +12,18 @@ import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import {
   usePetMembers,
   usePetPostAuthors,
 } from '@/features/family/family-queries';
 import { formatDateOnly } from '@/features/pets/pet-dates';
+import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, spacing } from '@/theme';
 
 import { PostActionsModal } from './components/post-actions-modal';
 import { PostPhotoViewer } from './components/post-photo-viewer';
+import { postMediaBucket } from './post-media';
 import { useDeletePost, usePost, usePostMediaUrls } from './post-queries';
 
 export default function PostDetailScreen() {
@@ -36,12 +39,16 @@ export default function PostDetailScreen() {
   const paths =
     postQuery.data?.post_media.map((item) => item.storage_path) ?? [];
   const urlsQuery = usePostMediaUrls(paths);
-  const lastMediaRecoveryAt = useRef(0);
-  const recoverMediaUrls = useCallback(() => {
-    if (Date.now() - lastMediaRecoveryAt.current < 60_000) return;
-    lastMediaRecoveryAt.current = Date.now();
-    void urlsQuery.refetch();
-  }, [urlsQuery]);
+  const mediaRecoveryAt = useRef(new Map<string, number>());
+  const recoverPhotoUrl = useCallback(
+    (storagePath: string) => {
+      const lastRecoveryAt = mediaRecoveryAt.current.get(storagePath) ?? 0;
+      if (Date.now() - lastRecoveryAt < 60_000) return;
+      mediaRecoveryAt.current.set(storagePath, Date.now());
+      void urlsQuery.refetchPath(storagePath);
+    },
+    [urlsQuery],
+  );
   const post = postQuery.data;
   const membersQuery = usePetMembers(post?.pet_id ?? null);
   const authorsQuery = usePetPostAuthors(post?.pet_id ?? null);
@@ -170,11 +177,11 @@ export default function PostDetailScreen() {
             accessibilityLabel={authorAvatarLabel}
             name={authorName}
             size={40}
-            source={
-              authorMember?.avatarUrl
-                ? { uri: authorMember.avatarUrl }
-                : undefined
-            }
+            source={createStorageImageSource(
+              profileAvatarBucket,
+              authorMember?.avatarPath ?? '',
+              authorMember?.avatarUrl,
+            )}
           />
         </View>
         <View style={styles.authorCopy}>
@@ -220,9 +227,13 @@ export default function PostDetailScreen() {
           <Image
             cachePolicy="memory-disk"
             contentFit="contain"
-            onError={recoverMediaUrls}
+            onError={() => recoverPhotoUrl(post.post_media[0]!.storage_path)}
             recyclingKey={post.post_media[0]!.id}
-            source={urlsQuery.data?.[post.post_media[0]!.storage_path] ?? null}
+            source={createStorageImageSource(
+              postMediaBucket,
+              post.post_media[0]!.storage_path,
+              urlsQuery.data?.[post.post_media[0]!.storage_path],
+            )}
             style={styles.singlePhoto}
             transition={180}
           />
@@ -243,9 +254,13 @@ export default function PostDetailScreen() {
               <Image
                 cachePolicy="memory-disk"
                 contentFit="cover"
-                onError={recoverMediaUrls}
+                onError={() => recoverPhotoUrl(media.storage_path)}
                 recyclingKey={media.id}
-                source={urlsQuery.data?.[media.storage_path] ?? null}
+                source={createStorageImageSource(
+                  postMediaBucket,
+                  media.storage_path,
+                  urlsQuery.data?.[media.storage_path],
+                )}
                 style={styles.photo}
                 transition={180}
               />
@@ -295,7 +310,7 @@ export default function PostDetailScreen() {
           media={post.post_media}
           mediaUrls={urlsQuery.data ?? {}}
           onClose={() => setViewerIndex(null)}
-          onImageError={recoverMediaUrls}
+          onImageError={recoverPhotoUrl}
           visible
         />
       ) : null}

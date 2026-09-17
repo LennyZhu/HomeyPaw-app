@@ -1,7 +1,9 @@
 import { useRef } from 'react';
 
 import { Avatar } from '@/components/avatar';
+import { createStorageImageSource } from '@/features/media/storage-signed-url';
 
+import { petAvatarBucket } from '../pet-avatar';
 import { usePetAvatarUrl } from '../pet-queries';
 
 type PetAvatarProps = {
@@ -36,7 +38,15 @@ export function PetAvatar({
       accessibilityLabel={accessibilityLabel}
       name={name}
       {...(size === undefined ? {} : { size })}
-      {...(uri ? { onError: recoverExpiredUrl, source: { uri } } : {})}
+      {...(uri
+        ? {
+            onError: recoverExpiredUrl,
+            source:
+              localUri || !avatarPath
+                ? { uri }
+                : createStorageImageSource(petAvatarBucket, avatarPath, uri),
+          }
+        : {})}
     />
   );
 }

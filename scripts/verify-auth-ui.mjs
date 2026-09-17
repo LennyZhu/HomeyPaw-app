@@ -122,7 +122,7 @@ assert(
 );
 assert(authScreen.includes('contentStyles.auth'));
 assert(profileForm.includes('uploadProfileAvatar({'));
-assert(profileForm.includes('profileAvatarKeys.signed(user.id, uploadedPath)'));
+assert(profileForm.includes('createStorageImageSource('));
 assert(profileForm.includes('await updateProfile(updates)'));
 assert(profileForm.includes('Object.keys(updates).length > 0'));
 assert(profileForm.includes('pickAndPrepareAvatarImage()'));

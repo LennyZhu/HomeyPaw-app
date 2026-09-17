@@ -50,15 +50,3 @@ export async function removePetAvatar(objectPath: string) {
     throw error;
   }
 }
-
-export async function createPetAvatarSignedUrl(objectPath: string) {
-  const { data, error } = await requireSupabase()
-    .storage.from(petAvatarBucket)
-    .createSignedUrl(objectPath, 3600);
-
-  if (error) {
-    throw error;
-  }
-
-  return data.signedUrl;
-}

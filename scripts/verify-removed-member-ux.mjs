@@ -115,6 +115,7 @@ assert.match(cleanup, /removeQueries/u);
 assert.match(cleanup, /filter\(\(pet\) => pet\.id !== petId\)/u);
 assert.match(cleanup, /setCurrentPetId\(null\)/u);
 assert.match(cleanup, /syncCareTaskNotifications/u);
+assert.match(cleanup, /storageSignedUrlKeys\.all/u);
 assert.match(realtime, /membershipRecheckIntervalMs/u);
 assert.match(realtime, /AppState\.addEventListener/u);
 assert.match(realtime, /clearInterval\(membershipRecheck\)/u);

@@ -109,7 +109,8 @@
     "verify:save-photo": "node --experimental-strip-types scripts/verify-save-photo.mjs",
     "verify:journal-browsing": "node --experimental-strip-types scripts/verify-journal-browsing.mjs",
     "verify:photo-editor": "node --experimental-strip-types scripts/verify-photo-editor.mjs",
-    "verify:ipad-layout": "node --experimental-strip-types scripts/verify-ipad-layout.mjs"
+    "verify:ipad-layout": "node --experimental-strip-types scripts/verify-ipad-layout.mjs",
+    "verify:media-egress-cache": "node scripts/verify-media-egress-cache.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"
