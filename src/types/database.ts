@@ -262,6 +262,57 @@ export type Database = {
           },
         ];
       };
+      families: {
+        Row: {
+          created_at: string;
+          id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      family_invites: {
+        Row: {
+          created_at: string;
+          expires_at: string;
+          family_id: string;
+          id: string;
+          invited_by: string;
+          max_uses: number;
+          revoked_at: string | null;
+          used_count: number;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'family_invites_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      family_members: {
+        Row: {
+          created_at: string;
+          family_id: string;
+          role: Database['public']['Enums']['pet_member_role'];
+          user_id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'family_members_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       pet_invites: {
         Row: {
           created_at: string;
@@ -467,6 +518,7 @@ export type Database = {
           breed: string | null;
           created_at: string;
           description: string | null;
+          family_id: string | null;
           gender: Database['public']['Enums']['pet_gender'];
           id: string;
           name: string;
@@ -481,6 +533,7 @@ export type Database = {
           breed?: string | null;
           created_at?: string;
           description?: string | null;
+          family_id?: string | null;
           gender?: Database['public']['Enums']['pet_gender'];
           id?: string;
           name: string;
@@ -499,7 +552,15 @@ export type Database = {
           species?: Database['public']['Enums']['pet_species'];
           weight?: number | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'pets_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: Record<never, never>;
