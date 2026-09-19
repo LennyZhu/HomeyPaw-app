@@ -88,6 +88,29 @@ async function activeMemberCount(owner) {
   ).length;
 }
 
+async function createInvite(owner) {
+  const result = await owner.client.rpc('create_pet_invite', {
+    target_pet_id: petId,
+  });
+  const invite = result.data?.[0];
+  if (result.error || !invite) {
+    throw result.error ?? new Error('Could not create a family cap invite.');
+  }
+  return invite;
+}
+
+function backdateInvitePair(inviteId) {
+  runLocalSql(`
+    update public.pet_invites
+    set created_at = created_at - interval '1 minute'
+    where id = '${assertUuid(inviteId)}'::uuid;
+
+    update public.family_invites
+    set created_at = created_at - interval '1 minute'
+    where id = '${assertUuid(inviteId)}'::uuid;
+  `);
+}
+
 async function main() {
   const owner = await createUser('owner');
   const candidates = [];
@@ -121,27 +144,12 @@ async function main() {
       'Fixture did not reach owner plus eight members.',
     );
 
-    const inviteCodes = ['23456789', 'ABCDEFGH', '34567892'];
-    runLocalSql(`
-      insert into public.pet_invites (
-        pet_id,
-        invited_by,
-        code_hash,
-        expires_at,
-        max_uses
-      ) values (
-        '${petId}'::uuid,
-        '${assertUuid(owner.id)}'::uuid,
-        private.pet_invite_code_hash('${inviteCodes[0]}'),
-        now() + interval '1 day',
-        5
-      );
-    `);
+    const firstInvite = await createInvite(owner);
 
     const concurrentAttempts = await Promise.all(
-      [candidates[8], candidates[9]].map((user, index) =>
+      [candidates[8], candidates[9]].map((user) =>
         user.client.rpc('join_pet_with_invite', {
-          invite_code: inviteCodes[0],
+          invite_code: firstInvite.invite_code,
         }),
       ),
     );
@@ -167,7 +175,7 @@ async function main() {
 
     const winner = candidates[8 + winners[0].index];
     const winnerRepeat = await winner.client.rpc('join_pet_with_invite', {
-      invite_code: inviteCodes[0],
+      invite_code: firstInvite.invite_code,
     });
     expect(
       !winnerRepeat.error &&
@@ -175,27 +183,10 @@ async function main() {
       'Existing member reuse stopped being idempotent at capacity.',
     );
 
-    runLocalSql(`
-      update public.pet_invites
-      set revoked_at = now()
-      where pet_id = '${petId}'::uuid and revoked_at is null;
-
-      insert into public.pet_invites (
-        pet_id,
-        invited_by,
-        code_hash,
-        expires_at,
-        max_uses
-      ) values (
-        '${petId}'::uuid,
-        '${assertUuid(owner.id)}'::uuid,
-        private.pet_invite_code_hash('${inviteCodes[1]}'),
-        now() + interval '1 day',
-        5
-      );
-    `);
+    backdateInvitePair(firstInvite.invite_id);
+    const secondInvite = await createInvite(owner);
     const eleventh = await candidates[10].client.rpc('join_pet_with_invite', {
-      invite_code: inviteCodes[1],
+      invite_code: secondInvite.invite_code,
     });
     expect(
       eleventh.error?.message.includes('family_member_limit_reached'),
@@ -216,23 +207,10 @@ async function main() {
       'Member removal did not free one family slot.',
     );
 
-    runLocalSql(`
-      insert into public.pet_invites (
-        pet_id,
-        invited_by,
-        code_hash,
-        expires_at,
-        max_uses
-      ) values (
-        '${petId}'::uuid,
-        '${assertUuid(owner.id)}'::uuid,
-        private.pet_invite_code_hash('${inviteCodes[2]}'),
-        now() + interval '1 day',
-        5
-      );
-    `);
+    backdateInvitePair(secondInvite.invite_id);
+    const thirdInvite = await createInvite(owner);
     const retry = await candidates[10].client.rpc('join_pet_with_invite', {
-      invite_code: inviteCodes[2],
+      invite_code: thirdInvite.invite_code,
     });
     expect(
       !retry.error && retry.data?.[0]?.join_status === 'joined',

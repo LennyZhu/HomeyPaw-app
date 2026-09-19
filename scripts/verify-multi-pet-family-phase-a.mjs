@@ -281,8 +281,15 @@ expectSql(
      );`,
 );
 
+const phaseB1Applied =
+  sql(`select pg_get_functiondef(
+    'public.create_pet(text,public.pet_species,text,public.pet_gender,date,date,numeric,text)'::regprocedure
+  ) like '%insert into public.family_members%';`) === 't';
+
 expectSql(
-  'Legacy create_pet still creates its Owner membership with nullable family_id.',
+  phaseB1Applied
+    ? 'B1 create_pet keeps the Phase A Family foundation consistent.'
+    : 'Legacy create_pet still creates its Owner membership with nullable family_id.',
   `begin;
    insert into auth.users (
      id, aud, role, email, raw_user_meta_data, created_at, updated_at
@@ -315,8 +322,14 @@ expectSql(
      select 1
      from public.pets as pet
      join public.pet_members as member on member.pet_id = pet.id
+     ${
+       phaseB1Applied
+         ? 'join public.families as family on family.id = pet.family_id\n     join public.family_members as family_member\n       on family_member.family_id = pet.family_id\n      and family_member.user_id = member.user_id\n      and family_member.role = member.role\n      and family_member.created_at = member.created_at'
+         : ''
+     }
      where pet.name = 'Phase A compatibility Pet'
-       and pet.family_id is null
+       and pet.family_id is ${phaseB1Applied ? 'not null' : 'null'}
+       ${phaseB1Applied ? 'and pet.family_id <> pet.id' : ''}
        and member.user_id = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'::uuid
        and member.role = 'owner'
    );
