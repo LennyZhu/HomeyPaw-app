@@ -5,6 +5,14 @@ import {
   getProfilePresentationState,
   profileKeys,
 } from '../src/features/profile/profile-query-state.ts';
+import {
+  compareNumericVersions,
+  HOMEYPAW_APP_STORE_ID,
+  HOMEYPAW_APP_STORE_LOOKUP_URL,
+  HOMEYPAW_APP_STORE_URL,
+  lookupLatestAppStoreVersion,
+  parseAppStoreVersion,
+} from '../src/features/profile/about-update.ts';
 
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
@@ -52,6 +60,47 @@ console.log(
   'PASS: initial loading/error are gated by missing data; cached content survives refetch failures.',
 );
 
+assert.equal(compareNumericVersions('1.1.1', '1.1.1'), 0);
+assert.equal(compareNumericVersions('1.1.1', '1.1.2'), 1);
+assert.equal(compareNumericVersions('1.9.9', '1.10.0'), 1);
+assert.equal(compareNumericVersions('1.10.0', '1.9.9'), -1);
+assert.equal(compareNumericVersions('1.1', '1.1.2'), null);
+assert.equal(parseAppStoreVersion({ resultCount: 0, results: [] }), null);
+assert.equal(
+  parseAppStoreVersion({ resultCount: 1, results: [{ version: 'latest' }] }),
+  null,
+);
+assert.equal(HOMEYPAW_APP_STORE_ID, '6806111286');
+assert.equal(
+  HOMEYPAW_APP_STORE_LOOKUP_URL,
+  'https://itunes.apple.com/lookup?id=6806111286&country=hk',
+);
+assert(HOMEYPAW_APP_STORE_LOOKUP_URL.includes('id=6806111286'));
+assert(HOMEYPAW_APP_STORE_LOOKUP_URL.includes('country=hk'));
+assert.equal(HOMEYPAW_APP_STORE_URL, 'https://apps.apple.com/app/id6806111286');
+assert(!HOMEYPAW_APP_STORE_URL.includes('country='));
+await assert.rejects(
+  lookupLatestAppStoreVersion({
+    fetcher: async () => {
+      throw new Error('offline');
+    },
+  }),
+  /offline/u,
+);
+await assert.rejects(
+  lookupLatestAppStoreVersion({
+    fetcher: async () => ({
+      json: async () => ({ resultCount: 1, results: [{ version: 'latest' }] }),
+      ok: true,
+      status: 200,
+    }),
+  }),
+  /invalid version/u,
+);
+console.log(
+  'PASS: About compares numeric App Store versions and handles malformed or failed lookups.',
+);
+
 const [
   packageText,
   profileScreen,
@@ -89,6 +138,7 @@ assert.equal(
   packageJson.scripts['verify:profile-ui'],
   'node --experimental-strip-types scripts/verify-profile-ui.mjs',
 );
+assert.equal(packageJson.dependencies['expo-application'], '~57.0.3');
 assert(useProfile.includes('queryKey: profileKeys.detail(user?.id)'));
 assert(useProfile.includes('profileQuery.isPending && !profileQuery.data'));
 assert(useProfile.includes('queryClient.cancelQueries({ queryKey })'));
@@ -194,13 +244,24 @@ assert(joinFamily.includes('maxLength={8}'));
 assert(editProfile.includes('<ProfileForm'));
 assert(profileForm.includes('await updateProfile(updates)'));
 assert(editProfile.includes('router.back()'));
-assert(aboutScreen.includes("t('about.version', { build, version })"));
+assert(aboutScreen.includes('Application.nativeApplicationVersion'));
+assert(aboutScreen.includes('lookupLatestAppStoreVersion()'));
+assert(aboutScreen.includes('HOMEYPAW_APP_STORE_URL'));
+assert(aboutScreen.includes('Linking.openURL(HOMEYPAW_APP_STORE_URL)'));
+assert(aboutScreen.includes("t('about.appStoreOpenError')"));
+assert(aboutScreen.includes("t('about.currentVersion')"));
+assert(aboutScreen.includes("t('about.checkForUpdates')"));
+assert(!aboutScreen.includes('requireSupabase'));
 const en = JSON.parse(enText);
 const zh = JSON.parse(zhText);
 assert.equal(en.pets.list.addPet, 'Add Pet');
 assert.equal(en.pets.list.joinFamily, 'Join Family');
 assert.equal(zh.pets.list.addPet, '新增毛孩');
 assert.equal(zh.pets.list.joinFamily, '加入家庭');
+assert.equal(en.about.currentVersion, 'Current Version');
+assert.equal(en.about.openAppStore, 'Open App Store');
+assert.equal(zh.about.currentVersion, '目前版本');
+assert.equal(zh.about.openAppStore, '前往 App Store');
 console.log(
   'PASS: Join Family, Edit Profile, About, bilingual actions, and eight-character invites remain intact.',
 );

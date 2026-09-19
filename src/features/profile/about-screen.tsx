@@ -1,13 +1,19 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import { Image } from 'expo-image';
 import { type Href, useRouter } from 'expo-router';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
 import { IconButton } from '@/components/icon-button';
 import { Screen } from '@/components/screen';
+import {
+  compareNumericVersions,
+  HOMEYPAW_APP_STORE_URL,
+  lookupLatestAppStoreVersion,
+} from '@/features/profile/about-update';
 import { lightColors, radius, spacing } from '@/theme';
 
 const links = [
@@ -21,11 +27,95 @@ const links = [
 
 const supportEmail = 'lenny996@163.com';
 
+type UpdateState =
+  | { status: 'checking' }
+  | { status: 'error' }
+  | { status: 'latest' }
+  | { status: 'available'; version: string };
+
 export default function AboutScreen() {
   const router = useRouter();
   const { t } = useTranslation();
-  const version = Constants.expoConfig?.version ?? '1.0.0';
-  const build = Constants.nativeBuildVersion ?? '1';
+  const version = Application.nativeApplicationVersion ?? '—';
+  const [updateState, setUpdateState] = useState<UpdateState>({
+    status: 'checking',
+  });
+  const requestIdRef = useRef(0);
+
+  const finishUpdateCheck = useCallback(
+    async (requestId: number) => {
+      try {
+        const storeVersion = await lookupLatestAppStoreVersion();
+        if (requestIdRef.current !== requestId) return;
+
+        const comparison = compareNumericVersions(version, storeVersion);
+        if (comparison === null) {
+          throw new Error('Installed app version is not a semantic version.');
+        }
+
+        setUpdateState(
+          comparison > 0
+            ? { status: 'available', version: storeVersion }
+            : { status: 'latest' },
+        );
+      } catch {
+        if (requestIdRef.current === requestId) {
+          setUpdateState({ status: 'error' });
+        }
+      }
+    },
+    [version],
+  );
+
+  const checkForUpdates = useCallback(() => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setUpdateState({ status: 'checking' });
+    void finishUpdateCheck(requestId);
+  }, [finishUpdateCheck]);
+
+  useEffect(() => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    void finishUpdateCheck(requestId);
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [finishUpdateCheck]);
+
+  const openAppStore = async () => {
+    try {
+      await Linking.openURL(HOMEYPAW_APP_STORE_URL);
+    } catch {
+      Alert.alert(t('common.error'), t('about.appStoreOpenError'));
+    }
+  };
+
+  const handleUpdatePress = () => {
+    if (updateState.status !== 'available') {
+      checkForUpdates();
+      return;
+    }
+
+    Alert.alert(
+      t('about.checkForUpdates'),
+      t('about.updateAvailable', { version: updateState.version }),
+      [
+        { style: 'cancel', text: t('about.later') },
+        { text: t('about.openAppStore'), onPress: () => void openAppStore() },
+      ],
+    );
+  };
+
+  const updateStatus =
+    updateState.status === 'checking'
+      ? t('about.checking')
+      : updateState.status === 'latest'
+        ? t('about.upToDate')
+        : updateState.status === 'available'
+          ? t('about.updateAvailable', { version: updateState.version })
+          : t('about.checkError');
 
   return (
     <Screen contentContainerStyle={styles.content} scroll>
@@ -56,12 +146,49 @@ export default function AboutScreen() {
         <AppText style={styles.centered} tone="secondary">
           {t('about.tagline')}
         </AppText>
-        <AppText tone="tertiary" variant="footnote">
-          {t('about.version', { build, version })}
-        </AppText>
       </View>
 
       <View style={styles.card}>
+        <View style={styles.row}>
+          <Ionicons
+            color={lightColors.secondary}
+            name="information-circle-outline"
+            size={22}
+          />
+          <AppText style={styles.rowText}>{t('about.currentVersion')}</AppText>
+          <AppText tone="secondary">{version}</AppText>
+        </View>
+        <Pressable
+          accessibilityLabel={`${t('about.checkForUpdates')}: ${updateStatus}`}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: updateState.status === 'checking' }}
+          disabled={updateState.status === 'checking'}
+          onPress={handleUpdatePress}
+          style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+        >
+          <Ionicons
+            color={lightColors.secondary}
+            name="cloud-download-outline"
+            size={22}
+          />
+          <View style={styles.updateText}>
+            <AppText>{t('about.checkForUpdates')}</AppText>
+            <AppText
+              accessibilityLiveRegion="polite"
+              tone={updateState.status === 'available' ? 'brand' : 'secondary'}
+              variant="footnote"
+            >
+              {updateStatus}
+            </AppText>
+          </View>
+          {updateState.status === 'checking' ? null : (
+            <Ionicons
+              color={lightColors.textTertiary}
+              name="chevron-forward"
+              size={18}
+            />
+          )}
+        </Pressable>
         {links.map((item) => (
           <Pressable
             accessibilityLabel={t(`about.${item.key}`)}
@@ -134,6 +261,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   rowText: { flex: 1, paddingHorizontal: spacing.md },
+  updateText: { flex: 1, gap: spacing.xs, paddingHorizontal: spacing.md },
   pressed: { backgroundColor: lightColors.surfaceSecondary },
   contactCard: {
     backgroundColor: lightColors.secondarySoft,
