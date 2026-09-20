@@ -347,6 +347,25 @@ async function removeMember(petId: string, userId: string) {
   return { familyId, status: data };
 }
 
+export async function transferFamilyOwnership(
+  familyId: string,
+  newOwnerUserId: string,
+) {
+  const { data, error } = await requireSupabase().rpc(
+    'transfer_family_ownership',
+    {
+      new_owner_user_id: newOwnerUserId,
+      target_family_id: familyId,
+    },
+  );
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export function usePetMembers(petId: string | null) {
   const { user } = useAuth();
   const queryClient = useQueryClient();

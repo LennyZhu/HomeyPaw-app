@@ -248,7 +248,13 @@ function expectFamilyInvariant(familyId, label) {
   expectSql(
     label,
     `select
-       not exists (
+       (
+         select count(*) = 1
+         from public.family_members
+         where family_id = '${familyId}'::uuid
+           and role = 'owner'
+       )
+       and not exists (
          select 1
          from public.pets as pet
          cross join public.family_members as family_member

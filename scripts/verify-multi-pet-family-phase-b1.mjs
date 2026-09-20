@@ -181,12 +181,14 @@ function expectDriftFree(label) {
          having count(member.user_id) <> 1
        )
        and not exists (
-         select family.id
+         select 1
          from public.families as family
-         left join public.family_members as member
-           on member.family_id = family.id and member.role = 'owner'
-         group by family.id
-         having count(member.user_id) <> 1
+         where (
+           select count(*)
+           from public.family_members as member
+           where member.family_id = family.id
+             and member.role = 'owner'
+         ) <> 1
        )
        and not exists (
          select 1

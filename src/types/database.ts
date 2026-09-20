@@ -974,6 +974,10 @@ export type Database = {
         Args: { target_pet_id: string; target_user_id: string };
         Returns: 'not_found' | 'removed';
       };
+      transfer_family_ownership: {
+        Args: { new_owner_user_id: string; target_family_id: string };
+        Returns: 'already_owner' | 'transferred';
+      };
       revoke_family_invite: {
         Args: { target_family_id: string };
         Returns: boolean;

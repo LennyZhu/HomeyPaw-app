@@ -1,9 +1,36 @@
+import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
 import { createClient } from '@supabase/supabase-js';
 
 const fixtureName = 'HomeyPaw Phase 7 Verification Pet';
 const fixtureDescription = 'Temporary Phase 7 care-task RLS verification';
+const localDbContainer =
+  process.env.SUPABASE_LOCAL_DB_CONTAINER?.trim() ?? 'supabase_db_pawday';
+
+if (!/^supabase_db_[a-z0-9_-]+$/u.test(localDbContainer)) {
+  throw new Error('SAFETY STOP: Phase 7 requires a local DB container.');
+}
+
+function deleteFixtureFamily(familyId) {
+  execFileSync(
+    'docker',
+    [
+      'exec',
+      localDbContainer,
+      'psql',
+      '-U',
+      'postgres',
+      '-d',
+      'postgres',
+      '-v',
+      'ON_ERROR_STOP=1',
+      '-c',
+      `delete from public.families where id = '${familyId}'::uuid;`,
+    ],
+    { stdio: 'ignore' },
+  );
+}
 
 function required(name) {
   const value = process.env[name]?.trim();
@@ -161,6 +188,7 @@ async function main() {
     'Stranger',
   );
   let petId = null;
+  let familyId = null;
 
   try {
     const { data: stalePets } = await ownerClient
@@ -178,6 +206,7 @@ async function main() {
     });
     if (petError || !pet) throw new Error('Pet fixture creation failed.');
     petId = pet.id;
+    familyId = pet.family_id;
 
     const { data: invites, error: inviteError } = await ownerClient.rpc(
       'create_pet_invite',
@@ -485,6 +514,7 @@ async function main() {
     console.log('PASS: Pet deletion removes tasks.');
   } finally {
     if (petId) await deletePet(ownerClient, petId);
+    if (familyId) deleteFixtureFamily(familyId);
     await Promise.all([
       ownerClient.auth.signOut(),
       memberClient.auth.signOut(),

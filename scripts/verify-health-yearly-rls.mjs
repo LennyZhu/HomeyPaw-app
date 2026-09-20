@@ -17,6 +17,7 @@ const admin = createClient(url, serviceKey, {
 });
 const users = [];
 const pets = [];
+const families = new Set();
 
 function sql(statement) {
   execFileSync('docker', [
@@ -72,6 +73,7 @@ async function pet(owner, label) {
   if (result.error || !result.data)
     throw result.error ?? new Error('pet create failed');
   pets.push(result.data.id);
+  families.add(result.data.family_id);
   return result.data.id;
 }
 function membership(petId, userId, role = 'member') {
@@ -457,6 +459,9 @@ try {
 } finally {
   for (const petId of pets) {
     sql(`delete from public.pets where id = '${petId}'::uuid;`);
+  }
+  for (const familyId of families) {
+    sql(`delete from public.families where id = '${familyId}'::uuid;`);
   }
   for (const item of users) {
     const deleted = await admin.auth.admin.deleteUser(item.id);

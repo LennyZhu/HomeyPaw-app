@@ -26,7 +26,7 @@ const admin = createClient(localUrl, localServiceRoleKey, {
 let auditClient;
 
 function runLocalSql(sql) {
-  execFileSync(
+  return execFileSync(
     'docker',
     [
       'exec',
@@ -36,13 +36,15 @@ function runLocalSql(sql) {
       'postgres',
       '-d',
       'postgres',
+      '-q',
+      '-tA',
       '-v',
       'ON_ERROR_STOP=1',
       '-c',
       sql,
     ],
     { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-  );
+  ).trim();
 }
 
 function createTestClient() {
@@ -1407,13 +1409,31 @@ async function main() {
       tasks: [ownerTwoTask],
     });
     expect(!ownerTwoShift.error, 'Owner Plan A Schedule fixture failed.');
+    const ownerTwoFamilyId = runLocalSql(
+      `select family_id from public.pets where id = '${ownerTwoPet}'::uuid;`,
+    );
     runLocalSql(`delete from public.pets where id = '${ownerTwoPet}'::uuid;`);
     const ownerDelete = await admin.auth.admin.deleteUser(ownerTwo.id);
-    expect(!ownerDelete.error, 'Owner Plan A account deletion failed.');
+    expect(
+      Boolean(ownerDelete.error),
+      'Owner auth deletion did not fail closed while its zero-Pet Family remained.',
+    );
     runLocalSql(
       `do $$ begin if exists (select 1 from public.care_shifts where pet_id = '${ownerTwoPet}'::uuid) then raise exception 'Owner Plan A left Schedule rows'; end if; end $$;`,
     );
-    console.log('PASS: Owner Plan A deletes Pet schedule before Auth account.');
+    runLocalSql(
+      `delete from public.families where id = '${ownerTwoFamilyId}'::uuid;`,
+    );
+    const ownerDeleteAfterFamily = await admin.auth.admin.deleteUser(
+      ownerTwo.id,
+    );
+    expect(
+      !ownerDeleteAfterFamily.error,
+      'Owner auth deletion failed after Family cleanup.',
+    );
+    console.log(
+      'PASS: Pet deletion clears Schedule data; unsafe zero-Pet Owner auth deletion fails closed until Family deletion.',
+    );
 
     const start = localDate;
     const range42 = await owner.client.rpc('get_care_schedule_range', {

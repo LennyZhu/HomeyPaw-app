@@ -28,6 +28,7 @@ const admin = createClient(url, serviceKey, {
 const users = [];
 const deletedUsers = new Set();
 const petIds = new Set();
+const familyIds = new Set();
 const storagePaths = new Map([
   ['pet-avatars', new Set()],
   ['post-media', new Set()],
@@ -110,6 +111,7 @@ async function createPet(owner, label) {
     throw created.error ?? new Error('Pet creation failed.');
   }
   petIds.add(created.data.id);
+  familyIds.add(created.data.family_id);
   return created.data.id;
 }
 
@@ -515,6 +517,9 @@ async function verifyPreviewInvite() {
 async function cleanup() {
   for (const petId of petIds) {
     sql(`delete from public.pets where id='${petId}'::uuid;`);
+  }
+  for (const familyId of familyIds) {
+    sql(`delete from public.families where id='${familyId}'::uuid;`);
   }
   for (const [bucket, paths] of storagePaths) {
     if (paths.size > 0) {

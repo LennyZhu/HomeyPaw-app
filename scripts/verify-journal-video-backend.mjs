@@ -23,6 +23,8 @@ const admin = createClient(url, serviceKey, {
 const users = [];
 const deletedUsers = new Set();
 const petIds = new Set();
+const familyIds = new Set();
+const petFamilyIds = new Map();
 const fakeStorageRows = [];
 const storagePaths = new Map([
   ['post-media', new Set()],
@@ -115,6 +117,8 @@ async function createPet(owner, label) {
     throw created.error ?? new Error('Pet creation failed.');
   }
   petIds.add(created.data.id);
+  familyIds.add(created.data.family_id);
+  petFamilyIds.set(created.data.id, created.data.family_id);
   return created.data.id;
 }
 
@@ -1124,26 +1128,36 @@ async function verifyDeleteLifecycles(context) {
     confirmation: 'DELETE_MY_ACCOUNT',
   });
   expect(
-    deletedAccount.status === 200 && deletedAccount.payload.deleted === true,
-    `Video delete-account failed (${deletedAccount.status}).`,
+    deletedAccount.status === 500 && deletedAccount.payload.deleted !== true,
+    `Owner delete-account did not fail closed (${deletedAccount.status}).`,
   );
+  sql(
+    `delete from public.families where id = '${petFamilyIds.get(accountPetId)}'::uuid;`,
+  );
+  familyIds.delete(petFamilyIds.get(accountPetId));
+  const accountAuthDelete = await admin.auth.admin.deleteUser(accountUser.id);
+  expect(!accountAuthDelete.error, 'Account fixture cleanup failed.');
   deletedUsers.add(accountUser.id);
   petIds.delete(accountPetId);
+  runCleanupWorker();
   expect(
     count(
       `select count(*) from storage.objects where name in ('${accountVideo.storagePath}','${accountVideo.thumbnailPath}');`,
     ) === 0,
-    'delete-account left video Storage objects.',
+    'delete-account failure cleanup jobs left video Storage objects.',
   );
 
   console.log(
-    'PASS: delete-post, delete-pet, and delete-account remove video metadata and both private objects; durable jobs cover retry.',
+    'PASS: delete-post/delete-pet remove video data; Owner delete-account clears Pet data then fails closed until Family cleanup.',
   );
 }
 
 async function cleanup() {
   for (const petId of petIds) {
     await admin.from('pets').delete().eq('id', petId);
+  }
+  for (const familyId of familyIds) {
+    sql(`delete from public.families where id = '${familyId}'::uuid;`);
   }
 
   try {

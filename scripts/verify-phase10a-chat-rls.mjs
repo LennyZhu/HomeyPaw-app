@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
 import { createClient } from '@supabase/supabase-js';
@@ -5,6 +6,8 @@ import { createClient } from '@supabase/supabase-js';
 const localUrl = process.env.SUPABASE_LOCAL_URL?.trim();
 const localAnonKey = process.env.SUPABASE_LOCAL_ANON_KEY?.trim();
 const localServiceRoleKey = process.env.SUPABASE_LOCAL_SERVICE_ROLE_KEY?.trim();
+const localDbContainer =
+  process.env.SUPABASE_LOCAL_DB_CONTAINER?.trim() ?? 'supabase_db_pawday';
 
 if (!localUrl || !localAnonKey || !localServiceRoleKey) {
   throw new Error(
@@ -15,6 +18,9 @@ if (!localUrl || !localAnonKey || !localServiceRoleKey) {
 const parsedUrl = new URL(localUrl);
 if (!['127.0.0.1', 'localhost'].includes(parsedUrl.hostname)) {
   throw new Error('SAFETY STOP: Phase 10A RLS verification only runs locally.');
+}
+if (!/^supabase_db_[a-z0-9_-]+$/u.test(localDbContainer)) {
+  throw new Error('SAFETY STOP: Phase 10A requires a local DB container.');
 }
 
 const admin = createClient(localUrl, localServiceRoleKey, {
@@ -34,6 +40,26 @@ function createTestClient() {
 
 function expect(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+function deleteFixtureFamily(familyId) {
+  execFileSync(
+    'docker',
+    [
+      'exec',
+      localDbContainer,
+      'psql',
+      '-U',
+      'postgres',
+      '-d',
+      'postgres',
+      '-v',
+      'ON_ERROR_STOP=1',
+      '-c',
+      `delete from public.families where id = '${familyId}'::uuid;`,
+    ],
+    { stdio: 'ignore' },
+  );
 }
 
 const uuidPattern =
@@ -397,6 +423,7 @@ async function main() {
   let petId;
   let crossPetId;
   let ownerDeletePetId;
+  let ownerDeleteFamilyId;
   let ownerDeletionUser;
 
   try {
@@ -1177,6 +1204,16 @@ async function main() {
       ownerDeletionUser.client,
       'Owner deletion Pet',
     );
+    const { data: ownerDeletePet, error: ownerDeletePetReadError } =
+      await ownerDeletionUser.client
+        .from('pets')
+        .select('family_id')
+        .eq('id', ownerDeletePetId)
+        .single();
+    if (ownerDeletePetReadError || !ownerDeletePet.family_id) {
+      throw ownerDeletePetReadError ?? new Error('Owner Family read failed.');
+    }
+    ownerDeleteFamilyId = ownerDeletePet.family_id;
     const ownerDeletionMessage = await send(
       ownerDeletionUser.client,
       ownerDeletePetId,
@@ -1191,7 +1228,17 @@ async function main() {
     const { error: ownerAuthDeleteError } = await admin.auth.admin.deleteUser(
       ownerDeletionUser.id,
     );
-    if (ownerAuthDeleteError) throw ownerAuthDeleteError;
+    expect(
+      Boolean(ownerAuthDeleteError),
+      'Owner auth deletion did not fail closed while its zero-Pet Family remained.',
+    );
+    deleteFixtureFamily(ownerDeleteFamilyId);
+    ownerDeleteFamilyId = null;
+    const { error: ownerAuthDeleteAfterFamilyError } =
+      await admin.auth.admin.deleteUser(ownerDeletionUser.id);
+    if (ownerAuthDeleteAfterFamilyError) {
+      throw ownerAuthDeleteAfterFamilyError;
+    }
     createdUserIds.splice(createdUserIds.indexOf(ownerDeletionUser.id), 1);
     const { data: ownerDeletedMessageRows, error: ownerDeletedMessageError } =
       await ownerDeletionUser.client
@@ -1246,7 +1293,7 @@ async function main() {
       'PASS: validation, edit-own, idempotency, cursor unread, and 70+ pages.',
     );
     console.log(
-      'PASS: account and pet deletion cascades with version rotation.',
+      'PASS: Member deletion cascades; unsafe zero-Pet Owner auth deletion fails closed until Family deletion.',
     );
   } finally {
     for (const [client, channel] of channels) {
@@ -1264,6 +1311,9 @@ async function main() {
         .from('pets')
         .delete()
         .eq('id', ownerDeletePetId);
+    }
+    if (ownerDeleteFamilyId) {
+      deleteFixtureFamily(ownerDeleteFamilyId);
     }
     if (petId && owner) {
       await owner.client.from('pets').delete().eq('id', petId);
