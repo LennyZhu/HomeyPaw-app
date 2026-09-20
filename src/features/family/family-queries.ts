@@ -10,11 +10,12 @@ import { petKeys } from '@/features/pets/pet-queries';
 import { createProfileAvatarSignedUrls } from '@/features/profile/profile-avatar';
 import { requireSupabase } from '@/lib/supabase/client';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
-import type { PetInvite, PetMemberRole, PetSpecies } from '@/types/database';
+import type { PetMemberRole, PetSpecies } from '@/types/database';
 
 import type {
   AccessibleFamily,
   Family,
+  FamilyInvite,
   FamilyMember,
   FamilyPet,
 } from './family-types';
@@ -231,13 +232,28 @@ async function fetchPostAuthors(petId: string): Promise<PetPostAuthor[]> {
   }));
 }
 
-async function fetchActiveInvite(petId: string): Promise<PetInvite | null> {
+async function resolvePetFamilyId(petId: string): Promise<string> {
   const { data, error } = await requireSupabase()
-    .from('pet_invites')
+    .from('pets')
+    .select('family_id')
+    .eq('id', petId)
+    .maybeSingle();
+
+  if (error || !data?.family_id) {
+    throw error ?? new Error('PET_FAMILY_MISSING');
+  }
+
+  return data.family_id;
+}
+
+async function fetchActiveInvite(petId: string): Promise<FamilyInvite | null> {
+  const familyId = await resolvePetFamilyId(petId);
+  const { data, error } = await requireSupabase()
+    .from('family_invites')
     .select(
-      'id, pet_id, invited_by, expires_at, max_uses, used_count, revoked_at, created_at',
+      'id, family_id, invited_by, expires_at, max_uses, used_count, revoked_at, created_at',
     )
-    .eq('pet_id', petId)
+    .eq('family_id', familyId)
     .is('revoked_at', null)
     .maybeSingle();
 
@@ -248,9 +264,12 @@ async function fetchActiveInvite(petId: string): Promise<PetInvite | null> {
   return data;
 }
 
-async function createInvite(petId: string): Promise<CreatedPetInvite> {
-  const { data, error } = await requireSupabase().rpc('create_pet_invite', {
-    target_pet_id: petId,
+async function createInvite(
+  petId: string,
+): Promise<CreatedPetInvite & { familyId: string }> {
+  const familyId = await resolvePetFamilyId(petId);
+  const { data, error } = await requireSupabase().rpc('create_family_invite', {
+    target_family_id: familyId,
   });
 
   if (error || !data[0]) {
@@ -262,6 +281,7 @@ async function createInvite(petId: string): Promise<CreatedPetInvite> {
     code: invite.invite_code,
     createdAt: invite.invite_created_at,
     expiresAt: invite.invite_expires_at,
+    familyId,
     id: invite.invite_id,
     maxUses: invite.invite_max_uses,
     usedCount: invite.invite_used_count,
@@ -269,8 +289,9 @@ async function createInvite(petId: string): Promise<CreatedPetInvite> {
 }
 
 async function revokeInvite(petId: string) {
-  const { data, error } = await requireSupabase().rpc('revoke_pet_invite', {
-    target_pet_id: petId,
+  const familyId = await resolvePetFamilyId(petId);
+  const { data, error } = await requireSupabase().rpc('revoke_family_invite', {
+    target_family_id: familyId,
   });
 
   if (error) {
@@ -295,36 +316,27 @@ export async function previewInvite(code: string): Promise<InvitePreview> {
 }
 
 async function joinPet(code: string): Promise<JoinPetResult> {
-  const { data, error } = await requireSupabase().rpc('join_pet_with_invite', {
-    invite_code: normalizeInviteCode(code),
-  });
+  const { data, error } = await requireSupabase().rpc(
+    'join_family_with_invite',
+    { invite_code: normalizeInviteCode(code) },
+  );
 
   if (error || !data[0]) {
     throw error ?? new Error('INVITE_INVALID');
   }
 
-  const joinedPetId = data[0].joined_pet_id;
-  const pet = await requireSupabase()
-    .from('pets')
-    .select('family_id')
-    .eq('id', joinedPetId)
-    .maybeSingle();
-
-  if (pet.error || !pet.data?.family_id) {
-    throw pet.error ?? new Error('JOINED_PET_FAMILY_MISSING');
-  }
-
   return {
-    familyId: pet.data.family_id,
-    petId: joinedPetId,
-    petName: data[0].joined_pet_name,
+    familyId: data[0].joined_family_id,
+    petId: data[0].display_pet_id,
+    petName: data[0].display_pet_name,
     status: data[0].join_status,
   };
 }
 
 async function removeMember(petId: string, userId: string) {
-  const { data, error } = await requireSupabase().rpc('remove_pet_member', {
-    target_pet_id: petId,
+  const familyId = await resolvePetFamilyId(petId);
+  const { data, error } = await requireSupabase().rpc('remove_family_member', {
+    target_family_id: familyId,
     target_user_id: userId,
   });
 
@@ -332,7 +344,7 @@ async function removeMember(petId: string, userId: string) {
     throw error;
   }
 
-  return data;
+  return { familyId, status: data };
 }
 
 export function usePetMembers(petId: string | null) {
@@ -373,15 +385,19 @@ export function useCreatePetInvite(petId: string) {
   return useMutation({
     mutationFn: () => createInvite(petId),
     onSuccess: (invite) => {
-      queryClient.setQueryData<PetInvite>(
+      queryClient.setQueriesData(
+        { queryKey: ['family', user?.id, 'invite'] },
+        null,
+      );
+      queryClient.setQueryData<FamilyInvite>(
         petFamilyKeys.activeInvite(user?.id, petId),
         {
           created_at: invite.createdAt,
           expires_at: invite.expiresAt,
+          family_id: invite.familyId,
           id: invite.id,
           invited_by: user!.id,
           max_uses: invite.maxUses,
-          pet_id: petId,
           revoked_at: null,
           used_count: invite.usedCount,
         },
@@ -397,8 +413,8 @@ export function useRevokePetInvite(petId: string) {
   return useMutation({
     mutationFn: () => revokeInvite(petId),
     onSuccess: () => {
-      queryClient.setQueryData(
-        petFamilyKeys.activeInvite(user?.id, petId),
+      queryClient.setQueriesData(
+        { queryKey: ['family', user?.id, 'invite'] },
         null,
       );
     },
@@ -421,7 +437,10 @@ export function useJoinPet() {
           queryKey: familyKeys.pets(user?.id, result.familyId),
         }),
         queryClient.invalidateQueries({
-          queryKey: petFamilyKeys.members(user?.id, result.petId),
+          queryKey: familyKeys.members(user?.id, result.familyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['family', user?.id, 'members'],
         }),
       ]);
       if (user) {
@@ -437,14 +456,19 @@ export function useRemovePetMember(petId: string) {
 
   return useMutation({
     mutationFn: (memberUserId: string) => removeMember(petId, memberUserId),
-    onSuccess: async () => {
-      queryClient.setQueryData(
-        petFamilyKeys.activeInvite(user?.id, petId),
+    onSuccess: async (result) => {
+      queryClient.setQueriesData(
+        { queryKey: ['family', user?.id, 'invite'] },
         null,
       );
-      await queryClient.invalidateQueries({
-        queryKey: petFamilyKeys.members(user?.id, petId),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: familyKeys.members(user?.id, result.familyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['family', user?.id, 'members'],
+        }),
+      ]);
       if (user) {
         void syncCareTaskNotifications(user.id).catch(() => undefined);
       }

@@ -816,6 +816,17 @@ export type Database = {
           task_title: string;
         }[];
       };
+      create_family_invite: {
+        Args: { target_family_id: string };
+        Returns: {
+          invite_code: string;
+          invite_created_at: string;
+          invite_expires_at: string;
+          invite_id: string;
+          invite_max_uses: number;
+          invite_used_count: number;
+        }[];
+      };
       create_pet_invite: {
         Args: { target_pet_id: string };
         Returns: {
@@ -856,6 +867,16 @@ export type Database = {
         Args: { failure_message: string; target_job_id: number };
         Returns: undefined;
       };
+      get_family_members: {
+        Args: { target_family_id: string };
+        Returns: {
+          member_avatar_path: string | null;
+          member_display_name: string;
+          member_joined_at: string;
+          member_role: Database['public']['Enums']['pet_member_role'];
+          member_user_id: string;
+        }[];
+      };
       get_pet_members: {
         Args: { target_pet_id: string };
         Returns: {
@@ -888,12 +909,31 @@ export type Database = {
           author_user_id: string;
         }[];
       };
+      join_family_with_invite: {
+        Args: { invite_code: string };
+        Returns: {
+          display_pet_id: string;
+          display_pet_name: string;
+          join_status: 'already_member' | 'joined';
+          joined_family_id: string;
+        }[];
+      };
       join_pet_with_invite: {
         Args: { invite_code: string };
         Returns: {
           join_status: 'already_member' | 'joined';
           joined_pet_id: string;
           joined_pet_name: string;
+        }[];
+      };
+      preview_family_invite: {
+        Args: { invite_code: string };
+        Returns: {
+          display_pet_breed: string | null;
+          display_pet_id: string;
+          display_pet_name: string;
+          display_pet_species: Database['public']['Enums']['pet_species'];
+          inviter_display_name: string;
         }[];
       };
       preview_pet_invite: {
@@ -905,9 +945,17 @@ export type Database = {
           pet_species: Database['public']['Enums']['pet_species'];
         }[];
       };
+      remove_family_member: {
+        Args: { target_family_id: string; target_user_id: string };
+        Returns: 'not_found' | 'removed';
+      };
       remove_pet_member: {
         Args: { target_pet_id: string; target_user_id: string };
         Returns: 'not_found' | 'removed';
+      };
+      revoke_family_invite: {
+        Args: { target_family_id: string };
+        Returns: boolean;
       };
       revoke_pet_invite: {
         Args: { target_pet_id: string };

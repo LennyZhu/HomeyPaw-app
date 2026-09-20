@@ -20,6 +20,7 @@ const admin = createClient(localUrl, localServiceRoleKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 const users = [];
+let familyId = null;
 let petId = null;
 
 function expect(condition, message) {
@@ -128,16 +129,23 @@ async function main() {
     });
     if (createdPet.error || !createdPet.data) throw createdPet.error;
     petId = assertUuid(createdPet.data.id);
+    familyId = assertUuid(createdPet.data.family_id);
 
     const initialMembers = candidates.slice(0, 8);
     runLocalSql(`
-      insert into public.pet_members (pet_id, user_id, role)
-      values ${initialMembers
-        .map(
-          (user) =>
-            `('${petId}'::uuid, '${assertUuid(user.id)}'::uuid, 'member'::public.pet_member_role)`,
-        )
-        .join(', ')};
+      with inserted as (
+        insert into public.family_members (family_id, user_id, role, created_at)
+        values ${initialMembers
+          .map(
+            (user) =>
+              `('${familyId}'::uuid, '${assertUuid(user.id)}'::uuid, 'member'::public.pet_member_role, clock_timestamp())`,
+          )
+          .join(', ')}
+        returning user_id, role, created_at
+      )
+      insert into public.pet_members (pet_id, user_id, role, created_at)
+      select '${petId}'::uuid, inserted.user_id, inserted.role, inserted.created_at
+      from inserted;
     `);
     expect(
       (await activeMemberCount(owner)) === 9,
@@ -222,8 +230,19 @@ async function main() {
     );
 
     runLocalSql(`
-      insert into public.pet_members (pet_id, user_id, role)
-      values ('${petId}'::uuid, '${assertUuid(viewer.id)}'::uuid, 'viewer'::public.pet_member_role);
+      with inserted as (
+        insert into public.family_members (family_id, user_id, role, created_at)
+        values (
+          '${familyId}'::uuid,
+          '${assertUuid(viewer.id)}'::uuid,
+          'viewer'::public.pet_member_role,
+          clock_timestamp()
+        )
+        returning user_id, role, created_at
+      )
+      insert into public.pet_members (pet_id, user_id, role, created_at)
+      select '${petId}'::uuid, inserted.user_id, inserted.role, inserted.created_at
+      from inserted;
     `);
     expect(
       (await activeMemberCount(owner)) === 10,
@@ -253,6 +272,11 @@ async function main() {
   } finally {
     if (petId) {
       runLocalSql(`delete from public.pets where id = '${petId}'::uuid;`);
+    }
+    if (familyId) {
+      runLocalSql(
+        `delete from public.families where id = '${familyId}'::uuid;`,
+      );
     }
     for (const user of users) {
       await admin.auth.admin.deleteUser(user.id).catch(() => undefined);

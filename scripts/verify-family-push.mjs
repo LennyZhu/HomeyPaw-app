@@ -54,6 +54,7 @@ const admin = createClient(url, serviceKey, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 const users = [];
+let familyId;
 let petId;
 
 function sql(statement) {
@@ -134,9 +135,21 @@ async function register(person, installation, token, platform = 'ios') {
 }
 
 async function addMember(person, role = 'member') {
-  sql(
-    `insert into public.pet_members (pet_id, user_id, role) values ('${petId}'::uuid, '${person.id}'::uuid, '${role}'::public.pet_member_role);`,
-  );
+  sql(`
+    with inserted as (
+      insert into public.family_members (family_id, user_id, role, created_at)
+      values (
+        '${familyId}'::uuid,
+        '${person.id}'::uuid,
+        '${role}'::public.pet_member_role,
+        clock_timestamp()
+      )
+      returning user_id, role, created_at
+    )
+    insert into public.pet_members (pet_id, user_id, role, created_at)
+    select '${petId}'::uuid, inserted.user_id, inserted.role, inserted.created_at
+    from inserted;
+  `);
 }
 
 async function claimExpected(sourceId, type, kind) {
@@ -239,6 +252,9 @@ async function createReminder(
 async function cleanup() {
   if (petId) {
     sql(`delete from public.pets where id = '${petId}'::uuid;`);
+  }
+  if (familyId) {
+    sql(`delete from public.families where id = '${familyId}'::uuid;`);
   }
   for (const person of users) {
     await admin.auth.admin.deleteUser(person.id).catch(() => undefined);
@@ -375,6 +391,7 @@ async function main() {
     if (pet.error || !pet.data)
       throw pet.error ?? new Error('Pet creation failed.');
     petId = pet.data.id;
+    familyId = pet.data.family_id;
     await addMember(memberA);
     await addMember(memberB);
     await addMember(viewer, 'viewer');

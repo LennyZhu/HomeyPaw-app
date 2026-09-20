@@ -146,26 +146,31 @@ function expectDriftFree(label) {
          where family.id is null
        )
        and not exists (
-         select family_id
-         from public.pets
-         group by family_id
-         having count(*) <> 1
+         select 1
+         from public.pets as pet
+         cross join public.family_members as family_member
+         where family_member.family_id = pet.family_id
+           and not exists (
+             select 1
+             from public.pet_members as pet_member
+             where pet_member.pet_id = pet.id
+               and pet_member.user_id = family_member.user_id
+               and pet_member.role = family_member.role
+               and pet_member.created_at = family_member.created_at
+           )
        )
        and not exists (
-         select pet.family_id, member.user_id, member.role, member.created_at
-         from public.pets as pet
-         join public.pet_members as member on member.pet_id = pet.id
-         except
-         select family_id, user_id, role, created_at
-         from public.family_members
-       )
-       and not exists (
-         select family_id, user_id, role, created_at
-         from public.family_members
-         except
-         select pet.family_id, member.user_id, member.role, member.created_at
-         from public.pets as pet
-         join public.pet_members as member on member.pet_id = pet.id
+         select 1
+         from public.pet_members as pet_member
+         join public.pets as pet on pet.id = pet_member.pet_id
+         where not exists (
+           select 1
+           from public.family_members as family_member
+           where family_member.family_id = pet.family_id
+             and family_member.user_id = pet_member.user_id
+             and family_member.role = pet_member.role
+             and family_member.created_at = pet_member.created_at
+         )
        )
        and not exists (
          select pet.id
@@ -176,38 +181,46 @@ function expectDriftFree(label) {
          having count(member.user_id) <> 1
        )
        and not exists (
-         select pet.id
-         from public.pets as pet
+         select family.id
+         from public.families as family
          left join public.family_members as member
-           on member.family_id = pet.family_id and member.role = 'owner'
-         group by pet.id
+           on member.family_id = family.id and member.role = 'owner'
+         group by family.id
          having count(member.user_id) <> 1
        )
        and not exists (
-         select
-           invite.id, pet.family_id, invite.invited_by, invite.code_hash,
-           invite.expires_at, invite.max_uses, invite.used_count,
-           invite.revoked_at, invite.created_at
-         from public.pets as pet
-         join public.pet_invites as invite on invite.pet_id = pet.id
-         except
-         select
-           id, family_id, invited_by, code_hash, expires_at, max_uses,
-           used_count, revoked_at, created_at
-         from public.family_invites
+         select 1
+         from public.family_invites as family_invite
+         where (
+           select count(*)
+           from public.pet_invites as pet_invite
+           join public.pets as pet on pet.id = pet_invite.pet_id
+           where pet_invite.id = family_invite.id
+             and pet.family_id = family_invite.family_id
+             and pet_invite.invited_by = family_invite.invited_by
+             and pet_invite.code_hash = family_invite.code_hash
+             and pet_invite.expires_at = family_invite.expires_at
+             and pet_invite.max_uses = family_invite.max_uses
+             and pet_invite.used_count = family_invite.used_count
+             and pet_invite.revoked_at is not distinct from family_invite.revoked_at
+             and pet_invite.created_at = family_invite.created_at
+             and pet_invite.pet_id = (
+               select anchor.id
+               from public.pets as anchor
+               where anchor.family_id = family_invite.family_id
+               order by anchor.created_at, anchor.id
+               limit 1
+             )
+         ) <> 1
        )
        and not exists (
-         select
-           id, family_id, invited_by, code_hash, expires_at, max_uses,
-           used_count, revoked_at, created_at
-         from public.family_invites
-         except
-         select
-           invite.id, pet.family_id, invite.invited_by, invite.code_hash,
-           invite.expires_at, invite.max_uses, invite.used_count,
-           invite.revoked_at, invite.created_at
-         from public.pets as pet
-         join public.pet_invites as invite on invite.pet_id = pet.id
+         select 1
+         from public.pet_invites as pet_invite
+         where not exists (
+           select 1
+           from public.family_invites as family_invite
+           where family_invite.id = pet_invite.id
+         )
        );`,
   );
 }
