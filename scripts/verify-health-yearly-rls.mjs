@@ -76,7 +76,16 @@ async function pet(owner, label) {
 }
 function membership(petId, userId, role = 'member') {
   sql(
-    `insert into public.pet_members (pet_id,user_id,role) values ('${petId}'::uuid,'${userId}'::uuid,'${role}'::public.pet_member_role);`,
+    `with membership as (
+       insert into public.pet_members (pet_id, user_id, role)
+       values ('${petId}'::uuid, '${userId}'::uuid, '${role}'::public.pet_member_role)
+       returning user_id, role, created_at
+     )
+     insert into public.family_members (family_id, user_id, role, created_at)
+     select pet.family_id, membership.user_id, membership.role,
+       membership.created_at
+     from membership
+     join public.pets as pet on pet.id = '${petId}'::uuid;`,
   );
 }
 async function health(client, petId, subtype, note = null, id = randomUUID()) {

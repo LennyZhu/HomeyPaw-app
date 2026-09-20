@@ -285,6 +285,12 @@ const phaseB1Applied =
   sql(`select pg_get_functiondef(
     'public.create_pet(text,public.pet_species,text,public.pet_gender,date,date,numeric,text)'::regprocedure
   ) like '%insert into public.family_members%';`) === 't';
+const phaseB2Applied =
+  sql(`select
+    pg_get_functiondef('private.is_family_member(uuid)'::regprocedure)
+      like '%from public.family_members%'
+    and pg_get_functiondef('private.is_family_member(uuid)'::regprocedure)
+      not like '%public.pet_members%';`) === 't';
 
 expectSql(
   phaseB1Applied
@@ -401,22 +407,55 @@ if (familyId) {
   }
 
   if (memberId) {
-    expectSql(
-      'Removing legacy membership immediately denies Family reads despite a stale mirror row.',
-      `begin;
-       delete from public.pet_members
-       where pet_id = (
-         select id from public.pets where family_id = '${familyId}'::uuid
-       )
-         and user_id = '${memberId}'::uuid;
-       set local role authenticated;
-       set local request.jwt.claim.sub = '${memberId}';
-       select
-         (select count(*) from public.families where id = '${familyId}'::uuid) = 0
-         and (select count(*) from public.family_members where family_id = '${familyId}'::uuid) = 0
-         and (select count(*) from public.family_invites where family_id = '${familyId}'::uuid) = 0;
-       rollback;`,
-    );
+    if (phaseB2Applied) {
+      expectSql(
+        'B2 Family reads remain authorized when only the legacy mirror is missing.',
+        `begin;
+         delete from public.pet_members
+         where pet_id = (
+           select id from public.pets where family_id = '${familyId}'::uuid
+         )
+           and user_id = '${memberId}'::uuid;
+         set local role authenticated;
+         set local request.jwt.claim.sub = '${memberId}';
+         select
+           (select count(*) from public.families where id = '${familyId}'::uuid) = 1
+           and (select count(*) from public.family_members where family_id = '${familyId}'::uuid) = ${memberCount}
+           and (select count(*) from public.family_invites where family_id = '${familyId}'::uuid) = 0;
+         rollback;`,
+      );
+      expectSql(
+        'B2 Family removal denies reads despite a stale legacy membership.',
+        `begin;
+         delete from public.family_members
+         where family_id = '${familyId}'::uuid
+           and user_id = '${memberId}'::uuid;
+         set local role authenticated;
+         set local request.jwt.claim.sub = '${memberId}';
+         select
+           (select count(*) from public.families where id = '${familyId}'::uuid) = 0
+           and (select count(*) from public.family_members where family_id = '${familyId}'::uuid) = 0
+           and (select count(*) from public.family_invites where family_id = '${familyId}'::uuid) = 0;
+         rollback;`,
+      );
+    } else {
+      expectSql(
+        'Removing legacy membership immediately denies Family reads despite a stale mirror row.',
+        `begin;
+         delete from public.pet_members
+         where pet_id = (
+           select id from public.pets where family_id = '${familyId}'::uuid
+         )
+           and user_id = '${memberId}'::uuid;
+         set local role authenticated;
+         set local request.jwt.claim.sub = '${memberId}';
+         select
+           (select count(*) from public.families where id = '${familyId}'::uuid) = 0
+           and (select count(*) from public.family_members where family_id = '${familyId}'::uuid) = 0
+           and (select count(*) from public.family_invites where family_id = '${familyId}'::uuid) = 0;
+         rollback;`,
+      );
+    }
   }
 
   expectSql(

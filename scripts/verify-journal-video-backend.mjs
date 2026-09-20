@@ -120,13 +120,30 @@ async function createPet(owner, label) {
 
 function addMember(petId, userId) {
   sql(
-    `insert into public.pet_members (pet_id,user_id,role) values ('${petId}'::uuid,'${userId}'::uuid,'member');`,
+    `with membership as (
+       insert into public.pet_members (pet_id, user_id, role)
+       values ('${petId}'::uuid, '${userId}'::uuid, 'member')
+       returning user_id, role, created_at
+     )
+     insert into public.family_members (family_id, user_id, role, created_at)
+     select pet.family_id, membership.user_id, membership.role,
+       membership.created_at
+     from membership
+     join public.pets as pet on pet.id = '${petId}'::uuid;`,
   );
 }
 
 function removeMember(petId, userId) {
   sql(
-    `delete from public.pet_members where pet_id='${petId}'::uuid and user_id='${userId}'::uuid;`,
+    `begin;
+     delete from public.pet_members
+     where pet_id = '${petId}'::uuid and user_id = '${userId}'::uuid;
+     delete from public.family_members as membership
+     using public.pets as pet
+     where pet.id = '${petId}'::uuid
+       and membership.family_id = pet.family_id
+       and membership.user_id = '${userId}'::uuid;
+     commit;`,
   );
 }
 

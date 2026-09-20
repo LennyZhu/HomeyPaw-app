@@ -138,7 +138,19 @@ async function createPet(ownerClient, name) {
 
 async function addMembership(petId, userId, role = 'member') {
   runLocalSql(
-    `insert into public.pet_members (pet_id, user_id, role) values ('${petId}'::uuid, '${userId}'::uuid, '${role}'::public.pet_member_role) on conflict (pet_id, user_id) do update set role = excluded.role;`,
+    `with membership as (
+       insert into public.pet_members (pet_id, user_id, role)
+       values ('${petId}'::uuid, '${userId}'::uuid, '${role}'::public.pet_member_role)
+       on conflict (pet_id, user_id) do update set role = excluded.role
+       returning user_id, role, created_at
+     )
+     insert into public.family_members (family_id, user_id, role, created_at)
+     select pet.family_id, membership.user_id, membership.role,
+       membership.created_at
+     from membership
+     join public.pets as pet on pet.id = '${petId}'::uuid
+     on conflict (family_id, user_id) do update
+     set role = excluded.role, created_at = excluded.created_at;`,
   );
 }
 

@@ -24,6 +24,7 @@ const admin = createClient(localUrl, localServiceRoleKey, {
 });
 const users = [];
 let petId = null;
+let familyId = null;
 let avatarPath = null;
 
 function expect(condition, message) {
@@ -88,8 +89,17 @@ async function main() {
   });
   if (pet.error || !pet.data) throw pet.error ?? new Error('Pet create failed');
   petId = pet.data.id;
+  familyId = pet.data.family_id;
   runLocalSql(
-    `insert into public.pet_members (pet_id, user_id, role) values ('${petId}'::uuid, '${member.id}'::uuid, 'member'::public.pet_member_role);`,
+    `with inserted as (
+       insert into public.pet_members (pet_id, user_id, role)
+       values ('${petId}'::uuid, '${member.id}'::uuid, 'member'::public.pet_member_role)
+       returning created_at
+     )
+     insert into public.family_members (family_id, user_id, role, created_at)
+     select '${familyId}'::uuid, '${member.id}'::uuid,
+       'member'::public.pet_member_role, inserted.created_at
+     from inserted;`,
   );
 
   avatarPath = `${owner.id}/${randomUUID()}.jpg`;
@@ -171,7 +181,8 @@ async function main() {
   );
 
   runLocalSql(
-    `delete from public.pet_members where pet_id = '${petId}'::uuid and user_id = '${member.id}'::uuid;`,
+    `delete from public.family_members
+     where family_id = '${familyId}'::uuid and user_id = '${member.id}'::uuid;`,
   );
   const removedMemberRead = await member.client.storage
     .from('profile-avatars')
@@ -196,6 +207,9 @@ try {
   }
   if (petId) {
     runLocalSql(`delete from public.pets where id = '${petId}'::uuid;`);
+  }
+  if (familyId) {
+    runLocalSql(`delete from public.families where id = '${familyId}'::uuid;`);
   }
   for (const user of users.reverse()) {
     await admin.auth.admin.deleteUser(user.id);
