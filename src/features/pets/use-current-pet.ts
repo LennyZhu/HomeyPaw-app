@@ -1,51 +1,31 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 
-import { useAuth } from '@/features/auth/auth-context';
-import { useCurrentPetStore } from '@/stores/current-pet-store';
-
-import { selectAccessiblePet } from './pet-access-state';
-import { usePets } from './pet-queries';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 
 export function useCurrentPet() {
-  const { user } = useAuth();
-  const petsQuery = usePets();
-  const storedPetId = useCurrentPetStore((state) => state.currentPetId);
-  const storedUserId = useCurrentPetStore((state) => state.currentPetUserId);
-  const setStoredPetId = useCurrentPetStore((state) => state.setCurrentPetId);
-  const pets = petsQuery.data ?? [];
-  const currentPet = selectAccessiblePet(
-    pets,
-    storedPetId,
-    storedUserId,
-    user?.id,
-  );
-  const setCurrentPetId = useCallback(
-    (petId: string | null) => setStoredPetId(petId, user?.id ?? null),
-    [setStoredPetId, user?.id],
-  );
-
-  useEffect(() => {
-    if (!petsQuery.isSuccess || !user) {
-      return;
-    }
-
-    if (storedUserId !== user.id || currentPet?.id !== storedPetId) {
-      setStoredPetId(currentPet?.id ?? null, user.id);
-    }
-  }, [
-    currentPet?.id,
-    petsQuery.isSuccess,
-    setStoredPetId,
-    storedPetId,
-    storedUserId,
-    user,
-  ]);
+  const familyContext = useCurrentFamily();
+  const petsQuery = familyContext.petsQuery;
+  const refetch = useCallback(async () => {
+    const [petsResult] = await Promise.all([
+      petsQuery.refetch(),
+      familyContext.familiesQuery.refetch(),
+    ]);
+    return petsResult;
+  }, [familyContext.familiesQuery, petsQuery]);
 
   return {
     ...petsQuery,
-    currentPet,
-    currentPetId: currentPet?.id ?? null,
-    pets,
-    setCurrentPetId,
+    currentFamily: familyContext.currentFamily,
+    currentFamilyId: familyContext.currentFamilyId,
+    currentPet: familyContext.currentPet,
+    currentPetId: familyContext.currentPetId,
+    error: petsQuery.error ?? familyContext.familiesQuery.error,
+    isError: petsQuery.isError || familyContext.familiesQuery.isError,
+    isPending: petsQuery.isPending || familyContext.familiesQuery.isPending,
+    isSuccess: petsQuery.isSuccess && familyContext.familiesQuery.isSuccess,
+    pets: petsQuery.data ?? [],
+    refetch,
+    setCurrentFamilyId: familyContext.setCurrentFamilyId,
+    setCurrentPetId: familyContext.setCurrentPetId,
   };
 }

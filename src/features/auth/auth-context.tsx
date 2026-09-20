@@ -20,6 +20,8 @@ import {
 } from '@/lib/supabase/client';
 import { cancelCareTaskNotifications } from '@/services/care-task-notifications';
 import { unregisterFamilyPushDevice } from '@/services/family-push-device';
+import { useCurrentFamilyStore } from '@/stores/current-family-store';
+import { useCurrentPetStore } from '@/stores/current-pet-store';
 
 import {
   applyAuthCallback,
@@ -53,6 +55,11 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const localeRestoreDeadlineMs = 8000;
+
+function clearCurrentFamilyAndPet() {
+  useCurrentFamilyStore.getState().clearCurrentFamily();
+  useCurrentPetStore.getState().clearCurrentPet();
+}
 
 async function getStoredLocale(session: Session | null) {
   if (!session || !supabase) {
@@ -99,6 +106,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       if (previousUserId && previousUserId !== nextUserId) {
         void cancelCareTaskNotifications(previousUserId).catch(() => undefined);
+        clearCurrentFamilyAndPet();
         queryClient.clear();
       }
 
@@ -224,6 +232,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setIsProfileSetupPending(false);
     profileSetupSignUpIntent.current = false;
     latestUserId.current = null;
+    clearCurrentFamilyAndPet();
     queryClient.clear();
 
     if (error) {

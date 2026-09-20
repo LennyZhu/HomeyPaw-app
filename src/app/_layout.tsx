@@ -15,6 +15,7 @@ import { FeedbackProvider } from '@/components/feedback-provider';
 import { appScreenOrientation } from '@/config/orientation';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { AuthDeepLinkCoordinator } from '@/features/auth/auth-deep-link-coordinator';
+import { FamilyContextCoordinator } from '@/features/family/family-context-coordinator';
 import { CareTaskNotificationCoordinator } from '@/features/reminders/care-task-notification-coordinator';
 import { FamilyPushCoordinator } from '@/features/reminders/family-push-coordinator';
 import i18n from '@/i18n';
@@ -156,6 +157,7 @@ function RootNavigator() {
         </Stack.Protected>
       </Stack>
       <AuthDeepLinkCoordinator />
+      <FamilyContextCoordinator />
       <CareTaskNotificationCoordinator />
       <FamilyPushCoordinator />
       <StatusBar style="dark" />

@@ -12,6 +12,16 @@ import { requireSupabase } from '@/lib/supabase/client';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
 import type { PetInvite, PetMemberRole, PetSpecies } from '@/types/database';
 
+import type {
+  AccessibleFamily,
+  Family,
+  FamilyMember,
+  FamilyPet,
+} from './family-types';
+import { familyKeys } from './family-query-keys';
+
+export { familyKeys } from './family-query-keys';
+
 export type PetMemberSummary = {
   avatarPath: string | null;
   avatarUrl: string | null;
@@ -44,12 +54,13 @@ export type CreatedPetInvite = {
 };
 
 export type JoinPetResult = {
+  familyId: string;
   petId: string;
   petName: string;
   status: 'already_member' | 'joined';
 };
 
-export const familyKeys = {
+export const petFamilyKeys = {
   activeInvite: (userId: string | undefined, petId: string) =>
     ['family', userId, 'invite', petId] as const,
   invitePreview: (userId: string | undefined, code: string) =>
@@ -59,6 +70,115 @@ export const familyKeys = {
   postAuthors: (userId: string | undefined, petId: string) =>
     ['family', userId, 'post-authors', petId] as const,
 };
+
+type FamilyMembershipJoin = FamilyMember & { families: Family };
+
+async function fetchFamilies(userId: string): Promise<AccessibleFamily[]> {
+  const { data, error } = await requireSupabase()
+    .from('family_members')
+    .select('created_at, family_id, role, user_id, families!inner(*)')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+
+  return (data as FamilyMembershipJoin[])
+    .map(({ families: family, ...membership }) => ({ family, membership }))
+    .sort(
+      (left, right) =>
+        left.family.created_at.localeCompare(right.family.created_at) ||
+        left.family.id.localeCompare(right.family.id),
+    );
+}
+
+async function fetchFamily(familyId: string): Promise<Family | null> {
+  const { data, error } = await requireSupabase()
+    .from('families')
+    .select('*')
+    .eq('id', familyId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+async function fetchFamilyMembers(familyId: string): Promise<FamilyMember[]> {
+  const { data, error } = await requireSupabase()
+    .from('family_members')
+    .select('*')
+    .eq('family_id', familyId)
+    .order('created_at', { ascending: true })
+    .order('user_id', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+async function fetchFamilyPets(familyId: string): Promise<FamilyPet[]> {
+  const { data, error } = await requireSupabase()
+    .from('pets')
+    .select('*')
+    .eq('family_id', familyId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
+
+  if (error) throw error;
+  return data as FamilyPet[];
+}
+
+export function useFamilies() {
+  const { user } = useAuth();
+
+  return useQuery({
+    enabled: Boolean(user),
+    queryFn: () => fetchFamilies(user!.id),
+    queryKey: familyKeys.list(user?.id),
+  });
+}
+
+export function useFamily(familyId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    enabled: Boolean(user && familyId),
+    queryFn: () => fetchFamily(familyId!),
+    queryKey: familyKeys.detail(user?.id, familyId ?? ''),
+  });
+}
+
+export function useFamilyMembers(familyId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    enabled: Boolean(user && familyId),
+    queryFn: () => fetchFamilyMembers(familyId!),
+    queryKey: familyKeys.members(user?.id, familyId ?? ''),
+  });
+}
+
+export function useFamilyPets(familyId: string | null) {
+  const { user } = useAuth();
+
+  return useQuery({
+    enabled: Boolean(user && familyId),
+    queryFn: () => fetchFamilyPets(familyId!),
+    queryKey: familyKeys.pets(user?.id, familyId ?? ''),
+  });
+}
+
+export function removeFamilyQueries(
+  queryClient: QueryClient,
+  userId: string,
+  familyId?: string,
+) {
+  if (!familyId) {
+    queryClient.removeQueries({ queryKey: familyKeys.all(userId) });
+    return;
+  }
+
+  queryClient.removeQueries({ queryKey: familyKeys.detail(userId, familyId) });
+  queryClient.removeQueries({ queryKey: familyKeys.members(userId, familyId) });
+  queryClient.removeQueries({ queryKey: familyKeys.pets(userId, familyId) });
+}
 
 function normalizeInviteCode(code: string) {
   return code.trim().toUpperCase();
@@ -183,8 +303,20 @@ async function joinPet(code: string): Promise<JoinPetResult> {
     throw error ?? new Error('INVITE_INVALID');
   }
 
+  const joinedPetId = data[0].joined_pet_id;
+  const pet = await requireSupabase()
+    .from('pets')
+    .select('family_id')
+    .eq('id', joinedPetId)
+    .maybeSingle();
+
+  if (pet.error || !pet.data?.family_id) {
+    throw pet.error ?? new Error('JOINED_PET_FAMILY_MISSING');
+  }
+
   return {
-    petId: data[0].joined_pet_id,
+    familyId: pet.data.family_id,
+    petId: joinedPetId,
     petName: data[0].joined_pet_name,
     status: data[0].join_status,
   };
@@ -210,7 +342,7 @@ export function usePetMembers(petId: string | null) {
   return useQuery({
     enabled: Boolean(user && petId),
     queryFn: () => fetchPetMembers(petId!, queryClient),
-    queryKey: familyKeys.members(user?.id, petId ?? ''),
+    queryKey: petFamilyKeys.members(user?.id, petId ?? ''),
   });
 }
 
@@ -220,7 +352,7 @@ export function usePetPostAuthors(petId: string | null) {
   return useQuery({
     enabled: Boolean(user && petId),
     queryFn: () => fetchPostAuthors(petId!),
-    queryKey: familyKeys.postAuthors(user?.id, petId ?? ''),
+    queryKey: petFamilyKeys.postAuthors(user?.id, petId ?? ''),
   });
 }
 
@@ -230,7 +362,7 @@ export function useActivePetInvite(petId: string, isOwner: boolean) {
   return useQuery({
     enabled: Boolean(user && petId && isOwner),
     queryFn: () => fetchActiveInvite(petId),
-    queryKey: familyKeys.activeInvite(user?.id, petId),
+    queryKey: petFamilyKeys.activeInvite(user?.id, petId),
   });
 }
 
@@ -242,7 +374,7 @@ export function useCreatePetInvite(petId: string) {
     mutationFn: () => createInvite(petId),
     onSuccess: (invite) => {
       queryClient.setQueryData<PetInvite>(
-        familyKeys.activeInvite(user?.id, petId),
+        petFamilyKeys.activeInvite(user?.id, petId),
         {
           created_at: invite.createdAt,
           expires_at: invite.expiresAt,
@@ -265,7 +397,10 @@ export function useRevokePetInvite(petId: string) {
   return useMutation({
     mutationFn: () => revokeInvite(petId),
     onSuccess: () => {
-      queryClient.setQueryData(familyKeys.activeInvite(user?.id, petId), null);
+      queryClient.setQueryData(
+        petFamilyKeys.activeInvite(user?.id, petId),
+        null,
+      );
     },
   });
 }
@@ -277,12 +412,18 @@ export function useJoinPet() {
   return useMutation({
     mutationFn: joinPet,
     onSuccess: async (result) => {
-      await queryClient.invalidateQueries({
-        queryKey: petKeys.all(user?.id),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: familyKeys.members(user?.id, result.petId),
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: petKeys.all(user?.id) }),
+        queryClient.invalidateQueries({
+          queryKey: familyKeys.list(user?.id),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: familyKeys.pets(user?.id, result.familyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: petFamilyKeys.members(user?.id, result.petId),
+        }),
+      ]);
       if (user) {
         void syncCareTaskNotifications(user.id).catch(() => undefined);
       }
@@ -297,9 +438,12 @@ export function useRemovePetMember(petId: string) {
   return useMutation({
     mutationFn: (memberUserId: string) => removeMember(petId, memberUserId),
     onSuccess: async () => {
-      queryClient.setQueryData(familyKeys.activeInvite(user?.id, petId), null);
+      queryClient.setQueryData(
+        petFamilyKeys.activeInvite(user?.id, petId),
+        null,
+      );
       await queryClient.invalidateQueries({
-        queryKey: familyKeys.members(user?.id, petId),
+        queryKey: petFamilyKeys.members(user?.id, petId),
       });
       if (user) {
         void syncCareTaskNotifications(user.id).catch(() => undefined);

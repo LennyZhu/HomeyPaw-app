@@ -8,6 +8,7 @@ import { AppText } from '@/components/app-text';
 import { useFeedback } from '@/components/feedback-provider';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { useCurrentFamilyStore } from '@/stores/current-family-store';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
 import { spacing } from '@/theme';
 
@@ -23,6 +24,9 @@ export default function NewPetScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const createPet = useCreatePet();
+  const setCurrentFamilyId = useCurrentFamilyStore(
+    (state) => state.setCurrentFamilyId,
+  );
   const setCurrentPetId = useCurrentPetStore((state) => state.setCurrentPetId);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -34,6 +38,7 @@ export default function NewPetScreen() {
 
     try {
       const pet = await createPet.mutateAsync(values);
+      setCurrentFamilyId(pet.family_id, user?.id ?? null);
       setCurrentPetId(pet.id, user?.id ?? null);
       let avatarWarning = false;
 

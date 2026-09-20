@@ -11,11 +11,12 @@ import { Avatar } from '@/components/avatar';
 import { useFeedback } from '@/components/feedback-provider';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { useCurrentFamilyStore } from '@/stores/current-family-store';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
 import { lightColors, radius, spacing, typography } from '@/theme';
 
 import {
-  familyKeys,
+  petFamilyKeys,
   type InvitePreview,
   previewInvite,
   useJoinPet,
@@ -47,6 +48,9 @@ export default function JoinFamilyScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const joinPet = useJoinPet();
+  const setCurrentFamilyId = useCurrentFamilyStore(
+    (state) => state.setCurrentFamilyId,
+  );
   const setCurrentPetId = useCurrentPetStore((state) => state.setCurrentPetId);
   const [code, setCode] = useState('');
   const [submittedCode, setSubmittedCode] = useState<string | null>(null);
@@ -67,7 +71,7 @@ export default function JoinFamilyScreen() {
     try {
       const result = await queryClient.fetchQuery({
         queryFn: () => previewInvite(normalized),
-        queryKey: familyKeys.invitePreview(user?.id, normalized),
+        queryKey: petFamilyKeys.invitePreview(user?.id, normalized),
         staleTime: 30_000,
       });
       setSubmittedCode(normalized);
@@ -93,6 +97,7 @@ export default function JoinFamilyScreen() {
     setErrorMessage(null);
     try {
       const result = await joinPet.mutateAsync(submittedCode);
+      setCurrentFamilyId(result.familyId, user?.id ?? null);
       setCurrentPetId(result.petId, user?.id ?? null);
       const message =
         result.status === 'already_member'

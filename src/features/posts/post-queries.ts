@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
-import { familyKeys } from '@/features/family/family-queries';
+import { petFamilyKeys } from '@/features/family/family-queries';
 import { useStorageSignedUrls } from '@/features/media/storage-signed-url';
 import {
   createJournalDateRangeKey,
@@ -302,7 +302,7 @@ export function useCreatePost() {
         queryKey: postKeys.listRoot(user?.id, post.pet_id),
       });
       void queryClient.invalidateQueries({
-        queryKey: familyKeys.postAuthors(user?.id, post.pet_id),
+        queryKey: petFamilyKeys.postAuthors(user?.id, post.pet_id),
       });
       void queryClient.invalidateQueries({
         queryKey: ['posts', user?.id, 'memory', post.pet_id],
@@ -364,7 +364,7 @@ export function useDeletePost() {
       });
       if (cachedPost) {
         void queryClient.invalidateQueries({
-          queryKey: familyKeys.postAuthors(user?.id, cachedPost.pet_id),
+          queryKey: petFamilyKeys.postAuthors(user?.id, cachedPost.pet_id),
         });
       }
     },

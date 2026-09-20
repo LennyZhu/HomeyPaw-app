@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { familyKeys } from '@/features/family/family-queries';
+import { petFamilyKeys } from '@/features/family/family-queries';
 import { petKeys } from '@/features/pets/pet-queries';
 import { logError } from '@/lib/logger';
 import { requireSupabase } from '@/lib/supabase/client';
@@ -102,7 +102,7 @@ export function useChatRealtime({
       await queryClient.cancelQueries({ queryKey: chatKeys.all(userId) });
       clearChatPetCache(queryClient, userId, petId);
       queryClient.removeQueries({
-        queryKey: familyKeys.members(userId, petId),
+        queryKey: petFamilyKeys.members(userId, petId),
       });
       queryClient.removeQueries({ queryKey: petKeys.detail(userId, petId) });
       await queryClient.invalidateQueries({ queryKey: petKeys.all(userId) });

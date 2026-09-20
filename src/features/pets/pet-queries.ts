@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
+import { familyKeys } from '@/features/family/family-query-keys';
 import {
   storageSignedUrlKeys,
   useStorageSignedUrl,
@@ -37,7 +38,8 @@ async function fetchPets() {
   const { data, error } = await requireSupabase()
     .from('pets')
     .select('*')
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true });
 
   if (error) {
     throw error;
@@ -164,6 +166,15 @@ export function useCreatePet() {
         pet,
       ]);
       queryClient.setQueryData(petKeys.detail(user?.id, pet.id), pet);
+      if (pet.family_id) {
+        queryClient.setQueryData<Pet[]>(
+          familyKeys.pets(user?.id, pet.family_id),
+          (pets = []) => [...pets, pet],
+        );
+      }
+      void queryClient.invalidateQueries({
+        queryKey: familyKeys.list(user?.id),
+      });
     },
   });
 }
@@ -179,6 +190,15 @@ export function useUpdatePet(petId: string) {
       queryClient.setQueryData<Pet[]>(petKeys.all(user?.id), (pets = []) =>
         pets.map((candidate) => (candidate.id === pet.id ? pet : candidate)),
       );
+      if (pet.family_id) {
+        queryClient.setQueryData<Pet[]>(
+          familyKeys.pets(user?.id, pet.family_id),
+          (pets = []) =>
+            pets.map((candidate) =>
+              candidate.id === pet.id ? pet : candidate,
+            ),
+        );
+      }
     },
   });
 }
@@ -190,10 +210,22 @@ export function useDeletePet() {
   return useMutation({
     mutationFn: deletePet,
     onSuccess: (_result, petId) => {
+      const deletedPet = queryClient
+        .getQueryData<Pet[]>(petKeys.all(user?.id))
+        ?.find((pet) => pet.id === petId);
       queryClient.removeQueries({ queryKey: petKeys.detail(user?.id, petId) });
       queryClient.setQueryData<Pet[]>(petKeys.all(user?.id), (pets = []) =>
         pets.filter((pet) => pet.id !== petId),
       );
+      if (deletedPet?.family_id) {
+        queryClient.setQueryData<Pet[]>(
+          familyKeys.pets(user?.id, deletedPet.family_id),
+          (pets = []) => pets.filter((pet) => pet.id !== petId),
+        );
+      }
+      void queryClient.invalidateQueries({
+        queryKey: familyKeys.list(user?.id),
+      });
       if (user) {
         void syncCareTaskNotifications(user.id).catch(() => undefined);
       }

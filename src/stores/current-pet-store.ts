@@ -5,6 +5,7 @@ import { create } from 'zustand';
 type CurrentPetState = {
   currentPetId: string | null;
   currentPetUserId: string | null;
+  clearCurrentPet: () => void;
   setCurrentPetId: (petId: string | null, userId: string | null) => void;
 };
 
@@ -25,6 +26,8 @@ export const useCurrentPetStore = create<CurrentPetState>()(
     (set) => ({
       currentPetId: null,
       currentPetUserId: null,
+      clearCurrentPet: () =>
+        set({ currentPetId: null, currentPetUserId: null }),
       setCurrentPetId: (currentPetId, currentPetUserId) =>
         set({ currentPetId, currentPetUserId }),
     }),

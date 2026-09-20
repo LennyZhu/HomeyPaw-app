@@ -58,10 +58,17 @@ export function ChatSessionProvider({ children }: PropsWithChildren) {
     clearRevokedPetAccess({
       petId,
       queryClient,
+      setCurrentFamilyId: petsState.setCurrentFamilyId,
       setCurrentPetId: petsState.setCurrentPetId,
       userId: user.id,
     });
-  }, [petId, petsState.setCurrentPetId, queryClient, user]);
+  }, [
+    petId,
+    petsState.setCurrentFamilyId,
+    petsState.setCurrentPetId,
+    queryClient,
+    user,
+  ]);
 
   const versionQuery = useChatChannelVersion(
     petId,

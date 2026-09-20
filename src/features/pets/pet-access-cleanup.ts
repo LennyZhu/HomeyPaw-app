@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import { clearRevokedFamilyAccess } from '@/features/family/family-access-cleanup';
 import { storageSignedUrlKeys } from '@/features/media/storage-signed-url';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
 import type { Pet } from '@/types/database';
@@ -10,10 +11,25 @@ import { shouldClearRevokedPetQuery } from './pet-access-state';
 export function clearRevokedPetAccess(input: {
   petId: string;
   queryClient: QueryClient;
+  setCurrentFamilyId?: (familyId: string | null) => void;
   setCurrentPetId: (petId: string | null) => void;
   userId: string;
 }) {
-  const { petId, queryClient, setCurrentPetId, userId } = input;
+  const { petId, queryClient, setCurrentFamilyId, setCurrentPetId, userId } =
+    input;
+  const familyId = queryClient
+    .getQueryData<Pet[]>(petKeys.all(userId))
+    ?.find((pet) => pet.id === petId)?.family_id;
+
+  if (familyId && setCurrentFamilyId) {
+    clearRevokedFamilyAccess({
+      familyId,
+      queryClient,
+      setCurrentFamilyId,
+      setCurrentPetId,
+      userId,
+    });
+  }
   const revokedQuery = {
     predicate: (query: {
       queryKey: readonly unknown[];
