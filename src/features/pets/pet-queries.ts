@@ -82,6 +82,27 @@ async function createPet(values: PetFormValues) {
   return data;
 }
 
+export async function createFamilyPet(familyId: string, values: PetFormValues) {
+  const input = formValuesToPetInput(values);
+  const { data, error } = await requireSupabase().rpc('create_family_pet', {
+    pet_adoption_date: input.adoption_date,
+    pet_birthday: input.birthday,
+    pet_breed: input.breed,
+    pet_description: input.description,
+    pet_gender: input.gender,
+    pet_name: input.name ?? '',
+    pet_species: input.species ?? 'other',
+    pet_weight: input.weight,
+    target_family_id: familyId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 async function updatePet(petId: string, values: PetFormValues) {
   const { data, error } = await requireSupabase()
     .from('pets')
@@ -119,6 +140,9 @@ async function deletePet(petId: string) {
   const { data, error } = await requireSupabase().functions.invoke<{
     avatarCleanupPending?: boolean;
     deleted: boolean;
+    familyId: string;
+    nextPetId: string | null;
+    videoCleanupPending?: boolean;
   }>('delete-pet', {
     body: { petId },
   });
@@ -209,7 +233,7 @@ export function useDeletePet() {
 
   return useMutation({
     mutationFn: deletePet,
-    onSuccess: (_result, petId) => {
+    onSuccess: (result, petId) => {
       const deletedPet = queryClient
         .getQueryData<Pet[]>(petKeys.all(user?.id))
         ?.find((pet) => pet.id === petId);
@@ -217,12 +241,14 @@ export function useDeletePet() {
       queryClient.setQueryData<Pet[]>(petKeys.all(user?.id), (pets = []) =>
         pets.filter((pet) => pet.id !== petId),
       );
-      if (deletedPet?.family_id) {
-        queryClient.setQueryData<Pet[]>(
-          familyKeys.pets(user?.id, deletedPet.family_id),
-          (pets = []) => pets.filter((pet) => pet.id !== petId),
-        );
-      }
+      const familyId = deletedPet?.family_id ?? result.familyId;
+      queryClient.setQueryData<Pet[]>(
+        familyKeys.pets(user?.id, familyId),
+        (pets = []) => pets.filter((pet) => pet.id !== petId),
+      );
+      void queryClient.invalidateQueries({
+        queryKey: familyKeys.pets(user?.id, familyId),
+      });
       void queryClient.invalidateQueries({
         queryKey: familyKeys.list(user?.id),
       });

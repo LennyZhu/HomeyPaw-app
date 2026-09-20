@@ -77,18 +77,23 @@ Deno.serve(async (request) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
   const secretKey = readDefaultKey(
     'SUPABASE_SECRET_KEYS',
     'SUPABASE_SERVICE_ROLE_KEY',
   );
 
-  if (!supabaseUrl || !secretKey) {
+  if (!supabaseUrl || !anonKey || !secretKey) {
     console.error('Required Supabase function environment is unavailable.');
     return jsonResponse({ error: 'Server configuration error' }, 500);
   }
 
   const adminClient = createClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const userClient = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
   });
   const {
     data: { user },
@@ -99,27 +104,9 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
-  const { data: membership, error: membershipError } = await adminClient
-    .from('pet_members')
-    .select('role')
-    .eq('pet_id', body.petId)
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (membershipError) {
-    console.error('Pet ownership check failed.', {
-      code: membershipError.code,
-    });
-    return jsonResponse({ error: 'Pet deletion failed' }, 500);
-  }
-
-  if (membership?.role !== 'owner') {
-    return jsonResponse({ error: 'Pet not found' }, 404);
-  }
-
   const { data: pet, error: petError } = await adminClient
     .from('pets')
-    .select('avatar_path')
+    .select('avatar_path, family_id')
     .eq('id', body.petId)
     .maybeSingle();
 
@@ -129,6 +116,28 @@ Deno.serve(async (request) => {
   }
 
   if (!pet) {
+    return jsonResponse({ error: 'Pet not found' }, 404);
+  }
+
+  const { data: memberships, error: membershipError } = await userClient.rpc(
+    'get_family_members',
+    { target_family_id: pet.family_id },
+  );
+
+  if (membershipError) {
+    if (membershipError.code === '42501') {
+      return jsonResponse({ error: 'Pet not found' }, 404);
+    }
+    console.error('Family ownership check failed.', {
+      code: membershipError.code,
+    });
+    return jsonResponse({ error: 'Pet deletion failed' }, 500);
+  }
+
+  const membership = memberships?.find(
+    (candidate) => candidate.member_user_id === user.id,
+  );
+  if (membership?.member_role !== 'owner') {
     return jsonResponse({ error: 'Pet not found' }, 404);
   }
 
@@ -213,14 +222,15 @@ Deno.serve(async (request) => {
     }
   }
 
-  const { error: deletionError } = await adminClient
-    .from('pets')
-    .delete()
-    .eq('id', body.petId);
+  const { data: deletionRows, error: deletionError } = await userClient.rpc(
+    'delete_family_pet',
+    { target_pet_id: body.petId },
+  );
+  const deletion = deletionRows?.[0];
 
-  if (deletionError) {
+  if (deletionError || !deletion) {
     console.error('Pet deletion failed after avatar cleanup.', {
-      code: deletionError.code,
+      code: deletionError?.code,
     });
     return jsonResponse({ error: 'Pet deletion failed' }, 500);
   }
@@ -231,7 +241,12 @@ Deno.serve(async (request) => {
   );
 
   return jsonResponse(
-    { deleted: true, videoCleanupPending: !videoCleanupComplete },
+    {
+      deleted: true,
+      familyId: deletion.deleted_family_id,
+      nextPetId: deletion.next_pet_id,
+      videoCleanupPending: !videoCleanupComplete,
+    },
     200,
   );
 });

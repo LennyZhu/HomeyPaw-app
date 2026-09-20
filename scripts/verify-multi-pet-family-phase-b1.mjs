@@ -211,7 +211,14 @@ function expectDriftFree(label) {
                order by anchor.created_at, anchor.id
                limit 1
              )
-         ) <> 1
+         ) <> case
+           when exists (
+             select 1
+             from public.pets as family_pet
+             where family_pet.family_id = family_invite.family_id
+           ) then 1
+           else 0
+         end
        )
        and not exists (
          select 1

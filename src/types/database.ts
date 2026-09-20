@@ -728,6 +728,20 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['pets']['Row'];
       };
+      create_family_pet: {
+        Args: {
+          target_family_id: string;
+          pet_adoption_date?: string | null;
+          pet_birthday?: string | null;
+          pet_breed?: string | null;
+          pet_description?: string | null;
+          pet_gender?: Database['public']['Enums']['pet_gender'];
+          pet_name: string;
+          pet_species: Database['public']['Enums']['pet_species'];
+          pet_weight?: number | null;
+        };
+        Returns: Database['public']['Tables']['pets']['Row'];
+      };
       create_care_log: {
         Args: {
           care_duration_minutes?: number | null;
@@ -745,6 +759,13 @@ export type Database = {
       deactivate_care_task: {
         Args: { target_task_id: string };
         Returns: 'deactivated' | 'already_inactive';
+      };
+      delete_family_pet: {
+        Args: { target_pet_id: string };
+        Returns: {
+          deleted_family_id: string;
+          next_pet_id: string | null;
+        }[];
       };
       get_care_task_occurrences: {
         Args: {

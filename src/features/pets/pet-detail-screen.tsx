@@ -38,7 +38,7 @@ export default function PetDetailScreen() {
     try {
       const result = await deletePet.mutateAsync(id);
       if (currentPetId === id) {
-        setCurrentPetId(null, user?.id ?? null);
+        setCurrentPetId(result.nextPetId, user?.id ?? null);
       }
       router.replace('/pets');
 

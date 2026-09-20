@@ -114,9 +114,26 @@ async function createPet(owner, label) {
 }
 
 function addMember(petId, userId, role = 'member') {
-  sql(
-    `insert into public.pet_members (pet_id,user_id,role) values ('${petId}'::uuid,'${userId}'::uuid,'${role}'::public.pet_member_role);`,
-  );
+  sql(`
+    with target_family as (
+      select family_id
+      from public.pets
+      where id = '${petId}'::uuid
+    ), inserted as (
+      insert into public.family_members (family_id, user_id, role, created_at)
+      select
+        target_family.family_id,
+        '${userId}'::uuid,
+        '${role}'::public.pet_member_role,
+        clock_timestamp()
+      from target_family
+      returning family_id, user_id, role, created_at
+    )
+    insert into public.pet_members (pet_id, user_id, role, created_at)
+    select pet.id, inserted.user_id, inserted.role, inserted.created_at
+    from inserted
+    join public.pets as pet on pet.family_id = inserted.family_id;
+  `);
 }
 
 async function invoke(functionName, user, body) {
