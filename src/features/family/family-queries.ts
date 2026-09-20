@@ -333,8 +333,7 @@ async function joinPet(code: string): Promise<JoinPetResult> {
   };
 }
 
-async function removeMember(petId: string, userId: string) {
-  const familyId = await resolvePetFamilyId(petId);
+export async function removeFamilyMember(familyId: string, userId: string) {
   const { data, error } = await requireSupabase().rpc('remove_family_member', {
     target_family_id: familyId,
     target_user_id: userId,
@@ -344,7 +343,25 @@ async function removeMember(petId: string, userId: string) {
     throw error;
   }
 
-  return { familyId, status: data };
+  return data;
+}
+
+async function removeMember(petId: string, userId: string) {
+  const familyId = await resolvePetFamilyId(petId);
+  const status = await removeFamilyMember(familyId, userId);
+  return { familyId, status };
+}
+
+export async function leaveFamily(familyId: string) {
+  const { data, error } = await requireSupabase().rpc('leave_family', {
+    target_family_id: familyId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }
 
 export async function transferFamilyOwnership(
@@ -491,6 +508,25 @@ export function useRemovePetMember(petId: string) {
       if (user) {
         void syncCareTaskNotifications(user.id).catch(() => undefined);
       }
+    },
+  });
+}
+
+export function useLeaveFamily() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: leaveFamily,
+    onSuccess: async (_status, familyId) => {
+      if (!user) return;
+
+      removeFamilyQueries(queryClient, user.id, familyId);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: familyKeys.list(user.id) }),
+        queryClient.invalidateQueries({ queryKey: petKeys.all(user.id) }),
+      ]);
+      void syncCareTaskNotifications(user.id).catch(() => undefined);
     },
   });
 }

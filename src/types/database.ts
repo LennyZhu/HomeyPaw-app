@@ -947,6 +947,10 @@ export type Database = {
           joined_pet_name: string;
         }[];
       };
+      leave_family: {
+        Args: { target_family_id: string };
+        Returns: 'left';
+      };
       preview_family_invite: {
         Args: { invite_code: string };
         Returns: {
