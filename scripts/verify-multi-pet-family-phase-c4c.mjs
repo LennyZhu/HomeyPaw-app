@@ -570,24 +570,28 @@ try {
   const isolationOwnerB = await createUser('isolation-owner-b');
   const isolationA = await createFamily(isolationOwnerA, 'Isolation A');
   const isolationB = await createFamily(isolationOwnerB, 'Isolation B');
-  const isolationC = await createFamily(isolatedUser, 'Isolation C');
   addMember(isolationA.familyId, isolatedUser.id);
-  addMember(isolationB.familyId, isolatedUser.id, 'viewer');
   expect(
     !(await leave(isolatedUser, isolationA.familyId)).error,
-    'Multi-Family Member leave failed.',
+    'Member leave failed.',
   );
   expectSql(
-    'Leaving Family A does not affect Viewer membership in B or Owner membership in C.',
-    `select not exists (select 1 from public.family_members where family_id = '${isolationA.familyId}'::uuid and user_id = '${isolatedUser.id}'::uuid) and exists (select 1 from public.family_members where family_id = '${isolationB.familyId}'::uuid and user_id = '${isolatedUser.id}'::uuid and role = 'viewer') and exists (select 1 from public.family_members where family_id = '${isolationC.familyId}'::uuid and user_id = '${isolatedUser.id}'::uuid and role = 'owner') and ${invariant(isolationA.familyId)} and ${invariant(isolationB.familyId)} and ${invariant(isolationC.familyId)};`,
+    'Leaving A clears the only membership while A retains its Owner.',
+    `select not exists (select 1 from public.family_members where user_id = '${isolatedUser.id}'::uuid) and ${invariant(isolationA.familyId)};`,
   );
+  addMember(isolationB.familyId, isolatedUser.id, 'viewer');
   expect(
     !(await leave(isolatedUser, isolationB.familyId)).error,
-    'Multi-Family Viewer leave failed.',
+    'Viewer leave failed.',
   );
+  expectSql(
+    'Leaving B clears the Viewer membership while B retains its Owner.',
+    `select not exists (select 1 from public.family_members where user_id = '${isolatedUser.id}'::uuid) and ${invariant(isolationB.familyId)};`,
+  );
+  const isolationC = await createFamily(isolatedUser, 'Isolation C');
   expect(
     Boolean((await leave(isolatedUser, isolationC.familyId)).error),
-    'Multi-Family Owner leave unexpectedly succeeded.',
+    'Owner leave unexpectedly succeeded.',
   );
 
   const rollbackOwner = await createUser('rollback-owner');

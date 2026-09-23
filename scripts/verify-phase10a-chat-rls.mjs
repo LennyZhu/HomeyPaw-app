@@ -186,6 +186,23 @@ async function createPet(ownerClient, name) {
   return data.id;
 }
 
+async function createFamilyPet(ownerClient, anchorPetId, name) {
+  const { data: anchor, error: readError } = await ownerClient
+    .from('pets')
+    .select('family_id')
+    .eq('id', anchorPetId)
+    .single();
+  if (readError || !anchor?.family_id)
+    throw readError ?? new Error('Anchor Family lookup failed');
+  const { data, error } = await ownerClient.rpc('create_family_pet', {
+    target_family_id: anchor.family_id,
+    pet_name: name,
+    pet_species: 'other',
+  });
+  if (error || !data) throw error ?? new Error('Family Pet creation failed');
+  return data.id;
+}
+
 async function inviteAndJoin(ownerClient, memberClient, petId) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const { data: invites, error: inviteError } = await ownerClient.rpc(
@@ -422,6 +439,8 @@ async function main() {
   let stranger;
   let petId;
   let crossPetId;
+  let foreignPetId;
+  let foreignOwner;
   let ownerDeletePetId;
   let ownerDeleteFamilyId;
   let ownerDeletionUser;
@@ -433,7 +452,17 @@ async function main() {
     createdUserIds.push(owner.id, member.id, stranger.id);
 
     petId = await createPet(owner.client, 'Phase 10A Chat Pet');
-    crossPetId = await createPet(owner.client, 'Phase 10A Cross Pet');
+    crossPetId = await createFamilyPet(
+      owner.client,
+      petId,
+      'Phase 10A Cross Pet',
+    );
+    foreignOwner = await createUser('Other Family Owner');
+    createdUserIds.push(foreignOwner.id);
+    foreignPetId = await createPet(
+      foreignOwner.client,
+      'Phase 10A Foreign Pet',
+    );
     await inviteAndJoin(owner.client, member.client, petId);
 
     // Exercise the exact v7 -> v8 attack scenario without a test-only database
@@ -633,12 +662,12 @@ async function main() {
     const { error: crossPetSendError } = await member.client.rpc(
       'send_chat_message',
       {
-        message_body: 'cross pet attempt',
+        message_body: 'cross family attempt',
         target_client_message_id: randomUUID(),
-        target_pet_id: crossPetId,
+        target_pet_id: foreignPetId,
       },
     );
-    expect(crossPetSendError, 'SECURITY BREACH: Cross-pet send succeeded.');
+    expect(crossPetSendError, 'SECURITY BREACH: Cross-Family send succeeded.');
     const { data: strangerDelete } = await stranger.client.rpc(
       'delete_chat_message',
       { target_message_id: first.id },
@@ -1308,6 +1337,9 @@ async function main() {
     }
     if (crossPetId && owner) {
       await owner.client.from('pets').delete().eq('id', crossPetId);
+    }
+    if (foreignPetId && foreignOwner) {
+      await foreignOwner.client.from('pets').delete().eq('id', foreignPetId);
     }
     if (ownerDeletePetId && ownerDeletionUser) {
       await ownerDeletionUser.client

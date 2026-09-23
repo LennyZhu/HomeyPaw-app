@@ -11,6 +11,7 @@ import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
 import { familyLabel } from '@/features/family/family-label';
+import { isAlreadyInFamilyError } from '@/features/family/family-single-membership';
 import { familyKeys } from '@/features/family/family-queries';
 import { useCurrentFamily } from '@/features/family/use-current-family';
 import { useCurrentFamilyStore } from '@/stores/current-family-store';
@@ -58,6 +59,9 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
     setSubmitError(null);
 
     try {
+      if (createNewFamily && currentFamilyId) {
+        throw new Error('ALREADY_IN_FAMILY');
+      }
       if (
         !createNewFamily &&
         (!currentFamilyId || familyContext.currentMembership?.role !== 'owner')
@@ -106,22 +110,25 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
         avatarWarning ? 'error' : 'success',
       );
       router.replace({ pathname: '/pets/[id]', params: { id: pet.id } });
-    } catch {
-      setSubmitError(t('pets.errors.create'));
+    } catch (error) {
+      setSubmitError(
+        t(
+          isAlreadyInFamilyError(error)
+            ? 'family.single.alreadyInFamily'
+            : 'pets.errors.create',
+        ),
+      );
     }
   };
 
   if (
-    !createNewFamily &&
-    (familyContext.familiesQuery.isPending || familyContext.petsQuery.isPending)
+    familyContext.familiesQuery.isPending ||
+    familyContext.petsQuery.isPending
   ) {
     return <LoadingView label={t('family.lifecycle.loading')} />;
   }
 
-  if (
-    !createNewFamily &&
-    (familyContext.familiesQuery.isError || familyContext.petsQuery.isError)
-  ) {
+  if (familyContext.familiesQuery.isError || familyContext.petsQuery.isError) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
@@ -131,6 +138,22 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
             void familyContext.familiesQuery.refetch();
             void familyContext.petsQuery.refetch();
           }}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
+  if (createNewFamily && currentFamilyId) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="largeTitle">
+          {t('family.create.title')}
+        </AppText>
+        <AppText tone="secondary">{t('family.single.alreadyInFamily')}</AppText>
+        <AppButton
+          label={t('family.lifecycle.manage')}
+          onPress={() => router.replace('/families')}
           variant="secondary"
         />
       </Screen>

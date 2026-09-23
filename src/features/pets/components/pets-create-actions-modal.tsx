@@ -13,6 +13,7 @@ import { lightColors, radius, shadows, spacing } from '@/theme';
 
 type Props = {
   canAddPet: boolean;
+  canCreateOrJoinFamily: boolean;
   onAddPet: () => void;
   onCancel: () => void;
   onCreateFamily: () => void;
@@ -22,6 +23,7 @@ type Props = {
 
 export function PetsCreateActionsModal({
   canAddPet,
+  canCreateOrJoinFamily,
   onAddPet,
   onCancel,
   onCreateFamily,
@@ -66,16 +68,20 @@ export function PetsCreateActionsModal({
                   onPress={onAddPet}
                 />
               ) : null}
-              <ActionRow
-                icon="people-circle-outline"
-                label={t('family.create.action')}
-                onPress={onCreateFamily}
-              />
-              <ActionRow
-                icon="people-outline"
-                label={t('pets.list.joinFamily')}
-                onPress={onJoinFamily}
-              />
+              {canCreateOrJoinFamily ? (
+                <ActionRow
+                  icon="people-circle-outline"
+                  label={t('family.create.action')}
+                  onPress={onCreateFamily}
+                />
+              ) : null}
+              {canCreateOrJoinFamily ? (
+                <ActionRow
+                  icon="people-outline"
+                  label={t('pets.list.joinFamily')}
+                  onPress={onJoinFamily}
+                />
+              ) : null}
               <ActionRow
                 cancel
                 icon="close-outline"

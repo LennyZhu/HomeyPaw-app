@@ -10,6 +10,7 @@ import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
 import { useFeedback } from '@/components/feedback-provider';
 import { Screen } from '@/components/screen';
+import { LoadingView } from '@/components/loading-view';
 import { useAuth } from '@/features/auth/auth-context';
 import { useCurrentFamilyStore } from '@/stores/current-family-store';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
@@ -22,6 +23,8 @@ import {
   useJoinPet,
 } from './family-queries';
 import { isFamilyMemberLimitError } from './family-member-limit';
+import { isAlreadyInFamilyError } from './family-single-membership';
+import { useCurrentFamily } from './use-current-family';
 
 function normalizeCode(value: string) {
   return value
@@ -48,6 +51,7 @@ export default function JoinFamilyScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const joinPet = useJoinPet();
+  const familyContext = useCurrentFamily();
   const setCurrentFamilyId = useCurrentFamilyStore(
     (state) => state.setCurrentFamilyId,
   );
@@ -108,14 +112,53 @@ export default function JoinFamilyScreen() {
       router.replace(`/pets/${result.petId}`);
     } catch (error) {
       setErrorMessage(
-        isFamilyMemberLimitError(error)
-          ? t('family.errors.memberLimit')
-          : isInvalidInviteError(error)
-            ? t('family.errors.invalidInvite')
-            : t('family.errors.network'),
+        isAlreadyInFamilyError(error)
+          ? t('family.single.alreadyInFamily')
+          : isFamilyMemberLimitError(error)
+            ? t('family.errors.memberLimit')
+            : isInvalidInviteError(error)
+              ? t('family.errors.invalidInvite')
+              : t('family.errors.network'),
       );
     }
   };
+
+  if (
+    familyContext.familiesQuery.isPending ||
+    familyContext.petsQuery.isPending
+  ) {
+    return <LoadingView label={t('family.lifecycle.loading')} />;
+  }
+  if (familyContext.familiesQuery.isError || familyContext.petsQuery.isError) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
+        <AppButton
+          label={t('common.retry')}
+          onPress={() => {
+            void familyContext.familiesQuery.refetch();
+            void familyContext.petsQuery.refetch();
+          }}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+  if (familyContext.currentFamilyId) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="largeTitle">
+          {t('family.join.title')}
+        </AppText>
+        <AppText tone="secondary">{t('family.single.alreadyInFamily')}</AppText>
+        <AppButton
+          label={t('family.lifecycle.manage')}
+          onPress={() => router.replace('/families')}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen

@@ -407,7 +407,7 @@
     "create": {
       "action": "新增家庭",
       "title": "新增家庭",
-      "subtitle": "為第一隻毛孩建立獨立家庭；現有家庭會保持不變。",
+      "subtitle": "為第一隻毛孩建立家庭。",
       "submit": "建立家庭",
       "saved": "家庭已建立。"
     },
@@ -420,7 +420,7 @@
       "loading": "正在載入家庭…",
       "loadError": "暫時無法載入家庭，請重試。",
       "unavailable": "你已無法存取這個家庭。",
-      "noFamilies": "你還沒有家庭。",
+      "noFamilies": "你還沒有家庭",
       "namedFamily": "{{name}}的家庭",
       "emptyFamily": "家庭 {{id}}",
       "petCount_one": "{{count}} 隻毛孩",
@@ -509,6 +509,10 @@
       "loadMembers": "暫時無法載入家庭成員，或你已失去存取權。",
       "removeMember": "暫時無法移除這位家庭成員，請稍後再試。",
       "memberLimit": "家庭成員已達 10 人上限。"
+    },
+    "single": {
+      "alreadyInFamily": "你已加入一個家庭。如要加入其他家庭，請先退出目前的家庭。",
+      "noFamilyBody": "你可以建立家庭，或用邀請碼加入現有家庭。"
     }
   },
   "reminders": {
@@ -1292,7 +1296,7 @@
   },
   "accountSecurity": {
     "ownsFamilyTitle": "請先處理家庭擁有權",
-    "ownsFamilyBody": "你仍擁有一個或多個家庭。刪除帳戶前，請將每個家庭的擁有權轉給家庭成員，或明確刪除該家庭。你只是成員或查看者的家庭不會阻止刪除帳戶。",
+    "ownsFamilyBody": "你仍是目前家庭的管理者。刪除帳戶前，請先將擁有權轉給家庭成員，或明確刪除這個家庭。成員或查看者可直接刪除帳戶。",
     "title": "帳戶與安全",
     "subtitle": "管理你的 HomeyPaw 帳戶和私人資料。",
     "dangerZone": "危險操作",

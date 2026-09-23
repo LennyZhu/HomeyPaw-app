@@ -169,18 +169,28 @@ export default function ChatScreen() {
     return (
       <Screen contentContainerStyle={styles.noPetContent}>
         <EmptyState
-          actionLabel={t('chat.live.noPet.add')}
+          actionLabel={t(
+            petsState.currentFamilyId
+              ? 'chat.live.noPet.add'
+              : 'family.create.action',
+          )}
           body={t('chat.live.noPet.body')}
           icon="chatbubble-ellipses-outline"
-          onActionPress={() => router.push('/pets/new')}
+          onActionPress={() =>
+            router.push(
+              petsState.currentFamilyId ? '/pets/new' : '/families/new',
+            )
+          }
           title={t('chat.live.noPet.title')}
         />
-        <AppButton
-          label={t('chat.live.noPet.join')}
-          onPress={() => router.push('/join-family' as Href)}
-          style={styles.secondaryAction}
-          variant="secondary"
-        />
+        {!petsState.currentFamilyId ? (
+          <AppButton
+            label={t('chat.live.noPet.join')}
+            onPress={() => router.push('/join-family' as Href)}
+            style={styles.secondaryAction}
+            variant="secondary"
+          />
+        ) : null}
       </Screen>
     );
   }

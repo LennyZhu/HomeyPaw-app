@@ -186,9 +186,8 @@ async function main() {
       invite_code: firstInvite.invite_code,
     });
     expect(
-      !winnerRepeat.error &&
-        winnerRepeat.data?.[0]?.join_status === 'already_member',
-      'Existing member reuse stopped being idempotent at capacity.',
+      winnerRepeat.error?.message.includes('ALREADY_IN_FAMILY'),
+      'Existing member repeat join did not return ALREADY_IN_FAMILY.',
     );
 
     backdateInvitePair(firstInvite.invite_id);

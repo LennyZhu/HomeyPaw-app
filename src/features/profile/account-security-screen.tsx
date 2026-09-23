@@ -19,6 +19,9 @@ export default function AccountSecurityScreen() {
   const { signOut } = useAuth();
   const familiesQuery = useFamilies();
   const petsQuery = usePets();
+  const ownedFamily = familiesQuery.data?.find(
+    (access) => access.membership.role === 'owner',
+  )?.family;
   const [isDeleting, setIsDeleting] = useState(false);
   const [ownerBlocked, setOwnerBlocked] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -134,33 +137,21 @@ export default function AccountSecurityScreen() {
               {t('accountSecurity.ownsFamilyTitle')}
             </AppText>
             <AppText>{t('accountSecurity.ownsFamilyBody')}</AppText>
-            {familiesQuery.data
-              ?.filter((access) => access.membership.role === 'owner')
-              .map(({ family }) => (
-                <View key={family.id} style={styles.ownedFamily}>
-                  <AppText>
-                    {familyLabel(family, petsQuery.data ?? [], t)}
-                  </AppText>
-                  <AppButton
-                    label={t('family.lifecycle.manage')}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/families/[id]',
-                        params: { id: family.id },
-                      })
-                    }
-                    variant="secondary"
-                  />
-                </View>
-              ))}
+            {ownedFamily ? (
+              <View style={styles.ownedFamily}>
+                <AppText>
+                  {familyLabel(ownedFamily, petsQuery.data ?? [], t)}
+                </AppText>
+                <AppButton
+                  label={t('family.lifecycle.manage')}
+                  onPress={() => router.push('/families')}
+                  variant="secondary"
+                />
+              </View>
+            ) : null}
             {familiesQuery.isError || petsQuery.isError ? (
               <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
             ) : null}
-            <AppButton
-              label={t('profile.manageFamilies')}
-              onPress={() => router.push('/families')}
-              variant="secondary"
-            />
           </View>
         ) : null}
         {Platform.OS === 'web' && webConfirmationStep > 0 ? (

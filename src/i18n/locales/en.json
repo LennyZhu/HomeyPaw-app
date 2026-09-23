@@ -407,7 +407,7 @@
     "create": {
       "action": "Create family",
       "title": "Create a family",
-      "subtitle": "Start a separate family with its first pet. Your existing families stay together.",
+      "subtitle": "Create a family for your first pet.",
       "submit": "Create family",
       "saved": "Family created."
     },
@@ -420,7 +420,7 @@
       "loading": "Loading families…",
       "loadError": "We couldn't load your families. Try again.",
       "unavailable": "This family is no longer available to you.",
-      "noFamilies": "You have no families yet.",
+      "noFamilies": "You have no family yet",
       "namedFamily": "{{name}}'s family",
       "emptyFamily": "Family {{id}}",
       "petCount_one": "{{count}} pet",
@@ -509,6 +509,10 @@
       "loadMembers": "We couldn't load the family members, or you no longer have access.",
       "removeMember": "We couldn't remove this family member. Try again shortly.",
       "memberLimit": "This family has reached the 10-person limit."
+    },
+    "single": {
+      "alreadyInFamily": "You’re already in a family. Leave your current family before joining another one.",
+      "noFamilyBody": "Create a family or join an existing one with an invite code."
     }
   },
   "reminders": {
@@ -1292,7 +1296,7 @@
   },
   "accountSecurity": {
     "ownsFamilyTitle": "Resolve family ownership first",
-    "ownsFamilyBody": "You still own one or more families. Before deleting your account, transfer each family's ownership to a Member or explicitly delete that family. Families you only belong to as a Member or Viewer do not block account deletion.",
+    "ownsFamilyBody": "You still own your family. Before deleting your account, transfer ownership to a Member or explicitly delete the family. Members and Viewers can delete their accounts directly.",
     "title": "Account and security",
     "subtitle": "Manage your HomeyPaw account and private data.",
     "dangerZone": "Danger zone",

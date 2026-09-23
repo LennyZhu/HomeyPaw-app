@@ -309,11 +309,13 @@ export default function HomeScreen() {
             }
             title={t('pets.empty.homeTitle')}
           />
-          <AppButton
-            label={t('family.join.action')}
-            onPress={() => router.push('/join-family' as Href)}
-            variant="secondary"
-          />
+          {!petsState.currentFamilyId ? (
+            <AppButton
+              label={t('family.join.action')}
+              onPress={() => router.push('/join-family' as Href)}
+              variant="secondary"
+            />
+          ) : null}
         </View>
       ) : null}
 

@@ -76,6 +76,24 @@ async function pet(owner, label) {
   families.add(result.data.family_id);
   return result.data.id;
 }
+async function familyPet(owner, anchorPetId, label) {
+  const anchor = await owner
+    .from('pets')
+    .select('family_id')
+    .eq('id', anchorPetId)
+    .single();
+  if (anchor.error || !anchor.data?.family_id)
+    throw anchor.error ?? new Error('Anchor Family lookup failed');
+  const result = await owner.rpc('create_family_pet', {
+    target_family_id: anchor.data.family_id,
+    pet_name: `${label} ${randomUUID().slice(0, 6)}`,
+    pet_species: 'other',
+  });
+  if (result.error || !result.data)
+    throw result.error ?? new Error('Family Pet creation failed');
+  pets.push(result.data.id);
+  return result.data.id;
+}
 function membership(petId, userId, role = 'member') {
   sql(
     `with membership as (
@@ -427,7 +445,7 @@ try {
     'PASS: Birthday occurrence enters the existing 30-day notification window.',
   );
 
-  const cascadePet = await pet(owner.client, 'Cascade');
+  const cascadePet = await familyPet(owner.client, petId, 'Cascade');
   await health(owner.client, cascadePet, 'stool');
   const petDelete = await owner.client
     .from('pets')

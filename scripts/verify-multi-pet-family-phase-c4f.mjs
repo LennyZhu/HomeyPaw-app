@@ -540,6 +540,11 @@ try {
      where family_id = '${authz.familyId}'::uuid and role = 'owner';`,
   );
 
+  result = await owner.client.rpc('delete_family', {
+    target_family_id: authz.familyId,
+  });
+  if (result.error) throw result.error;
+
   const zero = await createFamily(owner, 'Zero Pet');
   const zeroInvite = await createInvite(owner, zero.familyId);
   result = await owner.client.rpc('delete_family_pet', {
@@ -625,16 +630,17 @@ try {
     );
   }
 
-  const survivor = await createFamily(owner, 'Survivor Family');
-  const survivorAvatar = `${owner.id}/${survivor.petId}/${randomUUID()}.jpg`;
+  const survivorOwner = await createUser('survivor-owner');
+  const survivor = await createFamily(survivorOwner, 'Survivor Family');
+  const survivorAvatar = `${survivorOwner.id}/${survivor.petId}/${randomUUID()}.jpg`;
   await uploadImage('pet-avatars', survivorAvatar);
-  result = await owner.client
+  result = await survivorOwner.client
     .from('pets')
     .update({ avatar_path: survivorAvatar })
     .eq('id', survivor.petId);
   if (result.error) throw result.error;
   const survivorPhoto = await createPhotoPost(
-    owner,
+    survivorOwner,
     survivor.petId,
     'Survivor photo',
   );
@@ -750,6 +756,11 @@ try {
            and role = 'owner'
        );`,
   );
+
+  result = await owner.client.rpc('delete_family', {
+    target_family_id: rollback.familyId,
+  });
+  if (result.error) throw result.error;
 
   const createRace = await createFamily(owner, 'Create race');
   await raceDelete(

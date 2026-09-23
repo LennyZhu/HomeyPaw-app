@@ -138,6 +138,23 @@ async function createPet(ownerClient, name) {
   return data.id;
 }
 
+async function createFamilyPet(ownerClient, anchorPetId, name) {
+  const { data: anchor, error: readError } = await ownerClient
+    .from('pets')
+    .select('family_id')
+    .eq('id', anchorPetId)
+    .single();
+  if (readError || !anchor?.family_id)
+    throw readError ?? new Error('Anchor Family lookup failed');
+  const { data, error } = await ownerClient.rpc('create_family_pet', {
+    target_family_id: anchor.family_id,
+    pet_name: `${name} ${randomUUID().slice(0, 8)}`,
+    pet_species: 'other',
+  });
+  if (error || !data) throw error ?? new Error('Family Pet creation failed');
+  return data.id;
+}
+
 async function addMembership(petId, userId, role = 'member') {
   runLocalSql(
     `with membership as (
@@ -649,7 +666,11 @@ async function main() {
       'Task-zone local-date mismatch was accepted.',
     );
 
-    const crossPetId = await createPet(owner.client, 'Phase 11A Cross Pet');
+    const crossPetId = await createFamilyPet(
+      owner.client,
+      petId,
+      'Phase 11A Cross Pet',
+    );
     petIds.push(crossPetId);
     const crossTask = await createDailyTask(
       owner.client,

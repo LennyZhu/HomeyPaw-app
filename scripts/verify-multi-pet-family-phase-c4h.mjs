@@ -30,20 +30,13 @@ function check(label, condition) {
 }
 
 check(
-  'Family list is based on memberships, including zero-pet families',
-  list.includes('families.map') &&
-    list.includes('familyLabel(family, pets, t)') &&
-    labels.includes('emptyFamily'),
-);
-check(
-  'Each Family is one accessible card with identity, role, pet count, and the existing route',
-  list.includes('<Pressable') &&
-    list.includes('accessibilityRole="button"') &&
-    list.includes('familyLabel(family, pets, t)') &&
-    list.includes('family.lifecycle.petCount') &&
-    list.includes('chevron-forward') &&
+  'Family entry resolves the sole membership and offers create/join only with no Family',
+  list.includes('familiesQuery.data?.[0]') &&
     list.includes("pathname: '/families/[id]'") &&
-    !list.includes("label={t('family.lifecycle.manage')}"),
+    list.includes("router.push('/families/new')") &&
+    list.includes("router.push('/join-family')") &&
+    !list.includes('families.map') &&
+    labels.includes('emptyFamily'),
 );
 check(
   'Family management uses canonical family membership role',
@@ -155,7 +148,6 @@ check(
     ) &&
     c3Migration.includes('from public.family_members as membership') &&
     c3Migration.includes('where membership.family_id = target_family_id') &&
-    list.includes('pets.filter((pet) => pet.family_id === family.id)') &&
     petsScreen.includes('petsQuery.data.map((pet)'),
 );
 for (const locale of [en, zh]) {

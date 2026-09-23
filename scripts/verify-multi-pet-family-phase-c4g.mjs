@@ -429,10 +429,10 @@ try {
   const member = await createUser('member');
   const viewer = await createUser('viewer');
   const stranger = await createUser('stranger');
+  const otherOwner = await createUser('other-owner');
   const familyA = await createFamily(owner, 'Family A');
-  const familyB = await createFamily(owner, 'Family B');
+  const familyB = await createFamily(otherOwner, 'Family B');
   addMember(familyA.familyId, member.id);
-  addMember(familyB.familyId, member.id);
   addMember(familyA.familyId, viewer.id);
 
   const zero = await createFamily(stranger, 'Zero Pet');
@@ -441,7 +441,7 @@ try {
   });
   if (result.error) throw result.error;
   await expectOwnerDenied(stranger, 'zero-Pet Owner');
-  await expectOwnerDenied(owner, 'multiple-Family Owner');
+  await expectOwnerDenied(owner, 'single-Family Owner');
   const multiOwner = await createUser('multi-pet-owner');
   const multiPet = await createFamily(multiOwner, 'Multi Pet');
   for (let index = 0; index < 2; index += 1) {

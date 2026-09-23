@@ -586,9 +586,8 @@ try {
     invite_code: firstInvite.invite_code,
   });
   expect(
-    !repeatedJoin.error &&
-      repeatedJoin.data?.[0]?.join_status === 'already_member',
-    'Repeated legacy join was not idempotent.',
+    repeatedJoin.error?.message.includes('ALREADY_IN_FAMILY'),
+    'Repeated legacy join did not enforce single-Family membership.',
   );
   expectSql(
     'Repeated join did not increment invite usage.',

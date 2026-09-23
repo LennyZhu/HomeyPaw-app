@@ -11,6 +11,7 @@ import { useFeedback } from '@/components/feedback-provider';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { showFeedback } = useFeedback();
   const { signOut, user } = useAuth();
+  const familyContext = useCurrentFamily();
   const { error, isLoading, profile, refetch } = useProfile();
   const avatarQuery = useProfileAvatarUrl(profile?.avatar_url ?? null);
   const presentation = getProfilePresentationState({
@@ -174,34 +176,41 @@ export default function ProfileScreen() {
           </Pressable>
 
           <View style={styles.menu}>
-            {menuItems.map((item) => (
-              <Pressable
-                accessibilityLabel={t(`profile.${item.key}`)}
-                accessibilityRole="button"
-                key={item.key}
-                onPress={() => handleMenuPress(item.key)}
-                style={({ pressed }) => [
-                  styles.menuRow,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={styles.menuIcon}>
+            {menuItems
+              .filter(
+                (item) =>
+                  item.key !== 'joinFamily' ||
+                  (familyContext.familiesQuery.isSuccess &&
+                    !familyContext.currentFamilyId),
+              )
+              .map((item) => (
+                <Pressable
+                  accessibilityLabel={t(`profile.${item.key}`)}
+                  accessibilityRole="button"
+                  key={item.key}
+                  onPress={() => handleMenuPress(item.key)}
+                  style={({ pressed }) => [
+                    styles.menuRow,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={styles.menuIcon}>
+                    <Ionicons
+                      color={lightColors.secondary}
+                      name={item.icon}
+                      size={21}
+                    />
+                  </View>
+                  <AppText style={styles.menuLabel} variant="body">
+                    {t(`profile.${item.key}`)}
+                  </AppText>
                   <Ionicons
-                    color={lightColors.secondary}
-                    name={item.icon}
-                    size={21}
+                    color={lightColors.textTertiary}
+                    name="chevron-forward"
+                    size={18}
                   />
-                </View>
-                <AppText style={styles.menuLabel} variant="body">
-                  {t(`profile.${item.key}`)}
-                </AppText>
-                <Ionicons
-                  color={lightColors.textTertiary}
-                  name="chevron-forward"
-                  size={18}
-                />
-              </Pressable>
-            ))}
+                </Pressable>
+              ))}
           </View>
 
           <AppButton

@@ -20,7 +20,8 @@ import { getPetSummaryLabel } from './pet-display';
 export default function PetsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { currentFamilyId, petsQuery } = useCurrentFamily();
+  const { currentFamilyId, currentMembership, familiesQuery, petsQuery } =
+    useCurrentFamily();
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
   return (
@@ -33,15 +34,21 @@ export default function PetsScreen() {
         >
           {t('pets.list.title')}
         </AppText>
-        <IconButton
-          accessibilityLabel={t('pets.list.createActions')}
-          icon="add"
-          onPress={() => setIsCreateMenuOpen(true)}
-        />
+        {familiesQuery.isSuccess &&
+        (!currentFamilyId || currentMembership?.role === 'owner') ? (
+          <IconButton
+            accessibilityLabel={t('pets.list.createActions')}
+            icon="add"
+            onPress={() => setIsCreateMenuOpen(true)}
+          />
+        ) : null}
       </View>
 
       <PetsCreateActionsModal
-        canAddPet={Boolean(currentFamilyId)}
+        canAddPet={Boolean(
+          currentFamilyId && currentMembership?.role === 'owner',
+        )}
+        canCreateOrJoinFamily={familiesQuery.isSuccess && !currentFamilyId}
         onAddPet={() => {
           setIsCreateMenuOpen(false);
           router.push('/pets/new');
@@ -79,7 +86,9 @@ export default function PetsScreen() {
         </View>
       ) : null}
 
-      {petsQuery.isSuccess && petsQuery.data.length === 0 ? (
+      {familiesQuery.isSuccess &&
+      petsQuery.isSuccess &&
+      petsQuery.data.length === 0 ? (
         <View style={styles.emptyWrap}>
           <EmptyState
             actionLabel={t(
@@ -94,11 +103,13 @@ export default function PetsScreen() {
             }
             title={t('pets.empty.title')}
           />
-          <AppButton
-            label={t('family.join.action')}
-            onPress={() => router.push('/join-family' as Href)}
-            variant="secondary"
-          />
+          {!currentFamilyId ? (
+            <AppButton
+              label={t('family.join.action')}
+              onPress={() => router.push('/join-family' as Href)}
+              variant="secondary"
+            />
+          ) : null}
         </View>
       ) : null}
 
