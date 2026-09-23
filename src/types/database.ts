@@ -277,7 +277,7 @@ export type Database = {
           expires_at: string;
           family_id: string;
           id: string;
-          invited_by: string;
+          invited_by: string | null;
           max_uses: number;
           revoked_at: string | null;
           used_count: number;
@@ -318,7 +318,7 @@ export type Database = {
           created_at: string;
           expires_at: string;
           id: string;
-          invited_by: string;
+          invited_by: string | null;
           max_uses: number;
           pet_id: string;
           revoked_at: string | null;
@@ -763,6 +763,10 @@ export type Database = {
       delete_family: {
         Args: { target_family_id: string };
         Returns: 'deleted';
+      };
+      prepare_account_deletion: {
+        Args: Record<string, never>;
+        Returns: 'prepared';
       };
       delete_family_pet: {
         Args: { target_pet_id: string };

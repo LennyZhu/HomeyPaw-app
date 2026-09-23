@@ -1130,15 +1130,38 @@ async function verifyDeleteLifecycles(context) {
     confirmation: 'DELETE_MY_ACCOUNT',
   });
   expect(
-    deletedAccount.status === 500 && deletedAccount.payload.deleted !== true,
-    `Owner delete-account did not fail closed (${deletedAccount.status}).`,
+    deletedAccount.status === 409 &&
+      deletedAccount.payload.error === 'ACCOUNT_OWNS_FAMILY',
+    `Owner delete-account did not preserve its Family (${deletedAccount.status}).`,
   );
-  sql(
-    `delete from public.families where id = '${petFamilyIds.get(accountPetId)}'::uuid;`,
+  expect(
+    count(
+      `select count(*) from public.pets where id='${accountPetId}'::uuid;`,
+    ) === 1 &&
+      count(
+        `select count(*) from public.posts where id='${accountPostId}'::uuid;`,
+      ) === 1 &&
+      count(
+        `select count(*) from storage.objects where name in ('${accountVideo.storagePath}','${accountVideo.thumbnailPath}');`,
+      ) === 2,
+    'Owner denial changed shared Pet, Post, or Storage data.',
   );
+  const explicitFamilyDelete = await accountUser.client.rpc('delete_family', {
+    target_family_id: petFamilyIds.get(accountPetId),
+  });
+  expect(!explicitFamilyDelete.error, 'Explicit Family deletion failed.');
   familyIds.delete(petFamilyIds.get(accountPetId));
-  const accountAuthDelete = await admin.auth.admin.deleteUser(accountUser.id);
-  expect(!accountAuthDelete.error, 'Account fixture cleanup failed.');
+  const accountDeletedAfterFamily = await invoke(
+    'delete-account',
+    accountUser,
+    {
+      confirmation: 'DELETE_MY_ACCOUNT',
+    },
+  );
+  expect(
+    accountDeletedAfterFamily.status === 200,
+    'Account deletion after explicit Family deletion failed.',
+  );
   deletedUsers.add(accountUser.id);
   petIds.delete(accountPetId);
   runCleanupWorker();
@@ -1146,11 +1169,11 @@ async function verifyDeleteLifecycles(context) {
     count(
       `select count(*) from storage.objects where name in ('${accountVideo.storagePath}','${accountVideo.thumbnailPath}');`,
     ) === 0,
-    'delete-account failure cleanup jobs left video Storage objects.',
+    'Explicit Family deletion cleanup left video Storage objects.',
   );
 
   console.log(
-    'PASS: delete-post/delete-pet remove video data; Owner delete-account clears Pet data then fails closed until Family cleanup.',
+    'PASS: delete-post/delete-pet remove video data; Owner account deletion preserves shared media until explicit Family deletion.',
   );
 }
 
