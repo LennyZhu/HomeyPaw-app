@@ -760,6 +760,10 @@ export type Database = {
         Args: { target_task_id: string };
         Returns: 'deactivated' | 'already_inactive';
       };
+      delete_family: {
+        Args: { target_family_id: string };
+        Returns: 'deleted';
+      };
       delete_family_pet: {
         Args: { target_pet_id: string };
         Returns: {
