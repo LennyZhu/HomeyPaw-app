@@ -63,6 +63,18 @@ function count(statement) {
   return Number(sql(statement));
 }
 
+function processCleanupJobs() {
+  execFileSync(
+    process.execPath,
+    ['scripts/process-journal-video-cleanup.mjs'],
+    {
+      cwd: process.cwd(),
+      env: process.env,
+      stdio: 'inherit',
+    },
+  );
+}
+
 function testClient() {
   return createClient(url, anonKey, {
     auth: {
@@ -294,6 +306,8 @@ async function verifyDeletePost() {
     `Owner own-post deletion failed (${ownerOwn.status}).`,
   );
 
+  processCleanupJobs();
+
   for (const post of [ownerPost, memberPost, memberOwnPost]) {
     expect(
       count(
@@ -428,6 +442,7 @@ async function verifyDeletePet() {
     orphanCount === 0,
     `delete-pet left ${orphanCount} relational orphans.`,
   );
+  processCleanupJobs();
   expect(
     count(
       `select count(*) from storage.objects where (bucket_id='pet-avatars' and name='${avatarPath}') or (bucket_id='post-media' and name='${post.mediaPath}');`,

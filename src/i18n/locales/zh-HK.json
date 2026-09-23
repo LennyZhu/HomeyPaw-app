@@ -12,7 +12,8 @@
     "error": "發生錯誤",
     "retry": "再試一次",
     "save": "儲存",
-    "edit": "編輯"
+    "edit": "編輯",
+    "deletedUser": "已刪除用戶"
   },
   "auth": {
     "tagline": "記錄毛孩一生的私人寵物日記",
@@ -414,7 +415,7 @@
       "detailAction": "家庭成員 {{count}}",
       "loading": "正在載入家庭成員…",
       "avatar": "{{name}}的個人頭像預留位置",
-      "formerMember": "家庭成員",
+      "formerMember": "已離開的家庭成員",
       "remove": "移除",
       "removeTitle": "移除{{name}}？",
       "removeConfirm": "{{name}}會立即失去這隻毛孩及其日記的存取權；過去發布的日記會繼續保留。",

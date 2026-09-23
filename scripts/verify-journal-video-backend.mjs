@@ -1064,6 +1064,7 @@ async function verifyDeleteLifecycles(context) {
     deletedPost.status === 200 && deletedPost.payload.deleted === true,
     `Video delete-post failed (${deletedPost.status}).`,
   );
+  runCleanupWorker();
   expect(
     count(
       `select count(*) from storage.objects where name in ('${deletePostVideo.storagePath}','${deletePostVideo.thumbnailPath}');`,
@@ -1097,6 +1098,7 @@ async function verifyDeleteLifecycles(context) {
     `Video delete-pet failed (${deletedPet.status}).`,
   );
   petIds.delete(deletePetId);
+  runCleanupWorker();
   expect(
     count(
       `select count(*) from storage.objects where name in ('${deletePetVideo.storagePath}','${deletePetVideo.thumbnailPath}');`,

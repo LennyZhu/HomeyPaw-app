@@ -112,6 +112,8 @@
     "verify:multi-pet-family-phase-c4b": "node scripts/verify-multi-pet-family-phase-c4b.mjs",
     "verify:multi-pet-family-phase-c4c": "node scripts/verify-multi-pet-family-phase-c4c.mjs",
     "verify:multi-pet-family-phase-c4d-bc": "node scripts/verify-multi-pet-family-phase-c4d-bc.mjs",
+    "verify:multi-pet-family-phase-c4d-d": "node --experimental-strip-types scripts/verify-multi-pet-family-phase-c4d-d.mjs",
+    "verify:multi-pet-family-phase-c4e": "node scripts/verify-multi-pet-family-phase-c4e.mjs",
     "verify:family-push": "node --experimental-strip-types scripts/verify-family-push.mjs",
     "verify:family-push-edge": "node scripts/verify-family-push-edge.mjs",
     "verify:family-push-ttl": "node scripts/verify-family-push-ttl.mjs",
@@ -128,6 +130,7 @@
     "verify:journal-video-client": "node scripts/verify-journal-video-client.mjs",
     "verify:media-egress-cache": "node scripts/verify-media-egress-cache.mjs",
     "process:journal-video-cleanup": "node scripts/process-journal-video-cleanup.mjs",
+    "process:media-cleanup": "node scripts/process-journal-video-cleanup.mjs",
     "postinstall": "node scripts/apply-package-patches.mjs"
   },
   "engines": {

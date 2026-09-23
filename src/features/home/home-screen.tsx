@@ -18,6 +18,7 @@ import {
   usePetMembers,
   usePetPostAuthors,
 } from '@/features/family/family-queries';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { HomeSectionHeader } from '@/features/home/components/home-section-header';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
@@ -319,11 +320,13 @@ export default function HomeScreen() {
                   <TodayCareRow
                     key={log.id}
                     log={log}
-                    performerName={
-                      (log.performed_by
+                    performerName={resolveHistoricalActorDisplayName({
+                      actorId: log.performed_by,
+                      displayName: log.performed_by
                         ? carePerformerNames[log.performed_by]
-                        : undefined) ?? t('family.members.formerMember')
-                    }
+                        : null,
+                      t,
+                    })}
                   />
                 ))}
               </View>
@@ -373,9 +376,13 @@ export default function HomeScreen() {
               <View style={styles.activityList}>
                 {recentPosts.map((post) => (
                   <RecentActivity
-                    authorName={
-                      post.author_id ? authorNames[post.author_id] : undefined
-                    }
+                    authorName={resolveHistoricalActorDisplayName({
+                      actorId: post.author_id,
+                      displayName: post.author_id
+                        ? authorNames[post.author_id]
+                        : null,
+                      t,
+                    })}
                     key={post.id}
                     mediaUrls={mediaUrlsQuery.data ?? {}}
                     videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
@@ -489,7 +496,7 @@ function RecentActivity({
   onPress,
   post,
 }: {
-  authorName: string | undefined;
+  authorName: string;
   mediaUrls: Record<string, string>;
   videoThumbnailUrls: Record<string, string>;
   onPhotoError: (storagePath: string) => void;
@@ -551,8 +558,7 @@ function RecentActivity({
           {post.content || t(`posts.tags.${post.tag ?? 'other'}`)}
         </AppText>
         <AppText numberOfLines={1} tone="secondary" variant="footnote">
-          {authorName ?? t('family.members.formerMember')} ·{' '}
-          {formatDateOnly(post.event_date, i18n.language)}
+          {authorName} · {formatDateOnly(post.event_date, i18n.language)}
         </AppText>
       </View>
       <Ionicons

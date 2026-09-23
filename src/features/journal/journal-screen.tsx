@@ -19,6 +19,7 @@ import { AppText } from '@/components/app-text';
 import { EmptyState } from '@/components/empty-state';
 import { LoadingView } from '@/components/loading-view';
 import { useAuth } from '@/features/auth/auth-context';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { usePetPostAuthors } from '@/features/family/family-queries';
 import { parseDateOnly } from '@/features/pets/pet-dates';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
@@ -327,11 +328,13 @@ export default function JournalScreen() {
 
           return (
             <TimelinePost
-              authorName={
-                item.post.author_id
+              authorName={resolveHistoricalActorDisplayName({
+                actorId: item.post.author_id,
+                displayName: item.post.author_id
                   ? authorNames[item.post.author_id]
-                  : undefined
-              }
+                  : null,
+                t,
+              })}
               mediaUrls={mediaUrlsQuery.data ?? {}}
               videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
               onPhotoError={recoverPhotoUrl}
@@ -458,7 +461,7 @@ function TimelinePost({
   onPress,
   post,
 }: {
-  authorName: string | undefined;
+  authorName: string;
   mediaUrls: Record<string, string>;
   videoThumbnailUrls: Record<string, string>;
   onPhotoError: (storagePath: string) => void;
@@ -480,7 +483,7 @@ function TimelinePost({
       <View style={styles.timelineLine} />
       <View style={styles.metaRow}>
         <AppText style={styles.author} tone="secondary" variant="footnote">
-          {authorName ?? t('family.members.formerMember')}
+          {authorName}
           {' · '}
           {new Intl.DateTimeFormat(i18n.language, {
             hour: '2-digit',

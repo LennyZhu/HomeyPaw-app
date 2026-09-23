@@ -18,6 +18,7 @@ import {
   usePetMembers,
   usePetPostAuthors,
 } from '@/features/family/family-queries';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { formatDateOnly } from '@/features/pets/pet-dates';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -137,12 +138,17 @@ export default function PostDetailScreen() {
     );
   }
 
-  const authorName =
-    authorsQuery.data?.find((author) => author.userId === post.author_id)
-      ?.displayName ?? t('family.members.formerMember');
-  const authorMember = membersQuery.data?.find(
-    (member) => member.userId === post.author_id,
-  );
+  const authorName = resolveHistoricalActorDisplayName({
+    actorId: post.author_id,
+    displayName: post.author_id
+      ? authorsQuery.data?.find((author) => author.userId === post.author_id)
+          ?.displayName
+      : null,
+    t,
+  });
+  const authorMember = post.author_id
+    ? membersQuery.data?.find((member) => member.userId === post.author_id)
+    : undefined;
   const authorDate = formatDateOnly(post.event_date, i18n.language);
   const authorTime = new Intl.DateTimeFormat(i18n.language, {
     hour: '2-digit',
@@ -151,7 +157,7 @@ export default function PostDetailScreen() {
   const authorAvatarLabel = t('posts.actions.authorAvatar', {
     name: authorName,
   });
-  const isAuthor = post.author_id === user?.id;
+  const isAuthor = post.author_id !== null && post.author_id === user?.id;
   const isOwner = membersQuery.data?.some(
     (member) => member.userId === user?.id && member.role === 'owner',
   );

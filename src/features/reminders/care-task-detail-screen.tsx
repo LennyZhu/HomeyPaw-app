@@ -13,6 +13,7 @@ import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
 import { careTypeIcons } from '@/features/care/care-types';
 import { usePetMembers } from '@/features/family/family-queries';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { usePet } from '@/features/pets/pet-queries';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -112,9 +113,21 @@ export default function CareTaskDetailScreen() {
   const canEdit =
     task.is_active &&
     (task.created_by === user?.id || currentMembership?.role === 'owner');
-  const creator = membersQuery.data?.find(
-    (member) => member.userId === task.created_by,
-  );
+  const creator = task.created_by
+    ? membersQuery.data?.find((member) => member.userId === task.created_by)
+    : undefined;
+  const creatorName = resolveHistoricalActorDisplayName({
+    actorId: task.created_by,
+    displayName: creator?.displayName,
+    t,
+  });
+  const completerName = occurrence?.completion_id
+    ? resolveHistoricalActorDisplayName({
+        actorId: occurrence.completed_by,
+        displayName: occurrence.completer_display_name,
+        t,
+      })
+    : '';
   const status = occurrence ? getCareTaskStatus(occurrence, currentTime) : null;
   const canComplete = status === 'due' || status === 'overdue';
 
@@ -262,10 +275,7 @@ export default function CareTaskDetailScreen() {
           label={t('reminders.fields.timeZone')}
           value={task.time_zone}
         />
-        <DetailRow
-          label={t('reminders.createdByLabel')}
-          value={creator?.displayName ?? t('family.members.formerMember')}
-        />
+        <DetailRow label={t('reminders.createdByLabel')} value={creatorName} />
         {task.note ? (
           <DetailRow label={t('reminders.fields.note')} value={task.note} />
         ) : null}
@@ -273,9 +283,7 @@ export default function CareTaskDetailScreen() {
           <DetailRow
             label={t('reminders.completedLabel')}
             value={t('reminders.completedBy', {
-              name:
-                occurrence.completer_display_name ??
-                t('family.members.formerMember'),
+              name: completerName,
               time: occurrence.completed_at
                 ? formatTaskDateTime(
                     occurrence.completed_at,

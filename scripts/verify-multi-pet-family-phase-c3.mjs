@@ -112,6 +112,18 @@ function count(statement) {
   return Number(sql(statement));
 }
 
+function runCleanupWorker() {
+  execFileSync(
+    process.execPath,
+    ['scripts/process-journal-video-cleanup.mjs'],
+    {
+      cwd: root,
+      env: process.env,
+      stdio: 'inherit',
+    },
+  );
+}
+
 function expectSql(label, statement) {
   const result = sql(statement);
   expect(result === 't', `${label} (received ${JSON.stringify(result)})`);
@@ -605,6 +617,7 @@ try {
        and not exists (select 1 from public.care_shift_tasks where pet_id = '${petB.id}'::uuid)
        and ${mirrorInvariant(familyId)};`,
   );
+  runCleanupWorker();
   expectSql(
     'Storage cleanup removes only Pet B avatar/media paths.',
     `select

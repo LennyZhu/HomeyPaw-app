@@ -21,6 +21,7 @@ import { EmptyState } from '@/components/empty-state';
 import { useFeedback } from '@/components/feedback-provider';
 import { IconButton } from '@/components/icon-button';
 import { useAuth } from '@/features/auth/auth-context';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { usePetMembers } from '@/features/family/family-queries';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
@@ -205,11 +206,13 @@ export default function CareHistoryScreen() {
               )}
               log={item.log}
               onActions={() => setActionTarget(item.log)}
-              performerName={
-                (item.log.performed_by
+              performerName={resolveHistoricalActorDisplayName({
+                actorId: item.log.performed_by,
+                displayName: item.log.performed_by
                   ? performerNames[item.log.performed_by]
-                  : undefined) ?? t('family.members.formerMember')
-              }
+                  : null,
+                t,
+              })}
             />
           )
         }

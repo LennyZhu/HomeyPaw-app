@@ -7,6 +7,7 @@ import { AppText } from '@/components/app-text';
 import { Avatar } from '@/components/avatar';
 import { IconButton } from '@/components/icon-button';
 import type { PetMemberSummary } from '@/features/family/family-queries';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, spacing } from '@/theme';
@@ -185,14 +186,18 @@ export function ScheduleShiftCard({
                   <AppText tone="tertiary" variant="caption">
                     {canceled
                       ? t('schedule.status.completedOutsideSchedule', {
-                          name:
-                            item.completer_display_name ??
-                            t('family.members.formerMember'),
+                          name: resolveHistoricalActorDisplayName({
+                            actorId: item.completed_by,
+                            displayName: item.completer_display_name,
+                            t,
+                          }),
                         })
                       : t('schedule.completedBy', {
-                          name:
-                            item.completer_display_name ??
-                            t('family.members.formerMember'),
+                          name: resolveHistoricalActorDisplayName({
+                            actorId: item.completed_by,
+                            displayName: item.completer_display_name,
+                            t,
+                          }),
                         })}
                   </AppText>
                 ) : null}

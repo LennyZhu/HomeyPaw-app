@@ -166,22 +166,6 @@ function postValuesToRpc(values: PostFormValues) {
   };
 }
 
-async function cleanupRemovedPhotos(
-  originalMedia: PostMedia[],
-  mediaItems: UploadedPostMedia[],
-) {
-  const retainedPaths = new Set(mediaItems.map((item) => item.storage_path));
-  const removedPaths = originalMedia
-    .map((item) => item.storage_path)
-    .filter((path) => !retainedPaths.has(path));
-  try {
-    await removePostMedia(removedPaths);
-    return false;
-  } catch {
-    return true;
-  }
-}
-
 async function cleanupUploadedVideo(
   video: UploadedPostVideo,
   context: Pick<PublishContext, 'petId' | 'userId'> & { postId: string },
@@ -434,11 +418,7 @@ export async function savePostEdit({
           uploadedVideo: videoToReconcile,
           userId: context.userId,
         });
-        const mediaCleanupPending = await cleanupRemovedPhotos(
-          originalMedia,
-          mediaItems,
-        );
-        return { mediaCleanupPending, post: recovered };
+        return { mediaCleanupPending: false, post: recovered };
       }
       if (usesVideoRpc && uploadedPaths.length > 0) {
         const result = await requireSupabase()
@@ -464,11 +444,7 @@ export async function savePostEdit({
       throw rpcResult.error;
     }
 
-    const mediaCleanupPending = await cleanupRemovedPhotos(
-      originalMedia,
-      mediaItems,
-    );
-    return { mediaCleanupPending, post: rpcResult.data };
+    return { mediaCleanupPending: false, post: rpcResult.data };
   } catch (error) {
     if (!skipPhotoCleanup) await cleanupNewPhotoUploads(uploadedPaths);
     if (uploadedVideo) {

@@ -1,10 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-import {
-  cleanupVideoReferences,
-  type VideoCleanupReference,
-} from '../_shared/video-cleanup.ts';
-
 const corsHeaders = {
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type',
@@ -106,7 +101,7 @@ Deno.serve(async (request) => {
 
   const { data: pet, error: petError } = await adminClient
     .from('pets')
-    .select('avatar_path, family_id')
+    .select('family_id')
     .eq('id', body.petId)
     .maybeSingle();
 
@@ -141,87 +136,8 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Pet not found' }, 404);
   }
 
-  let mediaOffset = 0;
-  let videoOffset = 0;
-  const videoReferences: VideoCleanupReference[] = [];
-
-  while (true) {
-    const { data: videoRows, error: videoError } = await adminClient
-      .from('post_videos')
-      .select('storage_path, thumbnail_path, posts!inner(pet_id)')
-      .eq('posts.pet_id', body.petId)
-      .range(videoOffset, videoOffset + 499);
-
-    if (videoError) {
-      console.error('Pet journal video lookup failed.', {
-        code: videoError.code,
-      });
-      return jsonResponse({ error: 'Pet deletion failed' }, 500);
-    }
-
-    videoReferences.push(
-      ...videoRows.map((video) => ({
-        storage_path: video.storage_path,
-        thumbnail_path: video.thumbnail_path,
-      })),
-    );
-
-    if (videoRows.length < 500) {
-      break;
-    }
-
-    videoOffset += videoRows.length;
-  }
-
-  while (true) {
-    const { data: mediaRows, error: mediaError } = await adminClient
-      .from('post_media')
-      .select('storage_path, posts!inner(pet_id)')
-      .eq('posts.pet_id', body.petId)
-      .range(mediaOffset, mediaOffset + 499);
-
-    if (mediaError) {
-      console.error('Pet journal media lookup failed.', {
-        code: mediaError.code,
-      });
-      return jsonResponse({ error: 'Pet deletion failed' }, 500);
-    }
-
-    const mediaPaths = mediaRows.map((media) => media.storage_path);
-
-    for (let index = 0; index < mediaPaths.length; index += 100) {
-      const { error: storageError } = await adminClient.storage
-        .from('post-media')
-        .remove(mediaPaths.slice(index, index + 100));
-
-      if (storageError) {
-        console.error('Pet journal media cleanup failed.', {
-          statusCode: storageError.statusCode,
-        });
-        return jsonResponse({ error: 'Pet deletion failed' }, 500);
-      }
-    }
-
-    if (mediaRows.length < 500) {
-      break;
-    }
-
-    mediaOffset += mediaRows.length;
-  }
-
-  if (pet.avatar_path) {
-    const { data: removedAvatars, error: storageError } =
-      await adminClient.storage.from('pet-avatars').remove([pet.avatar_path]);
-
-    if (storageError || (removedAvatars?.length ?? 0) !== 1) {
-      console.error('Pet avatar cleanup failed before database deletion.', {
-        removedCount: removedAvatars?.length ?? 0,
-        statusCode: storageError?.statusCode,
-      });
-      return jsonResponse({ error: 'Pet deletion failed' }, 500);
-    }
-  }
-
+  // delete_family_pet owns the transaction. Cascades remove canonical rows,
+  // and their triggers enqueue every Storage object before commit.
   const { data: deletionRows, error: deletionError } = await userClient.rpc(
     'delete_family_pet',
     { target_pet_id: body.petId },
@@ -229,23 +145,16 @@ Deno.serve(async (request) => {
   const deletion = deletionRows?.[0];
 
   if (deletionError || !deletion) {
-    console.error('Pet deletion failed after avatar cleanup.', {
-      code: deletionError?.code,
-    });
+    console.error('Pet deletion failed.', { code: deletionError?.code });
     return jsonResponse({ error: 'Pet deletion failed' }, 500);
   }
-
-  const videoCleanupComplete = await cleanupVideoReferences(
-    adminClient,
-    videoReferences,
-  );
 
   return jsonResponse(
     {
       deleted: true,
       familyId: deletion.deleted_family_id,
+      mediaCleanupPending: true,
       nextPetId: deletion.next_pet_id,
-      videoCleanupPending: !videoCleanupComplete,
     },
     200,
   );

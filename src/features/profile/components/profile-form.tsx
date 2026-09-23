@@ -181,13 +181,6 @@ export function ProfileForm({
       }
       profileUpdated = true;
 
-      if (
-        profile.avatar_url &&
-        (selectedAvatar || avatarRemoved) &&
-        profile.avatar_url !== uploadedPath
-      ) {
-        await removeProfileAvatar(profile.avatar_url).catch(() => undefined);
-      }
       await i18n.changeLanguage(locale);
       await onSaved();
     } catch {

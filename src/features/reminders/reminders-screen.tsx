@@ -29,6 +29,7 @@ import { careTypeIcons } from '@/features/care/care-types';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
 import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { useCurrentPet } from '@/features/pets/use-current-pet';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import {
   getCareTaskNotificationPermission,
   requestCareTaskNotificationPermission,
@@ -532,9 +533,11 @@ function OccurrenceCard({
           <AppText tone="tertiary" variant="caption">
             {occurrence.completion_id
               ? t('reminders.completedBy', {
-                  name:
-                    occurrence.completer_display_name ??
-                    t('family.members.formerMember'),
+                  name: resolveHistoricalActorDisplayName({
+                    actorId: occurrence.completed_by,
+                    displayName: occurrence.completer_display_name,
+                    t,
+                  }),
                   time: occurrence.completed_at
                     ? formatTaskTime(
                         occurrence.completed_at,
@@ -544,9 +547,11 @@ function OccurrenceCard({
                     : '',
                 })
               : t('reminders.createdBy', {
-                  name:
-                    occurrence.creator_display_name ??
-                    t('family.members.formerMember'),
+                  name: resolveHistoricalActorDisplayName({
+                    actorId: occurrence.created_by,
+                    displayName: occurrence.creator_display_name,
+                    t,
+                  }),
                 })}
           </AppText>
         </View>

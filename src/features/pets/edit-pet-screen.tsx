@@ -56,6 +56,7 @@ export default function EditPetScreen() {
   ) => {
     const originalAvatarPath = petQuery.data?.avatar_path ?? null;
     let uploadedPath: string | null = null;
+    let avatarUpdated = false;
     setSubmitError(null);
 
     try {
@@ -68,13 +69,9 @@ export default function EditPetScreen() {
           userId: user.id,
         });
         await updatePetAvatarPath(id, uploadedPath);
-
-        if (originalAvatarPath) {
-          await removePetAvatar(originalAvatarPath).catch(() => undefined);
-        }
+        avatarUpdated = true;
       } else if (avatarChange.type === 'remove' && originalAvatarPath) {
         await updatePetAvatarPath(id, null);
-        await removePetAvatar(originalAvatarPath).catch(() => undefined);
       }
 
       await Promise.all([
@@ -85,7 +82,7 @@ export default function EditPetScreen() {
       ]);
       router.back();
     } catch {
-      if (uploadedPath) {
+      if (uploadedPath && !avatarUpdated) {
         await removePetAvatar(uploadedPath).catch(() => undefined);
       }
       setSubmitError(t('pets.errors.update'));

@@ -22,6 +22,7 @@ import {
   useContentLayout,
 } from '@/components/content-container';
 import { modalSupportedOrientations } from '@/config/orientation';
+import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, shadows, spacing } from '@/theme';
@@ -202,7 +203,11 @@ export const ProductionChatMessageList = forwardRef<
             : undefined;
           const authorName = isOwn
             ? t('chat.live.accessibility.you')
-            : (member?.displayName ?? t('chat.live.formerMember'));
+            : resolveHistoricalActorDisplayName({
+                actorId: item.sender_id,
+                displayName: member?.displayName,
+                t,
+              });
           const time = formatChatTime(item.created_at, i18n.language);
           const canDelete = !item.optimistic && (isOwn || canModerate);
           const canEdit = !item.optimistic && isOwn;

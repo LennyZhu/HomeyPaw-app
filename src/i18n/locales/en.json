@@ -12,7 +12,8 @@
     "error": "Something went wrong",
     "retry": "Try again",
     "save": "Save",
-    "edit": "Edit"
+    "edit": "Edit",
+    "deletedUser": "Deleted user"
   },
   "auth": {
     "tagline": "A private journal for your pet's whole life",
@@ -414,7 +415,7 @@
       "detailAction": "Family members {{count}}",
       "loading": "Loading family members…",
       "avatar": "{{name}}'s profile placeholder",
-      "formerMember": "Family member",
+      "formerMember": "Former family member",
       "remove": "Remove",
       "removeTitle": "Remove {{name}}?",
       "removeConfirm": "{{name}} will immediately lose access to this pet and its journal. Their existing journal entries will remain.",

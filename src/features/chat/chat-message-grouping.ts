@@ -23,7 +23,14 @@ export function isChatMessageConsecutive(
   previous: GroupableChatMessage | undefined,
   timeZone = 'Asia/Hong_Kong',
 ) {
-  if (!previous || previous.sender_id !== message.sender_id) return false;
+  if (
+    !previous ||
+    message.sender_id === null ||
+    previous.sender_id === null ||
+    previous.sender_id !== message.sender_id
+  ) {
+    return false;
+  }
   if (
     getDateKey(previous.created_at, timeZone) !==
     getDateKey(message.created_at, timeZone)
