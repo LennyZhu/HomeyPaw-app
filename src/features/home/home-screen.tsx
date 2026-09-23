@@ -320,8 +320,9 @@ export default function HomeScreen() {
                     key={log.id}
                     log={log}
                     performerName={
-                      carePerformerNames[log.performed_by] ??
-                      t('family.members.formerMember')
+                      (log.performed_by
+                        ? carePerformerNames[log.performed_by]
+                        : undefined) ?? t('family.members.formerMember')
                     }
                   />
                 ))}
@@ -372,7 +373,9 @@ export default function HomeScreen() {
               <View style={styles.activityList}>
                 {recentPosts.map((post) => (
                   <RecentActivity
-                    authorName={authorNames[post.author_id]}
+                    authorName={
+                      post.author_id ? authorNames[post.author_id] : undefined
+                    }
                     key={post.id}
                     mediaUrls={mediaUrlsQuery.data ?? {}}
                     videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}

@@ -1191,11 +1191,14 @@ async function main() {
     const { data: deletedSenderMessage, error: deletedSenderReadError } =
       await owner.client
         .from('chat_messages')
-        .select('id')
+        .select('id, sender_id, body')
         .eq('id', accountDeleteMessage.id);
     expect(
-      !deletedSenderReadError && deletedSenderMessage.length === 0,
-      'Member account deletion retained own chat message.',
+      !deletedSenderReadError &&
+        deletedSenderMessage.length === 1 &&
+        deletedSenderMessage[0]?.sender_id === null &&
+        deletedSenderMessage[0]?.body === 'Deleted with Member account',
+      'Member account deletion did not retain anonymous Chat history.',
     );
 
     ownerDeletionUser = await createUser('Owner deletion fixture');

@@ -257,7 +257,9 @@ async function createSchedule(owner, assignee, petId, label) {
   if (task.error) throw task.error;
   const shift = await owner.client.rpc('create_care_shift', {
     shift_id: shiftId,
-    shift_local_date: scheduledAt.slice(0, 10),
+    shift_local_date: new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Hong_Kong',
+    }).format(new Date(scheduledAt)),
     shift_note: label,
     target_assignee_user_id: assignee?.id ?? null,
     target_pet_id: petId,

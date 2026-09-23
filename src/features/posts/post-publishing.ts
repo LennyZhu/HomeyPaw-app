@@ -392,6 +392,7 @@ export async function savePostEdit({
 }) {
   if (context.video && context.media.length > 0)
     throw new Error('POST_MIXED_MEDIA_NOT_ALLOWED');
+  if (!post.author_id) throw new Error('POST_AUTHOR_UNAVAILABLE');
   const { uploaded, uploadedPaths } = await prepareAndUploadNewMedia({
     media: context.media,
     onProgress: context.onProgress,

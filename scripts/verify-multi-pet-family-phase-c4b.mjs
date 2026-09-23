@@ -346,7 +346,9 @@ try {
   if (careTask.error) throw careTask.error;
   const careShift = await owner.client.rpc('create_care_shift', {
     shift_id: shiftId,
-    shift_local_date: scheduledAt.slice(0, 10),
+    shift_local_date: new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Hong_Kong',
+    }).format(new Date(scheduledAt)),
     shift_note: 'C4B transfer retention',
     target_assignee_user_id: owner.id,
     target_pet_id: matrix.petId,

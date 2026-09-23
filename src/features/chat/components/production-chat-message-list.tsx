@@ -197,7 +197,9 @@ export const ProductionChatMessageList = forwardRef<
               getChatDateOnly(previous.created_at);
           const consecutive = isChatMessageConsecutive(item, previous);
           const isOwn = item.sender_id === currentUserId;
-          const member = memberById.get(item.sender_id);
+          const member = item.sender_id
+            ? memberById.get(item.sender_id)
+            : undefined;
           const authorName = isOwn
             ? t('chat.live.accessibility.you')
             : (member?.displayName ?? t('chat.live.formerMember'));

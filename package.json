@@ -111,6 +111,7 @@
     "verify:multi-pet-family-phase-c3": "node scripts/verify-multi-pet-family-phase-c3.mjs",
     "verify:multi-pet-family-phase-c4b": "node scripts/verify-multi-pet-family-phase-c4b.mjs",
     "verify:multi-pet-family-phase-c4c": "node scripts/verify-multi-pet-family-phase-c4c.mjs",
+    "verify:multi-pet-family-phase-c4d-bc": "node scripts/verify-multi-pet-family-phase-c4d-bc.mjs",
     "verify:family-push": "node --experimental-strip-types scripts/verify-family-push.mjs",
     "verify:family-push-edge": "node scripts/verify-family-push-edge.mjs",
     "verify:family-push-ttl": "node scripts/verify-family-push-ttl.mjs",

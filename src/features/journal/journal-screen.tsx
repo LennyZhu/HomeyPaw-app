@@ -327,7 +327,11 @@ export default function JournalScreen() {
 
           return (
             <TimelinePost
-              authorName={authorNames[item.post.author_id]}
+              authorName={
+                item.post.author_id
+                  ? authorNames[item.post.author_id]
+                  : undefined
+              }
               mediaUrls={mediaUrlsQuery.data ?? {}}
               videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
               onPhotoError={recoverPhotoUrl}

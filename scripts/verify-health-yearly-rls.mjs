@@ -445,16 +445,19 @@ try {
   expect(!departingLog.error, 'Departing member health fixture failed.');
   await admin.auth.admin.deleteUser(departing.id);
   users.splice(users.indexOf(departing), 1);
-  const accountOrphan = await owner.client
+  const retainedHistory = await owner.client
     .from('care_logs')
-    .select('id')
-    .eq('id', departingLog.data.id);
+    .select('id, performed_by, health_subtype')
+    .eq('id', departingLog.data.id)
+    .single();
   expect(
-    accountOrphan.data?.length === 0,
-    'Account deletion left a health log orphan.',
+    !retainedHistory.error &&
+      retainedHistory.data?.performed_by === null &&
+      retainedHistory.data?.health_subtype === 'energy',
+    'Account deletion did not retain the health log with an anonymous actor.',
   );
   console.log(
-    'PASS: health logs follow existing account and Pet cascade lifecycle.',
+    'PASS: health logs follow Pet cascade lifecycle and survive account deletion anonymously.',
   );
 } finally {
   for (const petId of pets) {

@@ -206,8 +206,9 @@ export default function CareHistoryScreen() {
               log={item.log}
               onActions={() => setActionTarget(item.log)}
               performerName={
-                performerNames[item.log.performed_by] ??
-                t('family.members.formerMember')
+                (item.log.performed_by
+                  ? performerNames[item.log.performed_by]
+                  : undefined) ?? t('family.members.formerMember')
               }
             />
           )

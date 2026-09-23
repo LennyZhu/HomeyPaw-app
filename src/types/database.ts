@@ -16,7 +16,7 @@ export type Database = {
           created_at: string;
           id: string;
           pet_id: string;
-          sender_id: string;
+          sender_id: string | null;
           updated_at: string;
         };
         Insert: never;
@@ -101,7 +101,7 @@ export type Database = {
           local_date: string;
           note: string | null;
           occurred_at: string;
-          performed_by: string;
+          performed_by: string | null;
           pet_id: string;
           time_zone: string;
           updated_at: string;
@@ -189,7 +189,7 @@ export type Database = {
           care_log_id: string;
           care_shift_task_id: string | null;
           completed_at: string;
-          completed_by: string;
+          completed_by: string | null;
           created_at: string;
           id: string;
           pet_id: string;
@@ -473,7 +473,7 @@ export type Database = {
       };
       posts: {
         Row: {
-          author_id: string;
+          author_id: string | null;
           content: string | null;
           created_at: string;
           event_date: string;
@@ -484,7 +484,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          author_id: string;
+          author_id: string | null;
           content?: string | null;
           created_at?: string;
           event_date?: string;
@@ -614,7 +614,7 @@ export type Database = {
           completion_status: 'completed' | 'already_completed';
           result_care_log_id: string;
           result_completed_at: string;
-          result_completed_by: string;
+          result_completed_by: string | null;
           result_completion_id: string;
         }[];
       };
@@ -689,7 +689,7 @@ export type Database = {
           completion_status: 'completed' | 'already_completed';
           result_care_log_id: string;
           result_completed_at: string;
-          result_completed_by: string;
+          result_completed_by: string | null;
           result_completion_id: string;
         }[];
       };

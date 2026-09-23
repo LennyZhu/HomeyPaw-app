@@ -20,7 +20,7 @@ export function getDisplayedChatUnread(
 }
 
 export function shouldInvalidateChatUnread(
-  senderId: string,
+  senderId: string | null,
   currentUserId: string,
 ) {
   return senderId !== currentUserId;
