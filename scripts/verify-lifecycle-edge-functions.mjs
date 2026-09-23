@@ -253,13 +253,28 @@ async function createOnceTask(actor, petId, label, scheduledAt) {
 async function verifyDeletePost() {
   const owner = await createUser('Owner');
   const member = await createUser('Member');
+  const removed = await createUser('Removed');
+  const viewer = await createUser('Viewer');
+  const former = await createUser('Former');
   const stranger = await createUser('Stranger');
+  const crossFamilyOwner = await createUser('CrossFamilyOwner');
   const petId = await createPet(owner, 'Delete Post Pet');
   addMember(petId, member.id);
+  addMember(petId, crossFamilyOwner.id);
+  addMember(petId, removed.id);
+  addMember(petId, viewer.id, 'viewer');
+  addMember(petId, former.id);
 
   const ownerPost = await createPost(owner, petId, 'Owner post');
   const memberPost = await createPost(member, petId, 'Member post');
   const memberOwnPost = await createPost(member, petId, 'Member own delete');
+  const removedPost = await createPost(removed, petId, 'Removed author post');
+  const formerPost = await createPost(former, petId, 'Deleted author post');
+  const crossFamilyPost = await createPost(
+    crossFamilyOwner,
+    petId,
+    'Former Family author post',
+  );
 
   const anonymousAttempt = await invokeAnonymous('delete-post', {
     postId: ownerPost.id,
@@ -279,6 +294,69 @@ async function verifyDeletePost() {
     strangerAttempt.status === 404,
     'Stranger delete-post was not rejected.',
   );
+  const viewerAttempt = await invoke('delete-post', viewer, {
+    postId: ownerPost.id,
+  });
+  expect(viewerAttempt.status === 404, 'Viewer deleted a Family post.');
+
+  const crossFamilyLeave = await owner.client.rpc('remove_pet_member', {
+    target_pet_id: petId,
+    target_user_id: crossFamilyOwner.id,
+  });
+  expect(!crossFamilyLeave.error, 'Cross-Family departure fixture failed.');
+  await createPet(crossFamilyOwner, 'Other Family Pet');
+
+  // This actor authored a post in the former Family, but now belongs to a
+  // different Family. A forged legacy mirror must not restore delete access.
+  sql(`insert into public.pet_members (pet_id, user_id, role)
+       values ('${petId}'::uuid, '${crossFamilyOwner.id}'::uuid, 'member');`);
+  const crossFamilyAttempt = await invoke('delete-post', crossFamilyOwner, {
+    postId: crossFamilyPost.id,
+  });
+  expect(
+    crossFamilyAttempt.status === 404,
+    'Cross-Family Owner used a forged pet_members mirror to delete a post.',
+  );
+  sql(`delete from public.pet_members
+       where pet_id='${petId}'::uuid and user_id='${crossFamilyOwner.id}'::uuid;`);
+
+  const removedMembership = await owner.client.rpc('remove_pet_member', {
+    target_pet_id: petId,
+    target_user_id: removed.id,
+  });
+  expect(!removedMembership.error, 'Removed Member fixture failed.');
+  sql(`insert into public.pet_members (pet_id, user_id, role)
+       values ('${petId}'::uuid, '${removed.id}'::uuid, 'member');`);
+  const removedAttempt = await invoke('delete-post', removed, {
+    postId: removedPost.id,
+  });
+  expect(
+    removedAttempt.status === 404,
+    'Removed Member used a stale pet_members mirror to delete own post.',
+  );
+  sql(`delete from public.pet_members
+       where pet_id='${petId}'::uuid and user_id='${removed.id}'::uuid;`);
+
+  const preparation = await former.client.rpc('prepare_account_deletion');
+  expect(!preparation.error, 'Deleted actor fixture preparation failed.');
+  const formerDeletion = await admin.auth.admin.deleteUser(former.id);
+  expect(!formerDeletion.error, 'Deleted actor fixture Auth deletion failed.');
+  deletedUsers.add(former.id);
+  expect(
+    count(
+      `select count(*) from public.posts
+       where id='${formerPost.id}'::uuid and author_id is null;`,
+    ) === 1,
+    'Deleted actor post did not retain NULL author history.',
+  );
+  const nullAuthorMemberAttempt = await invoke('delete-post', member, {
+    postId: formerPost.id,
+  });
+  expect(
+    nullAuthorMemberAttempt.status === 404,
+    'Member deleted a retained NULL-author post.',
+  );
+
   expect(
     count(
       `select count(*) from public.posts where id='${ownerPost.id}'::uuid;`,
@@ -305,10 +383,24 @@ async function verifyDeletePost() {
     ownerOwn.status === 200 && ownerOwn.payload.deleted === true,
     `Owner own-post deletion failed (${ownerOwn.status}).`,
   );
+  for (const post of [removedPost, formerPost, crossFamilyPost]) {
+    const moderation = await invoke('delete-post', owner, { postId: post.id });
+    expect(
+      moderation.status === 200 && moderation.payload.deleted === true,
+      `Owner moderation of retained history failed (${moderation.status}).`,
+    );
+  }
 
   processCleanupJobs();
 
-  for (const post of [ownerPost, memberPost, memberOwnPost]) {
+  for (const post of [
+    ownerPost,
+    memberPost,
+    memberOwnPost,
+    removedPost,
+    formerPost,
+    crossFamilyPost,
+  ]) {
     expect(
       count(
         `select count(*) from public.posts where id='${post.id}'::uuid;`,
@@ -320,7 +412,10 @@ async function verifyDeletePost() {
     );
   }
   console.log(
-    'PASS: delete-post author/owner moderation succeeds; anonymous, stranger, and other-member calls are denied.',
+    'PASS: delete-post author/Owner moderation succeeds; anonymous, Viewer, Stranger, Cross-Family, Removed Member, and other-member calls are denied.',
+  );
+  console.log(
+    'PASS: forged legacy mirror cannot authorize deletion; Owner can moderate NULL-author history.',
   );
   console.log(
     'PASS: delete-post removes both metadata and private Storage objects.',

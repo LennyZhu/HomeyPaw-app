@@ -122,6 +122,24 @@ async function createPet(owner, label) {
   return created.data.id;
 }
 
+async function createFamilyPet(owner, familyId, label) {
+  if (!familyId) throw new Error('Existing Family is required.');
+  const created = await owner.client.rpc('create_family_pet', {
+    target_family_id: familyId,
+    pet_breed: 'Local video fixture',
+    pet_description: 'Journal Video V1A local-only verification',
+    pet_gender: 'unknown',
+    pet_name: `${label} ${randomUUID().slice(0, 8)}`,
+    pet_species: 'other',
+  });
+  if (created.error || !created.data) {
+    throw created.error ?? new Error('Family Pet creation failed.');
+  }
+  petIds.add(created.data.id);
+  petFamilyIds.set(created.data.id, familyId);
+  return created.data.id;
+}
+
 function addMember(petId, userId) {
   sql(
     `with membership as (
@@ -1072,8 +1090,11 @@ async function verifyDeleteLifecycles(context) {
     'delete-post left video Storage objects.',
   );
 
-  const deletePetId = await createPet(owner, 'Video delete-pet');
-  addMember(deletePetId, memberA.id);
+  const deletePetId = await createFamilyPet(
+    owner,
+    petFamilyIds.get(petId),
+    'Video delete-pet',
+  );
   const deletePetPostId = randomUUID();
   const deletePetVideo = await uploadVideoPair(
     memberA,

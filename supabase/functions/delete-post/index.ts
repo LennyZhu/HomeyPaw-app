@@ -109,23 +109,47 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Post not found' }, 404);
   }
 
-  const { data: membership, error: membershipError } = await adminClient
-    .from('pet_members')
-    .select('role')
-    .eq('pet_id', post.pet_id)
-    .eq('user_id', user.id)
+  const { data: pet, error: petError } = await adminClient
+    .from('pets')
+    .select('family_id')
+    .eq('id', post.pet_id)
     .maybeSingle();
 
+  if (petError) {
+    console.error('Post Family lookup failed.', { code: petError.code });
+    return jsonResponse({ error: 'Post deletion failed' }, 500);
+  }
+  if (!pet?.family_id) {
+    return jsonResponse({ error: 'Post not found' }, 404);
+  }
+
+  // Resolve canonical family_members through the caller-bound RPC. The
+  // service role does not have direct SELECT on that table.
+  const callerClient = createClient(supabaseUrl, secretKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: memberships, error: membershipError } = await callerClient.rpc(
+    'get_family_members',
+    { target_family_id: pet.family_id },
+  );
+
   if (membershipError) {
-    console.error('Post ownership check failed.', {
+    if (membershipError.code === '42501') {
+      return jsonResponse({ error: 'Post not found' }, 404);
+    }
+    console.error('Post Family membership check failed.', {
       code: membershipError.code,
     });
     return jsonResponse({ error: 'Post deletion failed' }, 500);
   }
 
+  const membership = memberships?.find(
+    (candidate) => candidate.member_user_id === user.id,
+  );
   const canDelete =
-    membership?.role === 'owner' ||
-    (membership?.role === 'member' && post.author_id === user.id);
+    membership?.member_role === 'owner' ||
+    (membership?.member_role === 'member' && post.author_id === user.id);
 
   if (!canDelete) {
     return jsonResponse({ error: 'Post not found' }, 404);

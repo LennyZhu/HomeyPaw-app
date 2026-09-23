@@ -486,11 +486,14 @@ try {
     'Minimal nullable-actor client fallback is missing.',
   );
   expect(
-    deletePostEdge.includes("membership?.role === 'owner'") &&
+    deletePostEdge.includes(".from('pets')") &&
+      deletePostEdge.includes("'get_family_members'") &&
+      !deletePostEdge.includes(".from('pet_members')") &&
+      deletePostEdge.includes("membership?.member_role === 'owner'") &&
       deletePostEdge.includes(
-        "membership?.role === 'member' && post.author_id === user.id",
+        "membership?.member_role === 'member' && post.author_id === user.id",
       ),
-    'Existing Journal owner-delete moderation semantics changed.',
+    'Canonical Family authorization or Journal moderation semantics changed.',
   );
   console.log(
     'PASS: Atomic schema, NULL-safe functions, types, client fallbacks, and existing Journal moderation are present.',
