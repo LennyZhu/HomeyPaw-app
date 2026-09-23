@@ -12,15 +12,19 @@ import { modalSupportedOrientations } from '@/config/orientation';
 import { lightColors, radius, shadows, spacing } from '@/theme';
 
 type Props = {
+  canAddPet: boolean;
   onAddPet: () => void;
   onCancel: () => void;
+  onCreateFamily: () => void;
   onJoinFamily: () => void;
   visible: boolean;
 };
 
 export function PetsCreateActionsModal({
+  canAddPet,
   onAddPet,
   onCancel,
+  onCreateFamily,
   onJoinFamily,
   visible,
 }: Props) {
@@ -55,10 +59,17 @@ export function PetsCreateActionsModal({
               {t('pets.list.actionsTitle')}
             </AppText>
             <View style={styles.actions}>
+              {canAddPet ? (
+                <ActionRow
+                  icon="paw-outline"
+                  label={t('pets.list.addPet')}
+                  onPress={onAddPet}
+                />
+              ) : null}
               <ActionRow
-                icon="paw-outline"
-                label={t('pets.list.addPet')}
-                onPress={onAddPet}
+                icon="people-circle-outline"
+                label={t('family.create.action')}
+                onPress={onCreateFamily}
               />
               <ActionRow
                 icon="people-outline"
@@ -87,7 +98,11 @@ function ActionRow({
   onPress,
 }: {
   cancel?: boolean;
-  icon: 'close-outline' | 'paw-outline' | 'people-outline';
+  icon:
+    | 'close-outline'
+    | 'paw-outline'
+    | 'people-outline'
+    | 'people-circle-outline';
   label: string;
   onPress: () => void;
 }) {

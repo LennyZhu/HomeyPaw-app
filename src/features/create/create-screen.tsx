@@ -159,8 +159,16 @@ export default function CreateScreen() {
               ) : activeMenu === 'care' ? (
                 <QuickOption
                   icon="paw-outline"
-                  label={t('pets.empty.action')}
-                  onPress={() => open('/pets/new')}
+                  label={t(
+                    petsState.currentFamilyId
+                      ? 'pets.empty.action'
+                      : 'family.create.action',
+                  )}
+                  onPress={() =>
+                    open(
+                      petsState.currentFamilyId ? '/pets/new' : '/families/new',
+                    )
+                  }
                   primary
                 />
               ) : (

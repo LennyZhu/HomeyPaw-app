@@ -21,7 +21,8 @@ import { lightColors, radius, spacing } from '@/theme';
 import {
   useActivePetInvite,
   useCreatePetInvite,
-  usePetMembers,
+  useFamilyMemberSummaries,
+  useFamilies,
   useRemovePetMember,
   useRevokePetInvite,
 } from './family-queries';
@@ -34,16 +35,22 @@ export default function PetMembersScreen() {
   const { showFeedback } = useFeedback();
   const { user } = useAuth();
   const petQuery = usePet(id);
-  const membersQuery = usePetMembers(id);
+  const membersQuery = useFamilyMemberSummaries(
+    petQuery.data?.family_id ?? null,
+  );
+  const familiesQuery = useFamilies();
   const members = membersQuery.data ?? [];
   const activeMemberCount = members.filter(
     (member) => member.role === 'owner' || member.role === 'member',
   ).length;
   const isFamilyFull = activeMemberCount >= familyMemberLimit;
-  const currentMembership = members.find(
-    (member) => member.userId === user?.id,
-  );
-  const isOwner = currentMembership?.role === 'owner';
+  const isOwner =
+    familiesQuery.data?.some(
+      (access) =>
+        access.family.id === petQuery.data?.family_id &&
+        access.membership.user_id === user?.id &&
+        access.membership.role === 'owner',
+    ) ?? false;
   const activeInviteQuery = useActivePetInvite(id, isOwner);
   const createInvite = useCreatePetInvite(id);
   const revokeInvite = useRevokePetInvite(id);
@@ -146,11 +153,34 @@ export default function PetMembersScreen() {
     );
   };
 
-  if (petQuery.isPending || membersQuery.isPending) {
+  if (petQuery.isPending || familiesQuery.isPending) {
     return <LoadingView label={t('family.members.loading')} />;
   }
 
-  if (!petQuery.data || membersQuery.isError) {
+  if (
+    !petQuery.data ||
+    familiesQuery.isError ||
+    !familiesQuery.data?.some(
+      (access) => access.family.id === petQuery.data?.family_id,
+    )
+  ) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText tone="error">{t('family.errors.loadMembers')}</AppText>
+        <AppButton
+          label={t('common.back')}
+          onPress={() => router.replace(`/pets/${id}`)}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
+  if (membersQuery.isPending) {
+    return <LoadingView label={t('family.members.loading')} />;
+  }
+
+  if (membersQuery.isError) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText tone="error">{t('family.errors.loadMembers')}</AppText>
@@ -216,7 +246,9 @@ export default function PetMembersScreen() {
                 {t(`family.roles.${member.role}`)}
               </AppText>
             </View>
-            {isOwner && member.role === 'member' ? (
+            {isOwner &&
+            member.userId !== user?.id &&
+            (member.role === 'member' || member.role === 'viewer') ? (
               <AppButton
                 disabled={removeMember.isPending}
                 label={t('family.members.remove')}

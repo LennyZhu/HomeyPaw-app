@@ -404,6 +404,52 @@
     }
   },
   "family": {
+    "create": {
+      "action": "新增家庭",
+      "title": "新增家庭",
+      "subtitle": "為第一隻毛孩建立獨立家庭；現有家庭會保持不變。",
+      "submit": "建立家庭",
+      "saved": "家庭已建立。"
+    },
+    "lifecycle": {
+      "infoTitle": "家庭資料",
+      "managementTitle": "家庭管理",
+      "memberActions": "{{name}}的管理選項",
+      "listTitle": "我的家庭",
+      "listSubtitle": "管理每個家庭，包括沒有毛孩的家庭。",
+      "loading": "正在載入家庭…",
+      "loadError": "暫時無法載入家庭，請重試。",
+      "unavailable": "你已無法存取這個家庭。",
+      "noFamilies": "你還沒有家庭。",
+      "namedFamily": "{{name}}的家庭",
+      "emptyFamily": "家庭 {{id}}",
+      "petCount_one": "{{count}} 隻毛孩",
+      "petCount_other": "{{count}} 隻毛孩",
+      "manage": "管理家庭",
+      "petsTitle": "毛孩",
+      "zeroPets": "這個家庭目前沒有毛孩，但家庭仍然存在並可管理。",
+      "invitesTitle": "邀請",
+      "manageInvites": "管理邀請",
+      "invitesNeedPet": "新增毛孩後即可建立邀請。",
+      "transferAction": "轉移擁有權",
+      "transferTitle": "將擁有權轉給{{name}}？",
+      "transferBody": "{{name}}會成為這個家庭的管理者。你會成為家庭成員，可以繼續留在家庭，或之後自行離開。",
+      "transferError": "未能轉移擁有權。請重新載入家庭後再試。",
+      "removeTitle": "移除{{name}}？",
+      "removeBody": "{{name}}（{{role}}）會立即失去整個家庭及所有毛孩的存取權。過往共同內容會按現行保留政策處理。",
+      "removeError": "未能移除這位成員。請重新載入家庭後再試。",
+      "leaveAction": "離開家庭",
+      "leaveTitle": "離開{{name}}？",
+      "leaveBody": "你會失去這個家庭及所有毛孩的存取權。過往共同內容會按現行保留政策處理。",
+      "leaveError": "未能離開家庭。請重新載入後再試。",
+      "ownerLeaveGuidance": "管理者不能直接離開。請先將擁有權轉給家庭成員，然後離開；或刪除整個家庭。",
+      "deleteAction": "刪除整個家庭",
+      "deleteTitle": "刪除整個{{name}}？",
+      "deleteBody": "這會刪除整個家庭及所有毛孩，包括相關日記、照顧、聊天和日程資料。此操作無法還原。",
+      "finalDeleteTitle": "最後確認刪除家庭",
+      "finalDeleteBody": "永久刪除{{name}}及當中的所有毛孩？此操作無法還原。",
+      "deleteError": "未能刪除家庭。請重新載入後再試。"
+    },
     "roles": {
       "owner": "管理者",
       "member": "家庭成員",
@@ -867,6 +913,7 @@
     "emailUnavailable": "未提供電郵地址",
     "editProfile": "編輯個人資料",
     "accountSecurity": "帳戶與安全",
+    "manageFamilies": "管理家庭",
     "myPets": "我的毛孩",
     "joinFamily": "加入家庭",
     "language": "語言",
@@ -948,22 +995,27 @@
     "empty": {
       "title": "還沒有毛孩",
       "body": "建立第一份毛孩檔案，開始保存你們一起生活的日子。",
+      "noFamilyBody": "先為第一隻毛孩建立家庭，或接受邀請加入現有家庭。",
       "action": "新增毛孩",
       "homeTitle": "歡迎來到 HomeyPaw",
-      "homeBody": "建立第一位毛孩的檔案，開始記錄你們的日子。"
+      "homeBody": "建立第一位毛孩的檔案，開始記錄你們的日子。",
+      "noFamilyHomeBody": "先為第一隻毛孩建立家庭，或加入家人的共享空間。"
     },
     "list": {
       "title": "我的毛孩",
       "subtitle": "查看你擁有及共同照顧的毛孩。",
       "add": "新增",
       "actionsTitle": "新增",
-      "createActions": "新增或加入毛孩",
+      "createActions": "新增毛孩或管理家庭",
       "addPet": "新增毛孩",
       "joinFamily": "加入家庭"
     },
     "create": {
       "title": "新增毛孩",
       "subtitle": "建立一份只屬於你們的毛孩檔案。",
+      "existingFamilySubtitle": "將毛孩加入{{name}}。",
+      "noFamily": "新增毛孩前，請先建立家庭或加入現有家庭。",
+      "ownerOnly": "只有這個家庭的管理者可以新增毛孩。",
       "submit": "建立毛孩檔案",
       "saved": "毛孩檔案已建立。"
     },
@@ -973,6 +1025,7 @@
       "action": "編輯檔案"
     },
     "detail": {
+      "familySection": "家庭",
       "companionDays": "陪伴天數",
       "weightValue": "{{weight}} 公斤",
       "viewProfile": "查看毛孩檔案"
@@ -983,7 +1036,7 @@
     },
     "delete": {
       "title": "刪除{{name}}？",
-      "body": "刪除後，{{name}}的檔案、日記、相關相片與照顧記錄將永久刪除，無法復原。",
+      "body": "只會刪除{{name}}及這隻毛孩的日記、相片與照顧記錄。家庭及其他毛孩會保留；若這是最後一隻毛孩，家庭仍會存在但沒有毛孩。此操作無法還原。",
       "action": "刪除毛孩",
       "completed": "毛孩檔案已刪除"
     },
@@ -1238,13 +1291,15 @@
     "termsBody": "你須為自己的帳戶憑據與分享邀請碼負責，並只上載你有權使用的內容。家庭成員可依角色查看或管理共享毛孩資料；移除成員會停止其之後的存取，但已發佈內容會依產品列明的資料生命週期處理。提醒屬輔助工具，不應取代獸醫或緊急照護建議。服務可能因維護或網絡中斷而暫時不可用。刪除帳戶或毛孩是不可復原操作。如需支援，請電郵 lenny996@163.com。公開條款網址會在正式發佈前提供。"
   },
   "accountSecurity": {
+    "ownsFamilyTitle": "請先處理家庭擁有權",
+    "ownsFamilyBody": "你仍擁有一個或多個家庭。刪除帳戶前，請將每個家庭的擁有權轉給家庭成員，或明確刪除該家庭。你只是成員或查看者的家庭不會阻止刪除帳戶。",
     "title": "帳戶與安全",
     "subtitle": "管理你的 HomeyPaw 帳戶和私人資料。",
     "dangerZone": "危險操作",
     "deleteDescription": "刪除後，你的帳戶與相關資料將無法復原。",
     "deleteAction": "永久刪除帳戶",
     "confirmTitle": "刪除 HomeyPaw 帳戶？",
-    "confirmBody": "你的帳戶及擁有的毛孩資料將永久刪除；你在共享毛孩中建立的日記、相片與照顧記錄也會永久刪除。",
+    "confirmBody": "你的帳戶及個人資料將永久刪除；你在共享毛孩家庭中建立的日記、相片與照顧記錄也會永久刪除。共享家庭及其他成員的內容會保留。",
     "finalConfirmTitle": "最後確認",
     "finalConfirmBody": "刪除帳戶也會永久刪除你在共享毛孩中建立的日記、相片與照顧記錄。確定現在刪除帳戶？",
     "deleteError": "帳戶未能刪除。你的登入狀態和資料沒有被更改，請稍後再試。"

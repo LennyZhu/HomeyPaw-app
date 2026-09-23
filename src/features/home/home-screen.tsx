@@ -291,10 +291,22 @@ export default function HomeScreen() {
       {petsState.isSuccess && !pet ? (
         <View style={styles.emptyWrap}>
           <EmptyState
-            actionLabel={t('pets.empty.action')}
-            body={t('pets.empty.homeBody')}
+            actionLabel={t(
+              petsState.currentFamilyId
+                ? 'pets.empty.action'
+                : 'family.create.action',
+            )}
+            body={t(
+              petsState.currentFamilyId
+                ? 'pets.empty.homeBody'
+                : 'pets.empty.noFamilyHomeBody',
+            )}
             icon="paw-outline"
-            onActionPress={() => router.push('/pets/new')}
+            onActionPress={() =>
+              router.push(
+                petsState.currentFamilyId ? '/pets/new' : '/families/new',
+              )
+            }
             title={t('pets.empty.homeTitle')}
           />
           <AppButton

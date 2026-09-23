@@ -130,6 +130,7 @@ function RootNavigator() {
           <Stack.Screen name="join-family" />
           <Stack.Screen name="reminders" />
           <Stack.Screen name="pets" />
+          <Stack.Screen name="families" />
           <Stack.Screen name="posts" />
           <Stack.Screen name="care" />
           <Stack.Screen name="schedule" />

@@ -20,10 +20,16 @@ import { getProfilePresentationState } from './profile-query-state';
 
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
 type MenuKey =
-  'myPets' | 'joinFamily' | 'editProfile' | 'accountSecurity' | 'about';
+  | 'myPets'
+  | 'manageFamilies'
+  | 'joinFamily'
+  | 'editProfile'
+  | 'accountSecurity'
+  | 'about';
 
 const menuItems: { icon: IoniconName; key: MenuKey }[] = [
   { icon: 'paw-outline', key: 'myPets' },
+  { icon: 'people-circle-outline', key: 'manageFamilies' },
   { icon: 'people-outline', key: 'joinFamily' },
   { icon: 'person-outline', key: 'editProfile' },
   { icon: 'shield-checkmark-outline', key: 'accountSecurity' },
@@ -55,6 +61,8 @@ export default function ProfileScreen() {
   const handleMenuPress = (key: MenuKey) => {
     if (key === 'myPets') {
       router.push('/pets');
+    } else if (key === 'manageFamilies') {
+      router.push('/families');
     } else if (key === 'joinFamily') {
       router.push('/join-family' as Href);
     } else if (key === 'editProfile') {

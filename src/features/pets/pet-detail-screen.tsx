@@ -8,6 +8,7 @@ import { AppText } from '@/components/app-text';
 import { useFeedback } from '@/components/feedback-provider';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
+import { SettingsRow } from '@/components/settings-row';
 import { useAuth } from '@/features/auth/auth-context';
 import { usePetMembers } from '@/features/family/family-queries';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
@@ -182,50 +183,85 @@ export default function PetDetailScreen() {
         />
       </View>
 
-      <AppButton
-        label={t('family.members.detailAction', {
-          count: membersQuery.isSuccess ? members.length : '…',
-        })}
-        onPress={() => router.push(`/pets/${pet.id}/members` as Href)}
-        variant="secondary"
-      />
+      {isOwner ? (
+        <View style={styles.editSection}>
+          <View style={styles.settingsCard}>
+            <SettingsRow
+              icon="create-outline"
+              label={t('pets.edit.action')}
+              last
+              onPress={() =>
+                router.push({
+                  pathname: '/pets/[id]/edit',
+                  params: { id: pet.id },
+                })
+              }
+            />
+          </View>
+        </View>
+      ) : null}
+
+      <View style={styles.familySection}>
+        <AppText variant="title3">{t('pets.detail.familySection')}</AppText>
+        <View style={styles.settingsCard}>
+          <SettingsRow
+            icon="people-outline"
+            label={t('family.members.detailAction', {
+              count: membersQuery.isSuccess ? members.length : '…',
+            })}
+            onPress={() => router.push(`/pets/${pet.id}/members` as Href)}
+          />
+          {pet.family_id ? (
+            <SettingsRow
+              icon="settings-outline"
+              label={t('family.lifecycle.manage')}
+              last
+              onPress={() =>
+                router.push({
+                  pathname: '/families/[id]',
+                  params: { id: pet.family_id! },
+                })
+              }
+            />
+          ) : null}
+        </View>
+      </View>
 
       {isOwner ? (
-        <View style={styles.actions}>
-          <AppButton
-            label={t('pets.edit.action')}
-            onPress={() =>
-              router.push({
-                pathname: '/pets/[id]/edit',
-                params: { id: pet.id },
-              })
-            }
-          />
+        <View style={styles.dangerZone}>
+          <AppText tone="error" variant="footnote">
+            {t('accountSecurity.dangerZone')}
+          </AppText>
           {showWebConfirmation ? (
             <View style={styles.webConfirmation}>
               <AppText variant="headline">
                 {t('pets.delete.title', { name: pet.name })}
               </AppText>
-              <AppText>{t('pets.delete.body', { name: pet.name })}</AppText>
+              <AppText tone="secondary">
+                {t('pets.delete.body', { name: pet.name })}
+              </AppText>
               <AppButton
                 disabled={deletePet.isPending}
                 label={t('common.cancel')}
                 onPress={() => setShowWebConfirmation(false)}
-                variant="secondary"
+                variant="ghost"
               />
-              <AppButton
+              <SettingsRow
+                busy={deletePet.isPending}
+                danger
                 label={t('pets.delete.action')}
-                loading={deletePet.isPending}
+                last
                 onPress={() => void performDelete()}
-                variant="danger"
               />
             </View>
           ) : (
-            <AppButton
+            <SettingsRow
+              danger
+              icon="trash-outline"
               label={t('pets.delete.action')}
-              loading={deletePet.isPending}
+              last
+              busy={deletePet.isPending}
               onPress={confirmDelete}
-              variant="danger"
             />
           )}
           {deleteError ? <AppText tone="error">{deleteError}</AppText> : null}
@@ -287,16 +323,32 @@ const styles = StyleSheet.create({
   detailValue: {
     lineHeight: 23,
   },
-  actions: {
-    gap: spacing.md,
+  editSection: {
     marginTop: spacing.xxxl,
   },
-  webConfirmation: {
-    backgroundColor: '#F9E7E7',
-    borderColor: lightColors.error,
+  familySection: {
+    gap: spacing.sm,
+    marginTop: spacing.xxxl,
+  },
+  settingsCard: {
+    backgroundColor: lightColors.surface,
+    borderColor: lightColors.border,
     borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.lg,
+  },
+  dangerZone: {
+    backgroundColor: lightColors.surface,
+    borderColor: lightColors.border,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: spacing.sm,
+    marginTop: spacing.huge,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+  },
+  webConfirmation: {
     gap: spacing.md,
-    padding: spacing.lg,
+    paddingBottom: spacing.md,
   },
 });

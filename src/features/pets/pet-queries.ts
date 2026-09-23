@@ -11,6 +11,7 @@ import type { Pet, PetUpdate } from '@/types/database';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
 
 import { petAvatarBucket } from './pet-avatar';
+import { shouldClearRevokedPetQuery } from './pet-access-state';
 import type { PetFormValues } from './pet-schema';
 
 export const petKeys = {
@@ -62,7 +63,7 @@ async function fetchPet(petId: string) {
   return data;
 }
 
-async function createPet(values: PetFormValues) {
+async function createFamilyWithFirstPet(values: PetFormValues) {
   const input = formValuesToPetInput(values);
   const { data, error } = await requireSupabase().rpc('create_pet', {
     pet_adoption_date: input.adoption_date,
@@ -178,12 +179,12 @@ export function usePetAvatarUrl(objectPath: string | null) {
   return useStorageSignedUrl(petAvatarBucket, objectPath);
 }
 
-export function useCreatePet() {
+export function useCreateFamilyWithFirstPet() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createPet,
+    mutationFn: createFamilyWithFirstPet,
     onSuccess: (pet) => {
       queryClient.setQueryData<Pet[]>(petKeys.all(user?.id), (pets = []) => [
         ...pets,
@@ -199,6 +200,28 @@ export function useCreatePet() {
       void queryClient.invalidateQueries({
         queryKey: familyKeys.list(user?.id),
       });
+    },
+  });
+}
+
+export function useCreateFamilyPet(familyId: string | null) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (values: PetFormValues) => {
+      if (!familyId) throw new Error('FAMILY_REQUIRED');
+      return createFamilyPet(familyId, values);
+    },
+    onSuccess: (pet) => {
+      queryClient.setQueryData<Pet[]>(petKeys.all(user?.id), (pets = []) => [
+        ...pets,
+        pet,
+      ]);
+      queryClient.setQueryData(petKeys.detail(user?.id, pet.id), pet);
+      queryClient.setQueryData<Pet[]>(
+        familyKeys.pets(user?.id, pet.family_id!),
+        (pets = []) => [...pets, pet],
+      );
     },
   });
 }
@@ -233,10 +256,26 @@ export function useDeletePet() {
 
   return useMutation({
     mutationFn: deletePet,
-    onSuccess: (result, petId) => {
+    onSuccess: async (result, petId) => {
       const deletedPet = queryClient
         .getQueryData<Pet[]>(petKeys.all(user?.id))
         ?.find((pet) => pet.id === petId);
+      if (user) {
+        const revokedQueries = {
+          predicate: (query: {
+            queryKey: readonly unknown[];
+            state: { data: unknown };
+          }) =>
+            shouldClearRevokedPetQuery(
+              query.queryKey,
+              user.id,
+              petId,
+              query.state.data,
+            ),
+        };
+        await queryClient.cancelQueries(revokedQueries);
+        queryClient.removeQueries(revokedQueries);
+      }
       queryClient.removeQueries({ queryKey: petKeys.detail(user?.id, petId) });
       queryClient.setQueryData<Pet[]>(petKeys.all(user?.id), (pets = []) =>
         pets.filter((pet) => pet.id !== petId),

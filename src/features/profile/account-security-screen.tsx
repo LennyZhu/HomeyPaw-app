@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -6,13 +7,20 @@ import { AppButton } from '@/components/app-button';
 import { AppText } from '@/components/app-text';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { familyLabel } from '@/features/family/family-label';
+import { useFamilies } from '@/features/family/family-queries';
+import { usePets } from '@/features/pets/pet-queries';
 import { requireSupabase } from '@/lib/supabase/client';
 import { lightColors, radius, spacing } from '@/theme';
 
 export default function AccountSecurityScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { signOut } = useAuth();
+  const familiesQuery = useFamilies();
+  const petsQuery = usePets();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [ownerBlocked, setOwnerBlocked] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [webConfirmationStep, setWebConfirmationStep] = useState<0 | 1 | 2>(0);
 
@@ -27,6 +35,28 @@ export default function AccountSecurityScreen() {
       );
 
       if (error) {
+        const context = (
+          error as {
+            context?: { status?: number; json?: () => Promise<unknown> };
+          }
+        ).context;
+        const payload =
+          context?.status === 409 && context.json
+            ? await context.json().catch(() => null)
+            : null;
+        if (
+          context?.status === 409 &&
+          payload &&
+          typeof payload === 'object' &&
+          'error' in payload &&
+          payload.error === 'ACCOUNT_OWNS_FAMILY'
+        ) {
+          setOwnerBlocked(true);
+          setWebConfirmationStep(0);
+          await familiesQuery.refetch();
+          await petsQuery.refetch();
+          return;
+        }
         throw error;
       }
 
@@ -98,6 +128,41 @@ export default function AccountSecurityScreen() {
           {t('accountSecurity.deleteDescription')}
         </AppText>
         {deleteError ? <AppText tone="error">{deleteError}</AppText> : null}
+        {ownerBlocked ? (
+          <View style={styles.ownerResolution}>
+            <AppText variant="headline">
+              {t('accountSecurity.ownsFamilyTitle')}
+            </AppText>
+            <AppText>{t('accountSecurity.ownsFamilyBody')}</AppText>
+            {familiesQuery.data
+              ?.filter((access) => access.membership.role === 'owner')
+              .map(({ family }) => (
+                <View key={family.id} style={styles.ownedFamily}>
+                  <AppText>
+                    {familyLabel(family, petsQuery.data ?? [], t)}
+                  </AppText>
+                  <AppButton
+                    label={t('family.lifecycle.manage')}
+                    onPress={() =>
+                      router.push({
+                        pathname: '/families/[id]',
+                        params: { id: family.id },
+                      })
+                    }
+                    variant="secondary"
+                  />
+                </View>
+              ))}
+            {familiesQuery.isError || petsQuery.isError ? (
+              <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
+            ) : null}
+            <AppButton
+              label={t('profile.manageFamilies')}
+              onPress={() => router.push('/families')}
+              variant="secondary"
+            />
+          </View>
+        ) : null}
         {Platform.OS === 'web' && webConfirmationStep > 0 ? (
           <View style={styles.webConfirmation}>
             <AppText variant="headline">
@@ -179,4 +244,11 @@ const styles = StyleSheet.create({
   webConfirmationActions: {
     gap: spacing.md,
   },
+  ownerResolution: {
+    gap: spacing.md,
+    borderTopColor: lightColors.border,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: spacing.lg,
+  },
+  ownedFamily: { gap: spacing.sm, paddingVertical: spacing.sm },
 });

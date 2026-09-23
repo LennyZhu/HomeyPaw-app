@@ -404,6 +404,52 @@
     }
   },
   "family": {
+    "create": {
+      "action": "Create family",
+      "title": "Create a family",
+      "subtitle": "Start a separate family with its first pet. Your existing families stay together.",
+      "submit": "Create family",
+      "saved": "Family created."
+    },
+    "lifecycle": {
+      "infoTitle": "Family information",
+      "managementTitle": "Family management",
+      "memberActions": "Actions for {{name}}",
+      "listTitle": "Families",
+      "listSubtitle": "Manage each family, including families without pets.",
+      "loading": "Loading families…",
+      "loadError": "We couldn't load your families. Try again.",
+      "unavailable": "This family is no longer available to you.",
+      "noFamilies": "You have no families yet.",
+      "namedFamily": "{{name}}'s family",
+      "emptyFamily": "Family {{id}}",
+      "petCount_one": "{{count}} pet",
+      "petCount_other": "{{count}} pets",
+      "manage": "Manage family",
+      "petsTitle": "Pets",
+      "zeroPets": "This family has no pets. It still exists and can be managed.",
+      "invitesTitle": "Invitations",
+      "manageInvites": "Manage invitations",
+      "invitesNeedPet": "Add a pet before creating an invitation.",
+      "transferAction": "Transfer ownership",
+      "transferTitle": "Transfer ownership to {{name}}?",
+      "transferBody": "{{name}} will become this family's Owner. You will become a Member and can stay in the family or leave afterward.",
+      "transferError": "Ownership was not transferred. Refresh the family and try again.",
+      "removeTitle": "Remove {{name}}?",
+      "removeBody": "{{name}} ({{role}}) will immediately lose access to this entire family and all its pets. Shared history follows the existing retention policy.",
+      "removeError": "This person was not removed. Refresh the family and try again.",
+      "leaveAction": "Leave family",
+      "leaveTitle": "Leave {{name}}?",
+      "leaveBody": "You will lose access to this family and all its pets. Shared history follows the existing retention policy.",
+      "leaveError": "You could not leave this family. Refresh and try again.",
+      "ownerLeaveGuidance": "Owners cannot leave directly. Transfer ownership to a Member first, then leave; or delete the entire family.",
+      "deleteAction": "Delete entire family",
+      "deleteTitle": "Delete entire {{name}}?",
+      "deleteBody": "This deletes the entire family and all its pets, including their journal, care, chat and schedule data. It cannot be undone.",
+      "finalDeleteTitle": "Final family deletion confirmation",
+      "finalDeleteBody": "Permanently delete {{name}} and every pet in it? This cannot be undone.",
+      "deleteError": "The family was not deleted. Refresh and try again."
+    },
     "roles": {
       "owner": "Owner",
       "member": "Family member",
@@ -867,6 +913,7 @@
     "emailUnavailable": "Email address unavailable",
     "editProfile": "Edit profile",
     "accountSecurity": "Account and security",
+    "manageFamilies": "Manage families",
     "myPets": "My pets",
     "joinFamily": "Join a family",
     "language": "Language",
@@ -948,22 +995,27 @@
     "empty": {
       "title": "No pets yet",
       "body": "Create your first pet profile and start keeping the days you share.",
+      "noFamilyBody": "Create a family with its first pet, or join a family you've been invited to.",
       "action": "Add a pet",
       "homeTitle": "Welcome to HomeyPaw",
-      "homeBody": "Create your first pet profile and start recording your days together."
+      "homeBody": "Create your first pet profile and start recording your days together.",
+      "noFamilyHomeBody": "Create a family with its first pet, or join your family's shared space."
     },
     "list": {
       "title": "My pets",
       "subtitle": "Your owned and shared pet families.",
       "add": "Add",
       "actionsTitle": "Add",
-      "createActions": "Add or join a pet",
+      "createActions": "Add a pet or manage families",
       "addPet": "Add Pet",
       "joinFamily": "Join Family"
     },
     "create": {
       "title": "Add a pet",
       "subtitle": "Create a private profile for the life you share.",
+      "existingFamilySubtitle": "Add a pet to {{name}}.",
+      "noFamily": "To add a pet, first create a family or join one.",
+      "ownerOnly": "Only this family's Owner can add a pet here.",
       "submit": "Create pet profile",
       "saved": "Pet profile created."
     },
@@ -973,6 +1025,7 @@
       "action": "Edit profile"
     },
     "detail": {
+      "familySection": "Family",
       "companionDays": "Days together",
       "weightValue": "{{weight}} kg",
       "viewProfile": "View pet profile"
@@ -983,7 +1036,7 @@
     },
     "delete": {
       "title": "Delete {{name}}?",
-      "body": "Once deleted, {{name}}'s profile, journal entries, photos and care records will be permanently removed.",
+      "body": "Only {{name}} and this pet's journal, photos and care records will be removed. The family and its other pets remain. If this is the last pet, the family remains with no pets. This cannot be undone.",
       "action": "Delete pet",
       "completed": "Pet profile deleted"
     },
@@ -1238,13 +1291,15 @@
     "termsBody": "You are responsible for your account credentials and family invite codes, and you may upload only content you have the right to use. Family members can view or manage shared pet data according to their role. Removing a member ends future access, while previously published content follows the data lifecycle described in the product. Reminders are an aid and are not a substitute for veterinary or emergency advice. The service may be temporarily unavailable for maintenance or network interruptions. Account and pet deletion cannot be undone. For support, email lenny996@163.com. A public terms URL will be added before release."
   },
   "accountSecurity": {
+    "ownsFamilyTitle": "Resolve family ownership first",
+    "ownsFamilyBody": "You still own one or more families. Before deleting your account, transfer each family's ownership to a Member or explicitly delete that family. Families you only belong to as a Member or Viewer do not block account deletion.",
     "title": "Account and security",
     "subtitle": "Manage your HomeyPaw account and private data.",
     "dangerZone": "Danger zone",
     "deleteDescription": "Once deleted, your account and related data cannot be recovered.",
     "deleteAction": "Permanently delete account",
     "confirmTitle": "Delete your HomeyPaw account?",
-    "confirmBody": "Your account and owned pet data will be permanently deleted. Journal entries, photos and care records you created in shared pet families will also be permanently deleted.",
+    "confirmBody": "Your account and personal data will be permanently deleted. Journal entries, photos and care records you created in shared pet families will also be permanently deleted. Shared families and other members' content remain.",
     "finalConfirmTitle": "Final confirmation",
     "finalConfirmBody": "Deleting your account also permanently deletes journal entries, photos and care records you created in shared pet families. Delete your account now?",
     "deleteError": "Your account was not deleted. Your session and data are unchanged; please try again later."

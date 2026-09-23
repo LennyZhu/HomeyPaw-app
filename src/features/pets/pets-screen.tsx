@@ -10,17 +10,17 @@ import { EmptyState } from '@/components/empty-state';
 import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 import { lightColors, spacing } from '@/theme';
 
 import { PetAvatar } from './components/pet-avatar';
 import { PetsCreateActionsModal } from './components/pets-create-actions-modal';
 import { getPetSummaryLabel } from './pet-display';
-import { usePets } from './pet-queries';
 
 export default function PetsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const petsQuery = usePets();
+  const { currentFamilyId, petsQuery } = useCurrentFamily();
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
   return (
@@ -41,16 +41,27 @@ export default function PetsScreen() {
       </View>
 
       <PetsCreateActionsModal
+        canAddPet={Boolean(currentFamilyId)}
         onAddPet={() => {
           setIsCreateMenuOpen(false);
           router.push('/pets/new');
         }}
         onCancel={() => setIsCreateMenuOpen(false)}
+        onCreateFamily={() => {
+          setIsCreateMenuOpen(false);
+          router.push('/families/new');
+        }}
         onJoinFamily={() => {
           setIsCreateMenuOpen(false);
           router.push('/join-family' as Href);
         }}
         visible={isCreateMenuOpen}
+      />
+
+      <AppButton
+        label={t('profile.manageFamilies')}
+        onPress={() => router.push('/families')}
+        variant="secondary"
       />
 
       {petsQuery.isPending ? (
@@ -71,10 +82,16 @@ export default function PetsScreen() {
       {petsQuery.isSuccess && petsQuery.data.length === 0 ? (
         <View style={styles.emptyWrap}>
           <EmptyState
-            actionLabel={t('pets.empty.action')}
-            body={t('pets.empty.body')}
+            actionLabel={t(
+              currentFamilyId ? 'pets.empty.action' : 'family.create.action',
+            )}
+            body={t(
+              currentFamilyId ? 'pets.empty.body' : 'pets.empty.noFamilyBody',
+            )}
             icon="paw-outline"
-            onActionPress={() => router.push('/pets/new')}
+            onActionPress={() =>
+              router.push(currentFamilyId ? '/pets/new' : '/families/new')
+            }
             title={t('pets.empty.title')}
           />
           <AppButton

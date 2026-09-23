@@ -5,25 +5,46 @@ import { StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
+import { AppButton } from '@/components/app-button';
 import { useFeedback } from '@/components/feedback-provider';
+import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { familyLabel } from '@/features/family/family-label';
+import { familyKeys } from '@/features/family/family-queries';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 import { useCurrentFamilyStore } from '@/stores/current-family-store';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
 import { spacing } from '@/theme';
 
 import { removePetAvatar, uploadPetAvatar } from './pet-avatar';
 import { PetForm, type PetAvatarChange } from './components/pet-form';
-import { petKeys, updatePetAvatarPath, useCreatePet } from './pet-queries';
+import {
+  petKeys,
+  updatePetAvatarPath,
+  useCreateFamilyPet,
+  useCreateFamilyWithFirstPet,
+} from './pet-queries';
 import type { PetFormValues } from './pet-schema';
 
 export default function NewPetScreen() {
+  return <PetCreationScreen createNewFamily={false} />;
+}
+
+export function NewFamilyScreen() {
+  return <PetCreationScreen createNewFamily />;
+}
+
+function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { showFeedback } = useFeedback();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const createPet = useCreatePet();
+  const familyContext = useCurrentFamily();
+  const currentFamilyId = familyContext.currentFamilyId;
+  const createNewFamilyWithPet = useCreateFamilyWithFirstPet();
+  const createExistingFamilyPet = useCreateFamilyPet(currentFamilyId);
   const setCurrentFamilyId = useCurrentFamilyStore(
     (state) => state.setCurrentFamilyId,
   );
@@ -37,8 +58,21 @@ export default function NewPetScreen() {
     setSubmitError(null);
 
     try {
-      const pet = await createPet.mutateAsync(values);
-      setCurrentFamilyId(pet.family_id, user?.id ?? null);
+      if (
+        !createNewFamily &&
+        (!currentFamilyId || familyContext.currentMembership?.role !== 'owner')
+      ) {
+        throw new Error('FAMILY_OWNER_REQUIRED');
+      }
+      const pet = createNewFamily
+        ? await createNewFamilyWithPet.mutateAsync(values)
+        : await createExistingFamilyPet.mutateAsync(values);
+      if (createNewFamily) {
+        await queryClient.invalidateQueries({
+          queryKey: familyKeys.list(user?.id),
+        });
+        setCurrentFamilyId(pet.family_id, user?.id ?? null);
+      }
       setCurrentPetId(pet.id, user?.id ?? null);
       let avatarWarning = false;
 
@@ -68,7 +102,7 @@ export default function NewPetScreen() {
       showFeedback(
         avatarWarning
           ? t('pets.errors.avatarUploadAfterCreate')
-          : t('pets.create.saved'),
+          : t(createNewFamily ? 'family.create.saved' : 'pets.create.saved'),
         avatarWarning ? 'error' : 'success',
       );
       router.replace({ pathname: '/pets/[id]', params: { id: pet.id } });
@@ -77,18 +111,92 @@ export default function NewPetScreen() {
     }
   };
 
+  if (
+    !createNewFamily &&
+    (familyContext.familiesQuery.isPending || familyContext.petsQuery.isPending)
+  ) {
+    return <LoadingView label={t('family.lifecycle.loading')} />;
+  }
+
+  if (
+    !createNewFamily &&
+    (familyContext.familiesQuery.isError || familyContext.petsQuery.isError)
+  ) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
+        <AppButton
+          label={t('common.retry')}
+          onPress={() => {
+            void familyContext.familiesQuery.refetch();
+            void familyContext.petsQuery.refetch();
+          }}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
+  if (!createNewFamily && !currentFamilyId) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="largeTitle">
+          {t('pets.create.title')}
+        </AppText>
+        <AppText tone="secondary">{t('pets.create.noFamily')}</AppText>
+        <AppButton
+          label={t('family.create.action')}
+          onPress={() => router.replace('/families/new')}
+        />
+        <AppButton
+          label={t('family.join.action')}
+          onPress={() => router.push('/join-family')}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
+  if (!createNewFamily && familyContext.currentMembership?.role !== 'owner') {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="largeTitle">
+          {t('pets.create.title')}
+        </AppText>
+        <AppText tone="secondary">{t('pets.create.ownerOnly')}</AppText>
+        <AppButton
+          label={t('profile.manageFamilies')}
+          onPress={() => router.replace('/families')}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
   return (
     <Screen contentContainerStyle={styles.content} scroll>
       <AppText accessibilityRole="header" variant="largeTitle">
-        {t('pets.create.title')}
+        {t(createNewFamily ? 'family.create.title' : 'pets.create.title')}
       </AppText>
       <AppText style={styles.subtitle} tone="secondary">
-        {t('pets.create.subtitle')}
+        {createNewFamily
+          ? t('family.create.subtitle')
+          : t('pets.create.existingFamilySubtitle', {
+              name: familyContext.currentFamily
+                ? familyLabel(
+                    familyContext.currentFamily,
+                    familyContext.pets,
+                    t,
+                  )
+                : '',
+            })}
       </AppText>
       <PetForm
         onSubmit={handleSubmit}
         submitError={submitError}
-        submitLabel={t('pets.create.submit')}
+        submitLabel={t(
+          createNewFamily ? 'family.create.submit' : 'pets.create.submit',
+        )}
       />
     </Screen>
   );

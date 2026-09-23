@@ -156,6 +156,42 @@ export function useFamilyMembers(familyId: string | null) {
   });
 }
 
+export function useFamilyMemberSummaries(familyId: string | null) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    enabled: Boolean(user && familyId),
+    queryFn: async (): Promise<PetMemberSummary[]> => {
+      const { data, error } = await requireSupabase().rpc(
+        'get_family_members',
+        {
+          target_family_id: familyId!,
+        },
+      );
+      if (error) throw error;
+      const avatarPaths = data.flatMap((member) =>
+        member.member_avatar_path ? [member.member_avatar_path] : [],
+      );
+      const signedUrls = await createProfileAvatarSignedUrls(
+        queryClient,
+        avatarPaths,
+      ).catch(() => ({}) as Record<string, string>);
+      return data.map((member) => ({
+        avatarPath: member.member_avatar_path,
+        avatarUrl: member.member_avatar_path
+          ? (signedUrls[member.member_avatar_path] ?? null)
+          : null,
+        displayName: member.member_display_name,
+        joinedAt: member.member_joined_at,
+        role: member.member_role,
+        userId: member.member_user_id,
+      }));
+    },
+    queryKey: [...familyKeys.members(user?.id, familyId ?? ''), 'summaries'],
+  });
+}
+
 export function useFamilyPets(familyId: string | null) {
   const { user } = useAuth();
 
@@ -189,8 +225,9 @@ async function fetchPetMembers(
   petId: string,
   queryClient: QueryClient,
 ): Promise<PetMemberSummary[]> {
-  const { data, error } = await requireSupabase().rpc('get_pet_members', {
-    target_pet_id: petId,
+  const familyId = await resolvePetFamilyId(petId);
+  const { data, error } = await requireSupabase().rpc('get_family_members', {
+    target_family_id: familyId,
   });
 
   if (error) {
@@ -529,4 +566,51 @@ export function useLeaveFamily() {
       void syncCareTaskNotifications(user.id).catch(() => undefined);
     },
   });
+}
+
+export function useTransferFamilyOwnership(familyId: string) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (newOwnerUserId: string) =>
+      transferFamilyOwnership(familyId, newOwnerUserId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: familyKeys.list(user?.id) }),
+        queryClient.invalidateQueries({
+          queryKey: familyKeys.members(user?.id, familyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['family', user?.id, 'members'],
+        }),
+      ]);
+    },
+  });
+}
+
+export function useRemoveFamilyMember(familyId: string) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (memberUserId: string) =>
+      removeFamilyMember(familyId, memberUserId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: familyKeys.members(user?.id, familyId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['family', user?.id, 'members'],
+        }),
+      ]);
+    },
+  });
+}
+
+export async function deleteFamily(familyId: string) {
+  const { data, error } = await requireSupabase().rpc('delete_family', {
+    target_family_id: familyId,
+  });
+  if (error) throw error;
+  return data;
 }
