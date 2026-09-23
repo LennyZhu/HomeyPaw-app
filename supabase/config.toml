@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.family-push]
 verify_jwt = true
+
+[functions.process-media-cleanup]
+verify_jwt = false # Internal bearer secret is verified in the function.

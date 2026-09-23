@@ -48,7 +48,7 @@ const editPet = readFileSync(
   'utf8',
 );
 const worker = readFileSync(
-  join(root, 'scripts/process-journal-video-cleanup.mjs'),
+  join(root, 'supabase/functions/_shared/media-cleanup.mjs'),
   'utf8',
 );
 

@@ -136,7 +136,8 @@
     "process:media-cleanup": "node scripts/process-journal-video-cleanup.mjs",
     "postinstall": "node scripts/apply-package-patches.mjs",
     "verify:multi-pet-family-phase-c4i": "node scripts/verify-multi-pet-family-phase-c4i.mjs",
-    "verify:multi-pet-family-phase-c4i-client": "node scripts/verify-multi-pet-family-phase-c4i-client.mjs"
+    "verify:multi-pet-family-phase-c4i-client": "node scripts/verify-multi-pet-family-phase-c4i-client.mjs",
+    "verify:production-media-cleanup-worker": "node scripts/verify-production-media-cleanup-worker.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"
