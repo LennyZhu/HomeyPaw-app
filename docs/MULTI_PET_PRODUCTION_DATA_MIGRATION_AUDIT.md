@@ -1,10 +1,41 @@
 # R4 — Legacy Multi-Pet Production Data Preflight
 
-**Status: NO-GO pending Production read-only results.** No Production query or
-data migration was run in R4. Current App Store Production is HomeyPaw 1.1.1
-(Build 5). Run the [read-only SQL pack](sql/multi-pet-production-preflight.sql)
-against the **pre-Multi-Pet schema, before Phase A**, then review its UUID-only
-results before approving any migration. The pack must not be run as a migration.
+**R4 Production data preflight: PASS.** The operator manually ran the
+[read-only SQL pack](sql/multi-pet-production-preflight.sql) in the Production
+Supabase SQL Editor and supplied the results recorded below. Codex did not
+connect to Production, run remote SQL, or change Production data. Current App
+Store Production is HomeyPaw 1.1.1 (Build 5). This finding clears the R4
+legacy-data topology blocker; it is not approval to deploy migrations or
+activate the wider release gate.
+
+## Operator-reported Production results
+
+| Check                                        | Result |
+| -------------------------------------------- | -----: |
+| Users linked to more than one legacy Pet     |      0 |
+| Pets with zero Owners                        |      0 |
+| Pets with multiple Owners                    |      0 |
+| Orphan `pet_members`                         |      0 |
+| `pet_members` with missing `auth.users` row  |      0 |
+| `pet_members` with missing `profiles` row    |      0 |
+| Historical `pet_invites`                     |      8 |
+| Active legacy `pet_invites`                  |      0 |
+| `pet_invites` with missing Pet               |      0 |
+| `pet_invites` with missing inviter Auth user |      0 |
+
+No user is linked to multiple legacy Pets, so the Phase A one-Family-per-Pet
+backfill is not expected to create a duplicate `family_members.user_id` from
+these legacy memberships. There is no multi-Pet component to consolidate,
+whether identical or unsafe. These conclusions apply to the operator-reported
+snapshot; recheck data freshness in the approved migration window.
+
+**Rollout decision for the R4 data gate**
+
+- PRODUCTION DATA PREFLIGHT: **PASS**
+- FAMILY CONSOLIDATION REQUIRED: **NO**
+- SAFE_IDENTICAL_MULTI_PET CONSOLIDATION REQUIRED: **NO**
+- UNSAFE LEGACY TOPOLOGY FOUND: **NO**
+- C4I LEGACY MEMBERSHIP CONFLICT EXPECTED: **NO**
 
 ## Existing model and conflict
 
@@ -119,15 +150,13 @@ classification.
 ## Invite and migration strategy
 
 A Pet invite cannot silently gain Family-wide scope. Phase A currently copies
-legacy invites to corresponding one-Pet Families. Consolidating several such
-Families may also collide with the Family's one-unrevoked-invite index,
-including expired but unrevoked codes. During an approved migration window,
-the safest candidate policy is to **invalidate/revoke pending legacy
-invitations through a separately reviewed migration**, then have the new
-client create a canonical Family invite. This is a recommendation, not an R4
-operation. Product/support owners must decide the user communication and
-whether unused codes can be invalidated. The R4 SQL exposes usage, expiry and
-revocation without revealing hashes.
+legacy invites to corresponding one-Pet Families. The operator found **8
+historical invites, 0 active invites, 0 orphan Pets, and 0 missing inviter Auth
+users**. No active legacy invite needs a migration compatibility window. After
+the new-app rollout, new invitations use the canonical Family invite flow.
+This finding does not require revoking or merging any historical invite in R4.
+If the snapshot changes before rollout, reassess active invites. The R4 SQL
+exposes usage, expiry and revocation without revealing hashes.
 
 Do not automatically pick one Family, union/intersect member lists, randomly
 choose an Owner, delete memberships, select a recent/current Pet, or silently
@@ -136,10 +165,10 @@ Do not relax C4I's one-Family-per-account invariant.
 
 Decision tree:
 
-1. **No multi-Pet users, required-zero checks clean:** Existing
-   Phase A → subsequent migrations → C4I is a plausible path, subject to the
-   full release gate, invite review, and local regression. Production data has
-   not yet established that this case applies.
+1. **No multi-Pet users, required-zero checks clean:** This is the reported
+   Production case. Existing Phase A → subsequent migrations → C4I requires
+   no Family consolidation for legacy memberships, subject to the remaining
+   release gate, data-freshness recheck, and local regression.
 2. **Only valid identical-signature multi-Pet components:** Design and review a
    deterministic pre-C4I consolidation, including invite handling, family
    ID selection, Owner invariants, and access-set proof. Because Phase A has
@@ -153,8 +182,8 @@ Decision tree:
    delta:** Production rollout remains **NO-GO**. Resolve through explicit
    product/data decisions and a separately reviewed plan; no automatic merge.
 
-The final decision needs real Production counts and topology, plus an invite
-policy. R4's local fixtures prove classification determinism and the access
-pair check, but do not establish what Production contains. No R5
-consolidation migration, Production repair, forced-upgrade activation, worker
-activation, or deployment is part of R4.
+The reported Production counts clear the R4 legacy-data blocker. R4's local
+fixtures prove classification determinism and the access-pair check; they do
+not replace a fresh Production preflight if legacy data changes before the
+migration window. No R5 consolidation migration, Production repair,
+forced-upgrade activation, worker activation, or deployment is part of R4.
