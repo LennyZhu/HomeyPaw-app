@@ -23,6 +23,7 @@ import {
   useBackendCapability,
   type BackendCapability,
 } from './backend-capability';
+import { getBackendQueryRouting } from './backend-capability-state';
 import { familyKeys } from './family-query-keys';
 
 export { familyKeys } from './family-query-keys';
@@ -135,7 +136,8 @@ export function useFamilies() {
   const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user && capability.data === 'FAMILY_MULTI_PET'),
+    enabled: getBackendQueryRouting(Boolean(user), capability.data)
+      .familyQueriesEnabled,
     queryFn: () => fetchFamilies(user!.id),
     queryKey: familyKeys.list(user?.id),
   });

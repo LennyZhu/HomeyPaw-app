@@ -15,9 +15,10 @@ export const backendCapabilityKeys = {
 };
 
 export async function detectBackendCapability(): Promise<BackendCapability> {
+  // HEAD hides the missing-table error body; this bounded GET preserves PGRST205.
   const { error } = await requireSupabase()
     .from('family_members')
-    .select('family_id', { head: true })
+    .select('family_id')
     .limit(1);
 
   return classifyBackendCapability(error);

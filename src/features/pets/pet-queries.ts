@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
+import { useBackendCapability } from '@/features/family/backend-capability';
+import { getBackendQueryRouting } from '@/features/family/backend-capability-state';
 import { familyKeys } from '@/features/family/family-query-keys';
 import {
   storageSignedUrlKeys,
@@ -157,9 +159,11 @@ async function deletePet(petId: string) {
 
 export function usePets() {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user),
+    enabled: getBackendQueryRouting(Boolean(user), capability.data)
+      .petQueryEnabled,
     queryFn: fetchPets,
     queryKey: petKeys.all(user?.id),
   });

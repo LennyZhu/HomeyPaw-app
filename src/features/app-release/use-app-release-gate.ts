@@ -70,9 +70,7 @@ export function useAppReleaseGate() {
     const initialCheck = setTimeout(() => void recheck(), 0);
     const subscription = AppState.addEventListener('change', (nextState) => {
       if (nextState === 'active') {
-        setState((previous) =>
-          previous.status === 'allowed' ? { status: 'checking' } : previous,
-        );
+        // Keep the current navigation tree mounted while the gate rechecks.
         void recheck();
       }
     });

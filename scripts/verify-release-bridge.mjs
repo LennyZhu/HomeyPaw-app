@@ -24,8 +24,17 @@ const secondPet = {
   name: 'B',
 };
 
+// Read-only Production GET /rest/v1/family_members?select=family_id&limit=1:
+// HTTP 404, PGRST205, while the same HEAD returns an empty body.
+const productionMissingFamily = {
+  code: 'PGRST205',
+  message:
+    "Could not find the table 'public.family_members' in the schema cache",
+  details: null,
+  hint: "Perhaps you meant the table 'public.pet_members'",
+};
 assert.equal(
-  state.classifyBackendCapability({ code: 'PGRST205' }),
+  state.classifyBackendCapability(productionMissingFamily),
   'LEGACY_PET',
 );
 assert.equal(
@@ -42,11 +51,31 @@ for (const error of [
   { code: '503', message: 'temporary backend failure' },
   { message: 'network timeout' },
   { code: '42P01', message: 'unrelated relation is missing' },
+  { code: 'PGRST205', message: 'unrelated table is missing' },
+  { code: 'PGRST205' },
 ])
   assert.throws(() => state.classifyBackendCapability(error));
 console.log(
-  'PASS: only an explicitly missing canonical relation selects legacy mode.',
+  'PASS: real Production PGRST205 selects legacy; network/auth/unrelated errors do not.',
 );
+
+assert.deepEqual(state.getBackendQueryRouting(false, undefined), {
+  familyQueriesEnabled: false,
+  petQueryEnabled: false,
+});
+assert.deepEqual(state.getBackendQueryRouting(true, undefined), {
+  familyQueriesEnabled: false,
+  petQueryEnabled: false,
+});
+assert.deepEqual(state.getBackendQueryRouting(true, 'LEGACY_PET'), {
+  familyQueriesEnabled: false,
+  petQueryEnabled: true,
+});
+assert.deepEqual(state.getBackendQueryRouting(true, 'FAMILY_MULTI_PET'), {
+  familyQueriesEnabled: true,
+  petQueryEnabled: true,
+});
+console.log('PASS: unknown, legacy and new backend query routing.');
 
 assert.equal(
   state.reconcileLegacyPet([legacyPet], null, null, 'user-a')?.id,
@@ -134,6 +163,20 @@ console.log(
 );
 
 assert.match(capability, /\.from\('family_members'\)/);
+assert.match(capability, /\.select\('family_id'\)/);
+assert.doesNotMatch(capability, /head:\s*true/);
+assert.match(
+  queries,
+  /getBackendQueryRouting\(Boolean\(user\), capability\.data\)/,
+);
+assert.match(
+  petQueries,
+  /getBackendQueryRouting\(Boolean\(user\), capability\.data\)/,
+);
+assert.match(
+  source('src/features/pets/use-current-pet.ts'),
+  /backendCapability === 'LEGACY_PET'/,
+);
 assert.match(capability, /refetchOnMount: 'always'/);
 assert.match(capability, /data: query\.isError \? undefined : query\.data/);
 assert.match(context, /reconcileLegacyPet/);

@@ -140,6 +140,7 @@
     "verify:multi-pet-family-phase-c4i": "node scripts/verify-multi-pet-family-phase-c4i.mjs",
     "verify:multi-pet-family-phase-c4i-client": "node scripts/verify-multi-pet-family-phase-c4i-client.mjs",
     "verify:release-bridge": "node --experimental-strip-types scripts/verify-release-bridge.mjs",
+    "verify:auth-foreground": "node --experimental-strip-types scripts/verify-auth-foreground.mjs",
     "verify:production-media-cleanup-worker": "node scripts/verify-production-media-cleanup-worker.mjs",
     "verify:minimum-client-version": "node --experimental-strip-types scripts/verify-minimum-client-version.mjs",
     "verify:production-family-migration-preflight": "node scripts/verify-production-family-migration-preflight.mjs"
