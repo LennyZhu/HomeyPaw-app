@@ -1,6 +1,8 @@
 # HomeyPaw Production Readiness
 
-## Current Release Status
+> Historical 1.1.0 (4) review snapshot. Current App Store Production is **1.1.1 (5)**, including the image-cache fix. The release status and next steps below describe the earlier snapshot, not the current rollout.
+
+## Historical 1.1.0 (4) Release Status
 
 - App Store `1.0.0`：**RELEASED**。
 - HomeyPaw `1.1.0` Build 4：automated release gate、TestFlight、雙裝置真機驗收、iPhone／iPad validation 全部完成。

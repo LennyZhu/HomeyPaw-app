@@ -1307,5 +1307,16 @@
     "finalConfirmTitle": "最後確認",
     "finalConfirmBody": "刪除帳戶也會永久刪除你在共享毛孩中建立的日記、相片與照顧記錄。確定現在刪除帳戶？",
     "deleteError": "帳戶未能刪除。你的登入狀態和資料沒有被更改，請稍後再試。"
+  },
+  "appRelease": {
+    "upgrade": {
+      "title": "HomeyPaw 需要更新",
+      "body": "你目前使用的版本已不再支援。請更新至最新版本後繼續使用。"
+    },
+    "maintenance": {
+      "title": "HomeyPaw 暫時無法使用",
+      "body": "我們正在進行維護，請稍後再試。"
+    },
+    "checkAgain": "重新檢查"
   }
 }

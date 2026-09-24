@@ -2,7 +2,12 @@
 
 本文件保留 Phase 歷史，同時以 `COMPLETED`、`CURRENT`、`DEFERRED` 區分已交付、目前發布狀態與尚未承諾的後續工作。
 
-## CURRENT — 1.1.0 App Store Review
+## CURRENT — App Store Production 1.1.1 (5)
+
+- Current App Store Production is `1.1.1 (5)`; the image-cache fix is already in the development branch.
+- Multi-Pet is not yet released; its compatible binary needs a new version/build before C4I rollout.
+
+## HISTORICAL — 1.1.0 App Store Review
 
 - App Store `1.0.0` 已正式發布。
 - `1.1.0` Build 4 已完成 automated release gate、TestFlight、雙裝置真機驗收、iPhone 與 iPad 驗證。

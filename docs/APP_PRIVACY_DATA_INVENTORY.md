@@ -1,6 +1,6 @@
 # App Privacy Data Inventory
 
-Updated on 2026-09-13 for HomeyPaw 1.1.0 Build 4. This is the repository baseline used to reconcile the live App Store Connect declaration; the live questionnaire remains authoritative.
+Updated on 2026-09-13 for HomeyPaw 1.1.0 Build 4. This was the repository baseline used to reconcile the App Store Connect declaration at that time; current App Store Production is 1.1.1 (5), and the live questionnaire remains authoritative.
 
 ## Overall Answers
 

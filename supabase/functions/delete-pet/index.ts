@@ -1,8 +1,12 @@
+import {
+  checkAppReleaseGate,
+  clientVersionHeaders,
+} from '../_shared/app-release-gate.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+    'authorization, x-client-info, apikey, content-type, x-homeypaw-platform, x-homeypaw-app-version, x-homeypaw-build',
   'Access-Control-Allow-Origin': '*',
 };
 
@@ -88,7 +92,12 @@ Deno.serve(async (request) => {
   });
   const userClient = createClient(supabaseUrl, anonKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...clientVersionHeaders(request),
+      },
+    },
   });
   const {
     data: { user },
@@ -97,6 +106,11 @@ Deno.serve(async (request) => {
 
   if (userError || !user) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const releaseGate = await checkAppReleaseGate(adminClient, request);
+  if (releaseGate) {
+    return jsonResponse({ error: releaseGate.error }, releaseGate.status);
   }
 
   const { data: pet, error: petError } = await adminClient

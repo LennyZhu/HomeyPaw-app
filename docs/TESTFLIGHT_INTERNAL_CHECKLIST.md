@@ -1,6 +1,6 @@
 # TestFlight Internal Testing Checklist
 
-## Current Result — HomeyPaw 1.1.0 Build 4
+## Historical Result — HomeyPaw 1.1.0 Build 4
 
 - Bundle Identifier：`com.zhushunli.homeypaw`
 - Production-signed TestFlight build：`1.1.0 (4)`

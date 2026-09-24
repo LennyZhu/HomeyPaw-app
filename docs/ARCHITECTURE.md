@@ -9,7 +9,7 @@ HomeyPaw 是以家庭協作為核心的私人寵物照顧 App。資料模型的�
 - App：HomeyPaw
 - Bundle Identifier：`com.zhushunli.homeypaw`
 - Deep Link Scheme：`pawday://`
-- App Store：`1.0.0` 已發布；`1.1.0` Build 4 為 `Waiting for Review`
+- App Store Production：`1.1.1 (5)` 已發布（圖片快取修復）
 - iOS：iPhone／iPad，Light appearance、portrait
 
 `pawday://` 與少量 `PAWDAY_*` 測試環境變數名稱屬歷史相容識別，不是使用者可見品牌。

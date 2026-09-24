@@ -1,8 +1,12 @@
+import {
+  checkAppReleaseGate,
+  clientVersionHeaders,
+} from '../_shared/app-release-gate.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+    'authorization, x-client-info, apikey, content-type, x-homeypaw-platform, x-homeypaw-app-version, x-homeypaw-build',
   'Access-Control-Allow-Origin': '*',
 };
 
@@ -94,6 +98,11 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
+  const releaseGate = await checkAppReleaseGate(adminClient, request);
+  if (releaseGate) {
+    return jsonResponse({ error: releaseGate.error }, releaseGate.status);
+  }
+
   const { data: post, error: postError } = await adminClient
     .from('posts')
     .select('id, pet_id, author_id')
@@ -127,7 +136,12 @@ Deno.serve(async (request) => {
   // service role does not have direct SELECT on that table.
   const callerClient = createClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...clientVersionHeaders(request),
+      },
+    },
   });
   const { data: memberships, error: membershipError } = await callerClient.rpc(
     'get_family_members',

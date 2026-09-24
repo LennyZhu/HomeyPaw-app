@@ -1,6 +1,8 @@
 # App Store Metadata — HomeyPaw 1.1.0
 
-Current release record for HomeyPaw `1.1.0` Build 4. The build has been submitted to App Store Review and is `Waiting for Review`. Release mode is manual; this document does not claim approval or release.
+> Historical 1.1.0 (4) submission record. Current App Store Production is **1.1.1 (5)**; the submission status below is retained as historical context.
+
+Historical release record for HomeyPaw `1.1.0` Build 4. The build has been submitted to App Store Review and is `Waiting for Review`. Release mode is manual; this document does not claim approval or release.
 
 ## App Record
 

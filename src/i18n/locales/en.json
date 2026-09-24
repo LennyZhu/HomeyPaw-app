@@ -1307,5 +1307,16 @@
     "finalConfirmTitle": "Final confirmation",
     "finalConfirmBody": "Deleting your account also permanently deletes journal entries, photos and care records you created in shared pet families. Delete your account now?",
     "deleteError": "Your account was not deleted. Your session and data are unchanged; please try again later."
+  },
+  "appRelease": {
+    "upgrade": {
+      "title": "HomeyPaw needs an update",
+      "body": "This version is no longer supported. Update to the latest version to continue."
+    },
+    "maintenance": {
+      "title": "HomeyPaw is temporarily unavailable",
+      "body": "We are completing maintenance. Please try again shortly."
+    },
+    "checkAgain": "Check again"
   }
 }

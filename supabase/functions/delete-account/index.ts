@@ -1,8 +1,12 @@
+import {
+  checkAppReleaseGate,
+  clientVersionHeaders,
+} from '../_shared/app-release-gate.mjs';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
+    'authorization, x-client-info, apikey, content-type, x-homeypaw-platform, x-homeypaw-app-version, x-homeypaw-build',
   'Access-Control-Allow-Origin': '*',
 };
 
@@ -75,11 +79,21 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
+  const releaseGate = await checkAppReleaseGate(adminClient, request);
+  if (releaseGate) {
+    return jsonResponse({ error: releaseGate.error }, releaseGate.status);
+  }
+
   // PostgREST receives the verified caller's JWT. The RPC has no target-user
   // argument and binds every mutation to auth.uid() inside PostgreSQL.
   const callerClient = createClient(supabaseUrl, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...clientVersionHeaders(request),
+      },
+    },
   });
   const { error: preparationError } = await callerClient.rpc(
     'prepare_account_deletion',

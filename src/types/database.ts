@@ -9,6 +9,21 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_release_policy: {
+        Row: {
+          platform: 'ios';
+          minimum_app_version: string;
+          minimum_build: number;
+          recommended_app_version: string | null;
+          maintenance_mode: boolean;
+          enforce_mutation_gate: boolean;
+          maintenance_message: string | null;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       chat_messages: {
         Row: {
           body: string;

@@ -2,6 +2,8 @@ import 'react-native-url-polyfill/auto';
 import 'expo-sqlite/localStorage/install';
 
 import { createClient, processLock } from '@supabase/supabase-js';
+
+import { getAppVersionHeaders } from '@/features/app-release/minimum-version';
 import { AppState, Platform } from 'react-native';
 
 import type { Database } from '@/types/database';
@@ -93,7 +95,7 @@ export const supabase = isSupabaseConfigured
         detectSessionInUrl: false,
         lock: processLock,
       },
-      global: { fetch: fetchWithTimeout },
+      global: { fetch: fetchWithTimeout, headers: getAppVersionHeaders() },
     })
   : null;
 

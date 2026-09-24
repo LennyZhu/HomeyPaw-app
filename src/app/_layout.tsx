@@ -14,6 +14,8 @@ import { GlobalErrorScreen } from '@/components/global-error-screen';
 import { FeedbackProvider } from '@/components/feedback-provider';
 import { appScreenOrientation } from '@/config/orientation';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
+import { AppReleaseBlockScreen } from '@/features/app-release/app-release-block-screen';
+import { useAppReleaseGate } from '@/features/app-release/use-app-release-gate';
 import { AuthDeepLinkCoordinator } from '@/features/auth/auth-deep-link-coordinator';
 import { FamilyContextCoordinator } from '@/features/family/family-context-coordinator';
 import { CareTaskNotificationCoordinator } from '@/features/reminders/care-task-notification-coordinator';
@@ -61,6 +63,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 function RootNavigator() {
+  const appRelease = useAppReleaseGate();
   const {
     hasPasswordRecoveryError,
     isPasswordRecovery,
@@ -71,13 +74,23 @@ function RootNavigator() {
   } = useAuth();
 
   useEffect(() => {
-    if (!isRestoring) {
+    if (!isRestoring && appRelease.status !== 'checking') {
       void SplashScreen.hideAsync();
     }
-  }, [isRestoring]);
+  }, [isRestoring, appRelease.status]);
 
-  if (isRestoring) {
+  if (isRestoring || appRelease.status === 'checking') {
     return <LoadingView label={i18n.t('auth.restoringSession')} />;
+  }
+
+  if (appRelease.status === 'upgrade' || appRelease.status === 'maintenance') {
+    return (
+      <AppReleaseBlockScreen
+        mode={appRelease.status}
+        message={appRelease.message}
+        recheck={appRelease.recheck}
+      />
+    );
   }
 
   return (
