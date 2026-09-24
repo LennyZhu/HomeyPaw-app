@@ -13,6 +13,7 @@ import { IconButton } from '@/components/icon-button';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { useBackendCapability } from '@/features/family/backend-capability';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { usePet } from '@/features/pets/pet-queries';
 import { profileAvatarBucket } from '@/features/profile/profile-avatar';
@@ -21,8 +22,7 @@ import { lightColors, radius, spacing } from '@/theme';
 import {
   useActivePetInvite,
   useCreatePetInvite,
-  useFamilyMemberSummaries,
-  useFamilies,
+  usePetMembers,
   useRemovePetMember,
   useRevokePetInvite,
 } from './family-queries';
@@ -34,23 +34,17 @@ export default function PetMembersScreen() {
   const router = useRouter();
   const { showFeedback } = useFeedback();
   const { user } = useAuth();
+  const capabilityQuery = useBackendCapability();
   const petQuery = usePet(id);
-  const membersQuery = useFamilyMemberSummaries(
-    petQuery.data?.family_id ?? null,
-  );
-  const familiesQuery = useFamilies();
+  const membersQuery = usePetMembers(id);
   const members = membersQuery.data ?? [];
   const activeMemberCount = members.filter(
     (member) => member.role === 'owner' || member.role === 'member',
   ).length;
   const isFamilyFull = activeMemberCount >= familyMemberLimit;
-  const isOwner =
-    familiesQuery.data?.some(
-      (access) =>
-        access.family.id === petQuery.data?.family_id &&
-        access.membership.user_id === user?.id &&
-        access.membership.role === 'owner',
-    ) ?? false;
+  const isOwner = members.some(
+    (member) => member.userId === user?.id && member.role === 'owner',
+  );
   const activeInviteQuery = useActivePetInvite(id, isOwner);
   const createInvite = useCreatePetInvite(id);
   const revokeInvite = useRevokePetInvite(id);
@@ -153,17 +147,15 @@ export default function PetMembersScreen() {
     );
   };
 
-  if (petQuery.isPending || familiesQuery.isPending) {
+  if (
+    capabilityQuery.isPending ||
+    petQuery.isPending ||
+    (membersQuery.isPending && !capabilityQuery.isError)
+  ) {
     return <LoadingView label={t('family.members.loading')} />;
   }
 
-  if (
-    !petQuery.data ||
-    familiesQuery.isError ||
-    !familiesQuery.data?.some(
-      (access) => access.family.id === petQuery.data?.family_id,
-    )
-  ) {
+  if (capabilityQuery.isError || !petQuery.data || petQuery.isError) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText tone="error">{t('family.errors.loadMembers')}</AppText>

@@ -11,6 +11,7 @@ import { Screen } from '@/components/screen';
 import { SettingsRow } from '@/components/settings-row';
 import { useAuth } from '@/features/auth/auth-context';
 import { usePetMembers } from '@/features/family/family-queries';
+import { useBackendCapability } from '@/features/family/backend-capability';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
 import { lightColors, radius, spacing } from '@/theme';
 
@@ -25,6 +26,7 @@ export default function PetDetailScreen() {
   const router = useRouter();
   const { showFeedback } = useFeedback();
   const { user } = useAuth();
+  const capabilityQuery = useBackendCapability();
   const petQuery = usePet(id);
   const membersQuery = usePetMembers(id);
   const deletePet = useDeletePet();
@@ -39,7 +41,7 @@ export default function PetDetailScreen() {
     try {
       const result = await deletePet.mutateAsync(id);
       if (currentPetId === id) {
-        setCurrentPetId(result.nextPetId, user?.id ?? null);
+        setCurrentPetId(result.nextPetId ?? null, user?.id ?? null);
       }
       router.replace('/pets');
 
@@ -77,11 +79,11 @@ export default function PetDetailScreen() {
     );
   };
 
-  if (petQuery.isPending) {
+  if (capabilityQuery.isPending || petQuery.isPending) {
     return <LoadingView label={t('pets.loading.detail')} />;
   }
 
-  if (membersQuery.isError) {
+  if (capabilityQuery.isError || membersQuery.isError) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText tone="error">{t('pets.errors.notFound')}</AppText>

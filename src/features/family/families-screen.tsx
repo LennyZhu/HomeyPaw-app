@@ -14,19 +14,73 @@ import { useCurrentFamily } from './use-current-family';
 export default function FamiliesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { familiesQuery, petsQuery } = useCurrentFamily();
+  const { backendCapability, capabilityQuery, familiesQuery, petsQuery } =
+    useCurrentFamily();
   const access = familiesQuery.data?.[0];
   const soleFamilyId =
     familiesQuery.data?.length === 1 ? access?.family.id : null;
 
   useEffect(() => {
-    if (familiesQuery.isSuccess && petsQuery.isSuccess && soleFamilyId) {
+    if (
+      backendCapability === 'FAMILY_MULTI_PET' &&
+      familiesQuery.isSuccess &&
+      petsQuery.isSuccess &&
+      soleFamilyId
+    ) {
       router.replace({
         pathname: '/families/[id]',
         params: { id: soleFamilyId },
       });
     }
-  }, [familiesQuery.isSuccess, petsQuery.isSuccess, router, soleFamilyId]);
+  }, [
+    backendCapability,
+    familiesQuery.isSuccess,
+    petsQuery.isSuccess,
+    router,
+    soleFamilyId,
+  ]);
+
+  if (capabilityQuery.isPending || petsQuery.isPending) {
+    return <LoadingView label={t('family.lifecycle.loading')} />;
+  }
+
+  if (capabilityQuery.isError || petsQuery.isError) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
+        <AppButton
+          label={t('common.retry')}
+          onPress={() => {
+            void capabilityQuery.refetch();
+            void petsQuery.refetch();
+          }}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
+  if (backendCapability === 'LEGACY_PET') {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <View style={styles.heading}>
+          <AppText accessibilityRole="header" variant="largeTitle">
+            {t('profile.manageFamilies')}
+          </AppText>
+          <AppText tone="secondary">{t('family.bridge.legacyNotice')}</AppText>
+        </View>
+        <AppButton
+          label={t('profile.myPets')}
+          onPress={() => router.push('/pets')}
+        />
+        <AppButton
+          label={t('family.join.action')}
+          onPress={() => router.push('/join-family')}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
 
   if (
     familiesQuery.isPending ||
@@ -37,6 +91,7 @@ export default function FamiliesScreen() {
   }
 
   if (
+    capabilityQuery.isError ||
     familiesQuery.isError ||
     petsQuery.isError ||
     (familiesQuery.data?.length ?? 0) > 1

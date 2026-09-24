@@ -101,7 +101,9 @@ export default function JoinFamilyScreen() {
     setErrorMessage(null);
     try {
       const result = await joinPet.mutateAsync(submittedCode);
-      setCurrentFamilyId(result.familyId, user?.id ?? null);
+      if (result.familyId) {
+        setCurrentFamilyId(result.familyId, user?.id ?? null);
+      }
       setCurrentPetId(result.petId, user?.id ?? null);
       const message =
         result.status === 'already_member'
@@ -124,19 +126,29 @@ export default function JoinFamilyScreen() {
   };
 
   if (
-    familyContext.familiesQuery.isPending ||
-    familyContext.petsQuery.isPending
+    familyContext.capabilityQuery.isPending ||
+    familyContext.petsQuery.isPending ||
+    (familyContext.backendCapability === 'FAMILY_MULTI_PET' &&
+      familyContext.familiesQuery.isPending)
   ) {
     return <LoadingView label={t('family.lifecycle.loading')} />;
   }
-  if (familyContext.familiesQuery.isError || familyContext.petsQuery.isError) {
+  if (
+    familyContext.capabilityQuery.isError ||
+    familyContext.petsQuery.isError ||
+    (familyContext.backendCapability === 'FAMILY_MULTI_PET' &&
+      familyContext.familiesQuery.isError)
+  ) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
         <AppButton
           label={t('common.retry')}
           onPress={() => {
-            void familyContext.familiesQuery.refetch();
+            void familyContext.capabilityQuery.refetch();
+            if (familyContext.backendCapability === 'FAMILY_MULTI_PET') {
+              void familyContext.familiesQuery.refetch();
+            }
             void familyContext.petsQuery.refetch();
           }}
           variant="secondary"

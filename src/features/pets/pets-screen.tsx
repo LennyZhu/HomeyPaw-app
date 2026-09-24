@@ -20,8 +20,14 @@ import { getPetSummaryLabel } from './pet-display';
 export default function PetsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { currentFamilyId, currentMembership, familiesQuery, petsQuery } =
-    useCurrentFamily();
+  const {
+    backendCapability,
+    capabilityQuery,
+    currentFamilyId,
+    currentMembership,
+    familiesQuery,
+    petsQuery,
+  } = useCurrentFamily();
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
   return (
@@ -34,8 +40,12 @@ export default function PetsScreen() {
         >
           {t('pets.list.title')}
         </AppText>
-        {familiesQuery.isSuccess &&
-        (!currentFamilyId || currentMembership?.role === 'owner') ? (
+        {(
+          backendCapability === 'LEGACY_PET'
+            ? petsQuery.isSuccess && petsQuery.data.length === 0
+            : familiesQuery.isSuccess &&
+              (!currentFamilyId || currentMembership?.role === 'owner')
+        ) ? (
           <IconButton
             accessibilityLabel={t('pets.list.createActions')}
             icon="add"
@@ -46,9 +56,15 @@ export default function PetsScreen() {
 
       <PetsCreateActionsModal
         canAddPet={Boolean(
-          currentFamilyId && currentMembership?.role === 'owner',
+          backendCapability === 'FAMILY_MULTI_PET' &&
+          currentFamilyId &&
+          currentMembership?.role === 'owner',
         )}
-        canCreateOrJoinFamily={familiesQuery.isSuccess && !currentFamilyId}
+        canCreateOrJoinFamily={
+          backendCapability === 'LEGACY_PET'
+            ? petsQuery.isSuccess && petsQuery.data.length === 0
+            : familiesQuery.isSuccess && !currentFamilyId
+        }
         onAddPet={() => {
           setIsCreateMenuOpen(false);
           router.push('/pets/new');
@@ -86,7 +102,9 @@ export default function PetsScreen() {
         </View>
       ) : null}
 
-      {familiesQuery.isSuccess &&
+      {(backendCapability === 'LEGACY_PET'
+        ? capabilityQuery.isSuccess
+        : familiesQuery.isSuccess) &&
       petsQuery.isSuccess &&
       petsQuery.data.length === 0 ? (
         <View style={styles.emptyWrap}>

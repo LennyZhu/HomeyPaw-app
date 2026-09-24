@@ -6,12 +6,16 @@ import { usePets } from '@/features/pets/pet-queries';
 import { useCurrentFamilyStore } from '@/stores/current-family-store';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
 
+import { useBackendCapability } from './backend-capability';
+import { reconcileLegacyPet } from './backend-capability-state';
 import { reconcileFamilyContext } from './family-context-state';
 import { removeFamilyQueries, useFamilies } from './family-queries';
 
 export function useCurrentFamily() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const capabilityQuery = useBackendCapability();
+  const isLegacy = capabilityQuery.data === 'LEGACY_PET';
   const familiesQuery = useFamilies();
   const petsQuery = usePets();
   const storedFamilyId = useCurrentFamilyStore(
@@ -44,13 +48,27 @@ export function useCurrentFamily() {
     storedPetUserId,
     userId: user?.id,
   });
+  const legacyPet = isLegacy
+    ? reconcileLegacyPet(pets, storedPetId, storedPetUserId, user?.id)
+    : null;
   const currentMembership =
     familyAccess.find(
       (access) => access.family.id === context.currentFamily?.id,
     )?.membership ?? null;
 
   useEffect(() => {
-    if (!user || !familiesQuery.isSuccess || !petsQuery.isSuccess) return;
+    if (!user || !petsQuery.isSuccess || !capabilityQuery.isSuccess) return;
+
+    if (isLegacy) {
+      if (storedFamilyId || storedFamilyUserId !== user.id) {
+        setStoredFamilyId(null, user.id);
+      }
+      if (storedPetUserId !== user.id || storedPetId !== legacyPet?.id) {
+        setStoredPetId(legacyPet?.id ?? null, user.id);
+      }
+      return;
+    }
+    if (!familiesQuery.isSuccess) return;
 
     if (
       storedFamilyUserId === user.id &&
@@ -70,7 +88,10 @@ export function useCurrentFamily() {
       setStoredPetId(context.currentPet?.id ?? null, user.id);
     }
   }, [
+    capabilityQuery.isSuccess,
     context.currentFamily?.id,
+    isLegacy,
+    legacyPet?.id,
     context.currentPet?.id,
     familiesQuery.isSuccess,
     petsQuery.isSuccess,
@@ -87,7 +108,7 @@ export function useCurrentFamily() {
 
   const setCurrentFamilyId = useCallback(
     (familyId: string | null) => {
-      if (!user || !familyId) {
+      if (isLegacy || !user || !familyId) {
         setStoredFamilyId(null, user?.id ?? null);
         setStoredPetId(null, user?.id ?? null);
         return;
@@ -107,6 +128,7 @@ export function useCurrentFamily() {
     },
     [
       families,
+      isLegacy,
       pets,
       setStoredFamilyId,
       setStoredPetId,
@@ -124,26 +146,35 @@ export function useCurrentFamily() {
       }
 
       const pet = pets.find((candidate) => candidate.id === petId);
-      if (!pet?.family_id) {
+      if (!pet) {
         setStoredPetId(null, user.id);
         return;
       }
-
-      setStoredFamilyId(pet.family_id, user.id);
+      if (!isLegacy) {
+        if (!pet.family_id) {
+          setStoredPetId(null, user.id);
+          return;
+        }
+        setStoredFamilyId(pet.family_id, user.id);
+      }
       setStoredPetId(pet.id, user.id);
     },
-    [pets, setStoredFamilyId, setStoredPetId, user],
+    [isLegacy, pets, setStoredFamilyId, setStoredPetId, user],
   );
 
   return {
-    currentFamily: context.currentFamily,
-    currentFamilyId: context.currentFamily?.id ?? null,
-    currentMembership,
-    currentPet: context.currentPet,
-    currentPetId: context.currentPet?.id ?? null,
+    backendCapability: capabilityQuery.data,
+    capabilityQuery,
+    currentFamily: isLegacy ? null : context.currentFamily,
+    currentFamilyId: isLegacy ? null : (context.currentFamily?.id ?? null),
+    currentMembership: isLegacy ? null : currentMembership,
+    currentPet: isLegacy ? legacyPet : context.currentPet,
+    currentPetId: isLegacy
+      ? (legacyPet?.id ?? null)
+      : (context.currentPet?.id ?? null),
     families: familyAccess,
     familiesQuery,
-    familyPets: context.familyPets,
+    familyPets: isLegacy ? pets : context.familyPets,
     pets,
     petsQuery,
     setCurrentFamilyId,

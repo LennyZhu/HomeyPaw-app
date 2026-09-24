@@ -123,19 +123,24 @@ check(
   petsScreen.includes("router.push('/pets/new')") &&
     homeScreen.includes('petsState.currentFamilyId') &&
     homeScreen.includes("'/families/new'") &&
-    newPet.includes('if (!createNewFamily && !currentFamilyId)'),
+    newPet.includes("familyContext.backendCapability !== 'LEGACY_PET'") &&
+    /!createNewFamily &&\s*!currentFamilyId &&\s*familyContext\.backendCapability !== 'LEGACY_PET'/u.test(
+      newPet,
+    ),
 );
 check(
   'Adding a Pet preserves Family selection and selects the new Pet',
-  /if \(createNewFamily\) \{[\s\S]*?setCurrentFamilyId\(pet\.family_id/.test(
+  /createNewFamily &&\s*familyContext\.backendCapability === 'FAMILY_MULTI_PET'/u.test(
     newPet,
-  ) && newPet.includes('setCurrentPetId(pet.id'),
+  ) &&
+    newPet.includes('setCurrentFamilyId(pet.family_id') &&
+    newPet.includes('setCurrentPetId(pet.id'),
 );
 check(
   'Family Members presentation uses canonical Family membership and direct Remove action',
-  memberScreen.includes('useFamilyMemberSummaries') &&
-    memberScreen.includes('useFamilies') &&
-    !memberScreen.includes('usePetMembers') &&
+  memberScreen.includes('usePetMembers') &&
+    queries.includes("capability === 'LEGACY_PET'") &&
+    queries.includes("'get_family_members'") &&
     !memberScreen.includes(".from('pet_members')") &&
     memberScreen.includes("label={t('family.members.remove')}") &&
     memberScreen.includes('styles.inviteCard'),

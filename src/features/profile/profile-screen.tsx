@@ -180,8 +180,10 @@ export default function ProfileScreen() {
               .filter(
                 (item) =>
                   item.key !== 'joinFamily' ||
-                  (familyContext.familiesQuery.isSuccess &&
-                    !familyContext.currentFamilyId),
+                  (familyContext.backendCapability === 'LEGACY_PET'
+                    ? familyContext.petsQuery.isSuccess
+                    : familyContext.familiesQuery.isSuccess &&
+                      !familyContext.currentFamilyId),
               )
               .map((item) => (
                 <Pressable

@@ -86,9 +86,10 @@ check(
 );
 check(
   'Family Members read canonical Family membership with direct Remove and invitation buttons',
-  members.includes('useFamilyMemberSummaries') &&
+  members.includes('usePetMembers') &&
     queries.includes("'get_family_members'") &&
-    !queries.includes("'get_pet_members'") &&
+    queries.includes("capability === 'LEGACY_PET'") &&
+    queries.includes("'get_pet_members'") &&
     members.includes("label={t('family.members.remove')}") &&
     members.includes("label={t('family.invite.regenerate')}") &&
     members.includes("label={t('family.invite.revoke')}"),

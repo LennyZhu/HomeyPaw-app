@@ -59,19 +59,30 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
     setSubmitError(null);
 
     try {
+      if (
+        familyContext.backendCapability === 'LEGACY_PET' &&
+        familyContext.pets.length
+      ) {
+        throw new Error('LEGACY_SECOND_PET_UNAVAILABLE');
+      }
       if (createNewFamily && currentFamilyId) {
         throw new Error('ALREADY_IN_FAMILY');
       }
       if (
+        familyContext.backendCapability === 'FAMILY_MULTI_PET' &&
         !createNewFamily &&
         (!currentFamilyId || familyContext.currentMembership?.role !== 'owner')
       ) {
         throw new Error('FAMILY_OWNER_REQUIRED');
       }
-      const pet = createNewFamily
-        ? await createNewFamilyWithPet.mutateAsync(values)
-        : await createExistingFamilyPet.mutateAsync(values);
-      if (createNewFamily) {
+      const pet =
+        createNewFamily || familyContext.backendCapability === 'LEGACY_PET'
+          ? await createNewFamilyWithPet.mutateAsync(values)
+          : await createExistingFamilyPet.mutateAsync(values);
+      if (
+        createNewFamily &&
+        familyContext.backendCapability === 'FAMILY_MULTI_PET'
+      ) {
         await queryClient.invalidateQueries({
           queryKey: familyKeys.list(user?.id),
         });
@@ -122,22 +133,53 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
   };
 
   if (
-    familyContext.familiesQuery.isPending ||
-    familyContext.petsQuery.isPending
+    familyContext.capabilityQuery.isPending ||
+    familyContext.petsQuery.isPending ||
+    (familyContext.backendCapability === 'FAMILY_MULTI_PET' &&
+      familyContext.familiesQuery.isPending)
   ) {
     return <LoadingView label={t('family.lifecycle.loading')} />;
   }
 
-  if (familyContext.familiesQuery.isError || familyContext.petsQuery.isError) {
+  if (
+    familyContext.capabilityQuery.isError ||
+    familyContext.petsQuery.isError ||
+    (familyContext.backendCapability === 'FAMILY_MULTI_PET' &&
+      familyContext.familiesQuery.isError)
+  ) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText tone="error">{t('family.lifecycle.loadError')}</AppText>
         <AppButton
           label={t('common.retry')}
           onPress={() => {
-            void familyContext.familiesQuery.refetch();
+            void familyContext.capabilityQuery.refetch();
+            if (familyContext.backendCapability === 'FAMILY_MULTI_PET') {
+              void familyContext.familiesQuery.refetch();
+            }
             void familyContext.petsQuery.refetch();
           }}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
+  if (
+    familyContext.backendCapability === 'LEGACY_PET' &&
+    familyContext.pets.length
+  ) {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="largeTitle">
+          {t('pets.create.title')}
+        </AppText>
+        <AppText tone="secondary">
+          {t('family.bridge.secondPetUnavailable')}
+        </AppText>
+        <AppButton
+          label={t('common.back')}
+          onPress={() => router.replace('/pets')}
           variant="secondary"
         />
       </Screen>
@@ -160,7 +202,11 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
     );
   }
 
-  if (!createNewFamily && !currentFamilyId) {
+  if (
+    !createNewFamily &&
+    !currentFamilyId &&
+    familyContext.backendCapability !== 'LEGACY_PET'
+  ) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText accessibilityRole="header" variant="largeTitle">
@@ -180,7 +226,11 @@ function PetCreationScreen({ createNewFamily }: { createNewFamily: boolean }) {
     );
   }
 
-  if (!createNewFamily && familyContext.currentMembership?.role !== 'owner') {
+  if (
+    !createNewFamily &&
+    familyContext.backendCapability !== 'LEGACY_PET' &&
+    familyContext.currentMembership?.role !== 'owner'
+  ) {
     return (
       <Screen contentContainerStyle={styles.content}>
         <AppText accessibilityRole="header" variant="largeTitle">

@@ -30,7 +30,7 @@
       "supportsTablet": true,
       "requireFullScreen": false,
       "bundleIdentifier": "com.zhushunli.homeypaw",
-      "buildNumber": "6",
+      "buildNumber": "7",
       "config": {
         "usesNonExemptEncryption": false
       }

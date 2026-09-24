@@ -404,6 +404,10 @@
     }
   },
   "family": {
+    "bridge": {
+      "legacyNotice": "家庭管理將於後端更新後開放。你仍可在毛孩頁面管理分享。",
+      "secondPetUnavailable": "後端更新後即可新增第二隻毛孩。"
+    },
     "create": {
       "action": "新增家庭",
       "title": "新增家庭",

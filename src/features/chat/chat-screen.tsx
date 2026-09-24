@@ -165,6 +165,19 @@ export default function ChatScreen() {
     return <LoadingView label={t('pets.loading.list')} />;
   }
 
+  if (petsState.isError) {
+    return (
+      <Screen contentContainerStyle={styles.noPetContent}>
+        <AppText tone="error">{t('pets.errors.load')}</AppText>
+        <AppButton
+          label={t('common.retry')}
+          onPress={() => void petsState.refetch()}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
   if (!pet) {
     return (
       <Screen contentContainerStyle={styles.noPetContent}>

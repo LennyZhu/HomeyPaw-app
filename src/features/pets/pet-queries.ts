@@ -141,8 +141,8 @@ async function deletePet(petId: string) {
   const { data, error } = await requireSupabase().functions.invoke<{
     avatarCleanupPending?: boolean;
     deleted: boolean;
-    familyId: string;
-    nextPetId: string | null;
+    familyId?: string;
+    nextPetId?: string | null;
     videoCleanupPending?: boolean;
   }>('delete-pet', {
     body: { petId },
@@ -281,16 +281,18 @@ export function useDeletePet() {
         pets.filter((pet) => pet.id !== petId),
       );
       const familyId = deletedPet?.family_id ?? result.familyId;
-      queryClient.setQueryData<Pet[]>(
-        familyKeys.pets(user?.id, familyId),
-        (pets = []) => pets.filter((pet) => pet.id !== petId),
-      );
-      void queryClient.invalidateQueries({
-        queryKey: familyKeys.pets(user?.id, familyId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: familyKeys.list(user?.id),
-      });
+      if (familyId) {
+        queryClient.setQueryData<Pet[]>(
+          familyKeys.pets(user?.id, familyId),
+          (pets = []) => pets.filter((pet) => pet.id !== petId),
+        );
+        void queryClient.invalidateQueries({
+          queryKey: familyKeys.pets(user?.id, familyId),
+        });
+        void queryClient.invalidateQueries({
+          queryKey: familyKeys.list(user?.id),
+        });
+      }
       if (user) {
         void syncCareTaskNotifications(user.id).catch(() => undefined);
       }

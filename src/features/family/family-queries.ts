@@ -19,6 +19,10 @@ import type {
   FamilyMember,
   FamilyPet,
 } from './family-types';
+import {
+  useBackendCapability,
+  type BackendCapability,
+} from './backend-capability';
 import { familyKeys } from './family-query-keys';
 
 export { familyKeys } from './family-query-keys';
@@ -55,7 +59,7 @@ export type CreatedPetInvite = {
 };
 
 export type JoinPetResult = {
-  familyId: string;
+  familyId: string | null;
   petId: string;
   petName: string;
   status: 'already_member' | 'joined';
@@ -128,9 +132,10 @@ async function fetchFamilyPets(familyId: string): Promise<FamilyPet[]> {
 
 export function useFamilies() {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user),
+    enabled: Boolean(user && capability.data === 'FAMILY_MULTI_PET'),
     queryFn: () => fetchFamilies(user!.id),
     queryKey: familyKeys.list(user?.id),
   });
@@ -138,9 +143,12 @@ export function useFamilies() {
 
 export function useFamily(familyId: string | null) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user && familyId),
+    enabled: Boolean(
+      user && familyId && capability.data === 'FAMILY_MULTI_PET',
+    ),
     queryFn: () => fetchFamily(familyId!),
     queryKey: familyKeys.detail(user?.id, familyId ?? ''),
   });
@@ -148,9 +156,12 @@ export function useFamily(familyId: string | null) {
 
 export function useFamilyMembers(familyId: string | null) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user && familyId),
+    enabled: Boolean(
+      user && familyId && capability.data === 'FAMILY_MULTI_PET',
+    ),
     queryFn: () => fetchFamilyMembers(familyId!),
     queryKey: familyKeys.members(user?.id, familyId ?? ''),
   });
@@ -158,10 +169,13 @@ export function useFamilyMembers(familyId: string | null) {
 
 export function useFamilyMemberSummaries(familyId: string | null) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
   const queryClient = useQueryClient();
 
   return useQuery({
-    enabled: Boolean(user && familyId),
+    enabled: Boolean(
+      user && familyId && capability.data === 'FAMILY_MULTI_PET',
+    ),
     queryFn: async (): Promise<PetMemberSummary[]> => {
       const { data, error } = await requireSupabase().rpc(
         'get_family_members',
@@ -194,9 +208,12 @@ export function useFamilyMemberSummaries(familyId: string | null) {
 
 export function useFamilyPets(familyId: string | null) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user && familyId),
+    enabled: Boolean(
+      user && familyId && capability.data === 'FAMILY_MULTI_PET',
+    ),
     queryFn: () => fetchFamilyPets(familyId!),
     queryKey: familyKeys.pets(user?.id, familyId ?? ''),
   });
@@ -224,11 +241,16 @@ function normalizeInviteCode(code: string) {
 async function fetchPetMembers(
   petId: string,
   queryClient: QueryClient,
+  capability: BackendCapability,
 ): Promise<PetMemberSummary[]> {
-  const familyId = await resolvePetFamilyId(petId);
-  const { data, error } = await requireSupabase().rpc('get_family_members', {
-    target_family_id: familyId,
-  });
+  const { data, error } =
+    capability === 'LEGACY_PET'
+      ? await requireSupabase().rpc('get_pet_members', {
+          target_pet_id: petId,
+        })
+      : await requireSupabase().rpc('get_family_members', {
+          target_family_id: await resolvePetFamilyId(petId),
+        });
 
   if (error) {
     throw error;
@@ -283,7 +305,33 @@ async function resolvePetFamilyId(petId: string): Promise<string> {
   return data.family_id;
 }
 
-async function fetchActiveInvite(petId: string): Promise<FamilyInvite | null> {
+type ActiveInvite = Pick<
+  FamilyInvite,
+  | 'id'
+  | 'invited_by'
+  | 'expires_at'
+  | 'max_uses'
+  | 'used_count'
+  | 'revoked_at'
+  | 'created_at'
+>;
+
+async function fetchActiveInvite(
+  petId: string,
+  capability: BackendCapability,
+): Promise<ActiveInvite | null> {
+  if (capability === 'LEGACY_PET') {
+    const { data, error } = await requireSupabase()
+      .from('pet_invites')
+      .select(
+        'id, invited_by, expires_at, max_uses, used_count, revoked_at, created_at',
+      )
+      .eq('pet_id', petId)
+      .is('revoked_at', null)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
   const familyId = await resolvePetFamilyId(petId);
   const { data, error } = await requireSupabase()
     .from('family_invites')
@@ -303,11 +351,18 @@ async function fetchActiveInvite(petId: string): Promise<FamilyInvite | null> {
 
 async function createInvite(
   petId: string,
-): Promise<CreatedPetInvite & { familyId: string }> {
-  const familyId = await resolvePetFamilyId(petId);
-  const { data, error } = await requireSupabase().rpc('create_family_invite', {
-    target_family_id: familyId,
-  });
+  capability: BackendCapability,
+): Promise<CreatedPetInvite & { familyId: string | null }> {
+  const familyId =
+    capability === 'LEGACY_PET' ? null : await resolvePetFamilyId(petId);
+  const { data, error } =
+    capability === 'LEGACY_PET'
+      ? await requireSupabase().rpc('create_pet_invite', {
+          target_pet_id: petId,
+        })
+      : await requireSupabase().rpc('create_family_invite', {
+          target_family_id: familyId!,
+        });
 
   if (error || !data[0]) {
     throw error ?? new Error('INVITE_CREATE_FAILED');
@@ -325,11 +380,15 @@ async function createInvite(
   };
 }
 
-async function revokeInvite(petId: string) {
-  const familyId = await resolvePetFamilyId(petId);
-  const { data, error } = await requireSupabase().rpc('revoke_family_invite', {
-    target_family_id: familyId,
-  });
+async function revokeInvite(petId: string, capability: BackendCapability) {
+  const { data, error } =
+    capability === 'LEGACY_PET'
+      ? await requireSupabase().rpc('revoke_pet_invite', {
+          target_pet_id: petId,
+        })
+      : await requireSupabase().rpc('revoke_family_invite', {
+          target_family_id: await resolvePetFamilyId(petId),
+        });
 
   if (error) {
     throw error;
@@ -352,20 +411,38 @@ export async function previewInvite(code: string): Promise<InvitePreview> {
   return data;
 }
 
-async function joinPet(code: string): Promise<JoinPetResult> {
-  const { data, error } = await requireSupabase().rpc(
-    'join_family_with_invite',
-    { invite_code: normalizeInviteCode(code) },
-  );
+async function joinPet(
+  code: string,
+  capability: BackendCapability,
+): Promise<JoinPetResult> {
+  const { data, error } =
+    capability === 'LEGACY_PET'
+      ? await requireSupabase().rpc('join_pet_with_invite', {
+          invite_code: normalizeInviteCode(code),
+        })
+      : await requireSupabase().rpc('join_family_with_invite', {
+          invite_code: normalizeInviteCode(code),
+        });
 
   if (error || !data[0]) {
     throw error ?? new Error('INVITE_INVALID');
   }
 
   return {
-    familyId: data[0].joined_family_id,
-    petId: data[0].display_pet_id,
-    petName: data[0].display_pet_name,
+    familyId:
+      capability === 'LEGACY_PET'
+        ? null
+        : 'joined_family_id' in data[0]
+          ? data[0].joined_family_id
+          : null,
+    petId:
+      'joined_pet_id' in data[0]
+        ? data[0].joined_pet_id
+        : data[0].display_pet_id,
+    petName:
+      'joined_pet_name' in data[0]
+        ? data[0].joined_pet_name
+        : data[0].display_pet_name,
     status: data[0].join_status,
   };
 }
@@ -383,7 +460,19 @@ export async function removeFamilyMember(familyId: string, userId: string) {
   return data;
 }
 
-async function removeMember(petId: string, userId: string) {
+async function removeMember(
+  petId: string,
+  userId: string,
+  capability: BackendCapability,
+) {
+  if (capability === 'LEGACY_PET') {
+    const { data, error } = await requireSupabase().rpc('remove_pet_member', {
+      target_pet_id: petId,
+      target_user_id: userId,
+    });
+    if (error) throw error;
+    return { familyId: null, status: data };
+  }
   const familyId = await resolvePetFamilyId(petId);
   const status = await removeFamilyMember(familyId, userId);
   return { familyId, status };
@@ -422,11 +511,12 @@ export async function transferFamilyOwnership(
 
 export function usePetMembers(petId: string | null) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
   const queryClient = useQueryClient();
 
   return useQuery({
-    enabled: Boolean(user && petId),
-    queryFn: () => fetchPetMembers(petId!, queryClient),
+    enabled: Boolean(user && petId && capability.data),
+    queryFn: () => fetchPetMembers(petId!, queryClient, capability.data!),
     queryKey: petFamilyKeys.members(user?.id, petId ?? ''),
   });
 }
@@ -443,31 +533,35 @@ export function usePetPostAuthors(petId: string | null) {
 
 export function useActivePetInvite(petId: string, isOwner: boolean) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user && petId && isOwner),
-    queryFn: () => fetchActiveInvite(petId),
+    enabled: Boolean(user && petId && isOwner && capability.data),
+    queryFn: () => fetchActiveInvite(petId, capability.data!),
     queryKey: petFamilyKeys.activeInvite(user?.id, petId),
   });
 }
 
 export function useCreatePetInvite(petId: string) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => createInvite(petId),
+    mutationFn: () => {
+      if (!capability.data) throw new Error('BACKEND_CAPABILITY_UNAVAILABLE');
+      return createInvite(petId, capability.data);
+    },
     onSuccess: (invite) => {
       queryClient.setQueriesData(
         { queryKey: ['family', user?.id, 'invite'] },
         null,
       );
-      queryClient.setQueryData<FamilyInvite>(
+      queryClient.setQueryData<ActiveInvite>(
         petFamilyKeys.activeInvite(user?.id, petId),
         {
           created_at: invite.createdAt,
           expires_at: invite.expiresAt,
-          family_id: invite.familyId,
           id: invite.id,
           invited_by: user!.id,
           max_uses: invite.maxUses,
@@ -481,10 +575,14 @@ export function useCreatePetInvite(petId: string) {
 
 export function useRevokePetInvite(petId: string) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => revokeInvite(petId),
+    mutationFn: () => {
+      if (!capability.data) throw new Error('BACKEND_CAPABILITY_UNAVAILABLE');
+      return revokeInvite(petId, capability.data);
+    },
     onSuccess: () => {
       queryClient.setQueriesData(
         { queryKey: ['family', user?.id, 'invite'] },
@@ -496,10 +594,14 @@ export function useRevokePetInvite(petId: string) {
 
 export function useJoinPet() {
   const { user } = useAuth();
+  const capability = useBackendCapability();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: joinPet,
+    mutationFn: (code: string) => {
+      if (!capability.data) throw new Error('BACKEND_CAPABILITY_UNAVAILABLE');
+      return joinPet(code, capability.data);
+    },
     onSuccess: async (result) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: petKeys.all(user?.id) }),
@@ -507,10 +609,14 @@ export function useJoinPet() {
           queryKey: familyKeys.list(user?.id),
         }),
         queryClient.invalidateQueries({
-          queryKey: familyKeys.pets(user?.id, result.familyId),
+          queryKey: result.familyId
+            ? familyKeys.pets(user?.id, result.familyId)
+            : petKeys.all(user?.id),
         }),
         queryClient.invalidateQueries({
-          queryKey: familyKeys.members(user?.id, result.familyId),
+          queryKey: result.familyId
+            ? familyKeys.members(user?.id, result.familyId)
+            : petFamilyKeys.members(user?.id, result.petId),
         }),
         queryClient.invalidateQueries({
           queryKey: ['family', user?.id, 'members'],
@@ -525,10 +631,14 @@ export function useJoinPet() {
 
 export function useRemovePetMember(petId: string) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (memberUserId: string) => removeMember(petId, memberUserId),
+    mutationFn: (memberUserId: string) => {
+      if (!capability.data) throw new Error('BACKEND_CAPABILITY_UNAVAILABLE');
+      return removeMember(petId, memberUserId, capability.data);
+    },
     onSuccess: async (result) => {
       queryClient.setQueriesData(
         { queryKey: ['family', user?.id, 'invite'] },
@@ -536,7 +646,9 @@ export function useRemovePetMember(petId: string) {
       );
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: familyKeys.members(user?.id, result.familyId),
+          queryKey: result.familyId
+            ? familyKeys.members(user?.id, result.familyId)
+            : petFamilyKeys.members(user?.id, petId),
         }),
         queryClient.invalidateQueries({
           queryKey: ['family', user?.id, 'members'],

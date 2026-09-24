@@ -64,15 +64,28 @@ export default function FamilySettingsScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (context.backendCapability !== 'FAMILY_MULTI_PET') return;
       void refetchFamilies();
       void refetchPets();
       void refetchMembers();
       void refetchFamilyPets();
-    }, [refetchFamilies, refetchPets, refetchMembers, refetchFamilyPets]),
+    }, [
+      context.backendCapability,
+      refetchFamilies,
+      refetchPets,
+      refetchMembers,
+      refetchFamilyPets,
+    ]),
   );
 
   useEffect(() => {
-    if (!user || !context.familiesQuery.isSuccess || familyAccess) return;
+    if (
+      context.backendCapability !== 'FAMILY_MULTI_PET' ||
+      !user ||
+      !context.familiesQuery.isSuccess ||
+      familyAccess
+    )
+      return;
     clearRevokedFamilyAccess({
       familyId: id,
       queryClient,
@@ -82,6 +95,7 @@ export default function FamilySettingsScreen() {
     });
     router.replace('/families');
   }, [
+    context.backendCapability,
     context.familiesQuery.isSuccess,
     familyAccess,
     id,
@@ -194,9 +208,30 @@ export default function FamilySettingsScreen() {
     );
   };
 
-  if (context.familiesQuery.isPending || context.petsQuery.isPending) {
+  if (
+    context.capabilityQuery.isPending ||
+    context.petsQuery.isPending ||
+    (context.backendCapability === 'FAMILY_MULTI_PET' &&
+      context.familiesQuery.isPending)
+  ) {
     return <LoadingView label={t('family.lifecycle.loading')} />;
   }
+  if (context.backendCapability === 'LEGACY_PET') {
+    return (
+      <Screen contentContainerStyle={styles.content}>
+        <AppText accessibilityRole="header" variant="largeTitle">
+          {t('profile.manageFamilies')}
+        </AppText>
+        <AppText tone="secondary">{t('family.bridge.legacyNotice')}</AppText>
+        <AppButton
+          label={t('profile.myPets')}
+          onPress={() => router.replace('/pets')}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
   if (!familyAccess || context.familiesQuery.isError) {
     return (
       <Screen contentContainerStyle={styles.content}>

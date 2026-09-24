@@ -69,6 +69,19 @@ export default function NewCareScreen() {
     );
   }
 
+  if (petsState.isError) {
+    return (
+      <Screen contentContainerStyle={styles.empty}>
+        <AppText tone="error">{t('pets.errors.load')}</AppText>
+        <AppButton
+          label={t('common.retry')}
+          onPress={() => void petsState.refetch()}
+          variant="secondary"
+        />
+      </Screen>
+    );
+  }
+
   if (!petsState.currentPet) {
     return (
       <Screen contentContainerStyle={styles.empty}>

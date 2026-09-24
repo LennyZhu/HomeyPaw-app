@@ -404,6 +404,10 @@
     }
   },
   "family": {
+    "bridge": {
+      "legacyNotice": "Family management will be available after the backend update. Pet sharing remains available from each pet.",
+      "secondPetUnavailable": "Adding another pet will be available after the backend update."
+    },
     "create": {
       "action": "Create family",
       "title": "Create a family",
