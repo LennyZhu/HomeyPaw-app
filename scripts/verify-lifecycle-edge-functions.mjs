@@ -588,6 +588,21 @@ async function verifyPreviewInvite() {
     'Invite preview returned incorrect minimal data.',
   );
 
+  // C4G retains historical invites after their inviter is deleted. Its FK
+  // becomes NULL; no UUID or email may escape through the preview response.
+  sql(
+    `update public.family_invites set invited_by=null where code_hash=private.pet_invite_code_hash('${code}');`,
+  );
+  const deletedInviter = await invoke('preview-pet-invite', requester, {
+    code,
+  });
+  expect(
+    deletedInviter.status === 200 &&
+      deletedInviter.payload.inviterDisplayName === 'Deleted user' &&
+      !JSON.stringify(deletedInviter.payload).includes(owner.id),
+    'Deleted-inviter preview did not use the anonymous fallback.',
+  );
+
   const invalid = await invoke('preview-pet-invite', requester, {
     code: 'ZZZZZZZZ',
   });
@@ -596,7 +611,7 @@ async function verifyPreviewInvite() {
     'Invalid invite behavior changed.',
   );
   sql(
-    `update public.pet_invites set created_at=now()-interval '2 days', expires_at=now()-interval '1 day' where pet_id='${petId}'::uuid;`,
+    `update public.family_invites set created_at=now()-interval '2 days', expires_at=now()-interval '1 day' where family_id=(select family_id from public.pets where id='${petId}'::uuid);`,
   );
   const expired = await invoke('preview-pet-invite', requester, { code });
   expect(
@@ -605,10 +620,15 @@ async function verifyPreviewInvite() {
   );
 
   sql(`
-    update public.pet_invites set revoked_at=now() where pet_id='${petId}'::uuid;
-    insert into public.pet_invites (pet_id,invited_by,code_hash,expires_at,max_uses,used_count)
-    values ('${petId}'::uuid,'${owner.id}'::uuid,private.pet_invite_code_hash('ABCDEFGH'),now()+interval '1 day',1,1);
+    update public.family_invites set revoked_at=now() where family_id=(select family_id from public.pets where id='${petId}'::uuid);
+    insert into public.family_invites (family_id,invited_by,code_hash,expires_at,max_uses,used_count)
+    values ((select family_id from public.pets where id='${petId}'::uuid),'${owner.id}'::uuid,private.pet_invite_code_hash('ABCDEFGH'),now()+interval '1 day',1,1);
   `);
+  const revoked = await invoke('preview-pet-invite', requester, { code });
+  expect(
+    revoked.status === 404 && revoked.payload.error === 'invite_invalid',
+    'Revoked invite behavior changed.',
+  );
   const exhausted = await invoke('preview-pet-invite', requester, {
     code: 'ABCDEFGH',
   });
@@ -616,12 +636,47 @@ async function verifyPreviewInvite() {
     exhausted.status === 404 && exhausted.payload.error === 'invite_invalid',
     'Exhausted invite behavior changed.',
   );
+  addMember(petId, requester.id);
+  const exhaustedExistingMember = await invoke(
+    'preview-pet-invite',
+    requester,
+    {
+      code: 'ABCDEFGH',
+    },
+  );
+  expect(
+    exhaustedExistingMember.status === 200,
+    'Existing Family member lost exhausted-invite preview access.',
+  );
+  const otherOwner = await createUser('OtherOwner');
+  const otherPetId = await createPet(otherOwner, 'Cross Family Pet');
+  const otherInvite = await otherOwner.client.rpc('create_family_invite', {
+    target_family_id: sql(
+      `select family_id from public.pets where id='${otherPetId}'::uuid;`,
+    ),
+  });
+  if (otherInvite.error || !otherInvite.data?.[0]) {
+    throw otherInvite.error ?? new Error('Cross-Family invite failed.');
+  }
+  const otherCode = otherInvite.data[0].invite_code;
+  const crossPreview = await invoke('preview-pet-invite', requester, {
+    code: otherCode,
+  });
+  expect(crossPreview.status === 200, 'Cross-Family preview was lost.');
+  const crossJoin = await requester.client.rpc('join_family_with_invite', {
+    invite_code: otherCode,
+  });
+  expect(
+    crossJoin.error?.message.includes('ALREADY_IN_FAMILY'),
+    'Cross-Family join did not enforce C4I.',
+  );
   console.log(
     'PASS: valid invite returns only the five approved preview fields.',
   );
   console.log(
-    'PASS: invalid, expired, and exhausted invite previews return invite_invalid.',
+    'PASS: deleted inviter is anonymous; invalid, expired, revoked, and exhausted invite contracts hold.',
   );
+  console.log('PASS: cross-Family preview remains safe and join fails C4I.');
 }
 
 async function cleanup() {

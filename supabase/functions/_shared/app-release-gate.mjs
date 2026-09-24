@@ -72,6 +72,11 @@ export function evaluateClientRelease(policy, request) {
 }
 
 export async function checkAppReleaseGate(admin, request) {
+  const { data: locked, error: lockError } = await admin.rpc(
+    'is_pre_cutover_release_locked',
+  );
+  if (lockError || locked !== false)
+    return { status: 503, error: 'PRE_CUTOVER_RELEASE_LOCK' };
   const { data, error } = await admin
     .from('app_release_policy')
     .select(

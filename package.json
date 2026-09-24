@@ -124,6 +124,8 @@
     "verify:delete-post-edge": "node scripts/verify-lifecycle-edge-functions.mjs delete-post",
     "verify:delete-pet-edge": "node scripts/verify-lifecycle-edge-functions.mjs delete-pet",
     "verify:preview-pet-invite-edge": "node scripts/verify-lifecycle-edge-functions.mjs preview-pet-invite",
+    "verify:invite-preview-compatibility": "node scripts/verify-lifecycle-edge-functions.mjs preview-pet-invite",
+    "verify:pre-cutover-release-lock": "node scripts/verify-pre-cutover-release-lock.mjs",
     "verify:health-yearly-rls": "node scripts/verify-health-yearly-rls.mjs",
     "verify:save-photo": "node --experimental-strip-types scripts/verify-save-photo.mjs",
     "verify:journal-browsing": "node --experimental-strip-types scripts/verify-journal-browsing.mjs",

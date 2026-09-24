@@ -32,17 +32,6 @@ function readDefaultKey(currentName: string, legacyName: string) {
   return Deno.env.get(legacyName);
 }
 
-async function sha256Hex(value: string) {
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(value),
-  );
-
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, '0'),
-  ).join('');
-}
-
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -77,12 +66,13 @@ Deno.serve(async (request) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
   const secretKey = readDefaultKey(
     'SUPABASE_SECRET_KEYS',
     'SUPABASE_SERVICE_ROLE_KEY',
   );
 
-  if (!supabaseUrl || !secretKey) {
+  if (!supabaseUrl || !anonKey || !secretKey) {
     console.error('Required Supabase function environment is unavailable.');
     return jsonResponse({ error: 'Server configuration error' }, 500);
   }
@@ -99,67 +89,31 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
-  const codeHash = await sha256Hex(code);
-  const { data: invite, error: inviteError } = await adminClient
-    .from('pet_invites')
-    .select('pet_id, invited_by, expires_at, max_uses, used_count, revoked_at')
-    .eq('code_hash', codeHash)
-    .maybeSingle();
-
-  if (inviteError) {
-    console.error('Invite preview lookup failed.', { code: inviteError.code });
-    return jsonResponse({ error: 'Invite preview failed' }, 500);
-  }
-
-  if (
-    !invite ||
-    invite.revoked_at ||
-    new Date(invite.expires_at).getTime() <= Date.now()
-  ) {
+  const callerClient = createClient(supabaseUrl, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: previews, error: previewError } = await callerClient.rpc(
+    'preview_family_invite',
+    { invite_code: code },
+  );
+  if (previewError?.message.includes('invite_invalid')) {
     return jsonResponse({ error: 'invite_invalid' }, 404);
   }
-
-  if (invite.used_count >= invite.max_uses) {
-    const { data: membership, error: membershipError } = await adminClient
-      .from('pet_members')
-      .select('pet_id')
-      .eq('pet_id', invite.pet_id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (membershipError) {
-      console.error('Invite membership lookup failed.', {
-        code: membershipError.code,
-      });
-      return jsonResponse({ error: 'Invite preview failed' }, 500);
-    }
-
-    if (!membership) {
-      return jsonResponse({ error: 'invite_invalid' }, 404);
-    }
-  }
-
-  const [
-    { data: pet, error: petError },
-    { data: inviter, error: profileError },
-  ] = await Promise.all([
-    adminClient
-      .from('pets')
-      .select('name, species, breed, avatar_path')
-      .eq('id', invite.pet_id)
-      .maybeSingle(),
-    adminClient
-      .from('profiles')
-      .select('display_name')
-      .eq('id', invite.invited_by)
-      .maybeSingle(),
-  ]);
-
-  if (petError || profileError || !pet || !inviter) {
-    console.error('Invite preview data lookup failed.', {
-      petCode: petError?.code,
-      profileCode: profileError?.code,
+  if (previewError || !previews?.[0]) {
+    console.error('Canonical invite preview failed.', {
+      code: previewError?.code,
     });
+    return jsonResponse({ error: 'Invite preview failed' }, 500);
+  }
+  const preview = previews[0];
+  const { data: pet, error: petError } = await adminClient
+    .from('pets')
+    .select('avatar_path')
+    .eq('id', preview.display_pet_id)
+    .maybeSingle();
+  if (petError || !pet) {
+    console.error('Invite avatar lookup failed.', { code: petError?.code });
     return jsonResponse({ error: 'Invite preview failed' }, 500);
   }
 
@@ -183,10 +137,10 @@ Deno.serve(async (request) => {
   return jsonResponse(
     {
       avatarUrl,
-      inviterDisplayName: inviter.display_name,
-      petBreed: pet.breed,
-      petName: pet.name,
-      petSpecies: pet.species,
+      inviterDisplayName: preview.inviter_display_name,
+      petBreed: preview.display_pet_breed,
+      petName: preview.display_pet_name,
+      petSpecies: preview.display_pet_species,
     },
     200,
   );

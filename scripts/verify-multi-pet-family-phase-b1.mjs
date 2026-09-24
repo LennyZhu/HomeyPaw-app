@@ -463,10 +463,16 @@ if (process.env.PAWDAY_PHASE_B1_SKIP_MUTATION_MATRIX !== '1') {
     const repeatedJoin = await member.client.rpc('join_pet_with_invite', {
       invite_code: firstInvite.invite_code,
     });
+    const c4iInstalled =
+      sql(
+        "select to_regclass('public.family_members_one_family_per_user') is not null;",
+      ) === 't';
     expect(
-      !repeatedJoin.error &&
-        repeatedJoin.data?.[0]?.join_status === 'already_member',
-      'Repeated invite join lost idempotency.',
+      c4iInstalled
+        ? repeatedJoin.error?.message.includes('ALREADY_IN_FAMILY')
+        : !repeatedJoin.error &&
+            repeatedJoin.data?.[0]?.join_status === 'already_member',
+      'Repeated invite join did not match the installed membership contract.',
     );
     expectSql(
       'Repeated invite join did not increment either use counter.',

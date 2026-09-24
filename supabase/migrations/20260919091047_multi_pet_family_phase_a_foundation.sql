@@ -44,6 +44,18 @@ create table public.family_invites (
     check (expires_at > created_at)
 );
 
+-- Phase A is the first migration to introduce these tables. Attach the
+-- pre-cutover guard in the same transaction, before any client can write them.
+create trigger pre_cutover_release_lock before insert or update or delete
+  on public.families for each row
+  execute function private.assert_release_write_allowed();
+create trigger pre_cutover_release_lock before insert or update or delete
+  on public.family_members for each row
+  execute function private.assert_release_write_allowed();
+create trigger pre_cutover_release_lock before insert or update or delete
+  on public.family_invites for each row
+  execute function private.assert_release_write_allowed();
+
 comment on table public.family_invites is
   'Additive Family invitation mirror. Phase A does not replace pet_invites.';
 comment on column public.family_invites.code_hash is
