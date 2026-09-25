@@ -22,6 +22,7 @@ const [
   form,
   publishing,
   queries,
+  postQueryContract,
   journal,
   detail,
   home,
@@ -40,6 +41,7 @@ const [
   read('src/features/posts/components/post-form.tsx'),
   read('src/features/posts/post-publishing.ts'),
   read('src/features/posts/post-queries.ts'),
+  read('src/features/posts/post-query-contract.ts'),
   read('src/features/journal/journal-screen.tsx'),
   read('src/features/posts/post-detail-screen.tsx'),
   read('src/features/home/home-screen.tsx'),
@@ -151,9 +153,10 @@ check(
   'video URL TTL must be ten minutes and thumbnails separately signed',
 );
 check(
-  queries.includes("select('*, post_media(*), post_videos(*)')") &&
+  postQueryContract.includes("'*, post_media(*), post_videos(*)'") &&
+    queries.includes('getPostSelect(capability)') &&
     queries.includes('normalizePost'),
-  'post readers must normalize photo, text-only, and video relations',
+  'new-backend post readers must retain video relations and normalize photo, text-only, and video posts',
 );
 check(
   journal.includes('PostVideoThumbnail') &&

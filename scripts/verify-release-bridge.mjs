@@ -120,6 +120,12 @@ const coordinator = source(
 const queries = source('src/features/family/family-queries.ts');
 const creation = source('src/features/pets/new-pet-screen.tsx');
 const petQueries = source('src/features/pets/pet-queries.ts');
+const postQueries = source('src/features/posts/post-queries.ts');
+const postContract = await import(
+  pathToFileURL(resolve('src/features/posts/post-query-contract.ts')).href
+);
+const home = source('src/features/home/home-screen.tsx');
+const journal = source('src/features/journal/journal-screen.tsx');
 const members = source('src/features/family/pet-members-screen.tsx');
 const settings = source('src/features/family/family-settings-screen.tsx');
 const pets = source('src/features/pets/pets-screen.tsx');
@@ -135,6 +141,7 @@ const old = (path) =>
   );
 const oldQueries = old('src/features/family/family-queries.ts');
 const oldPetQueries = old('src/features/pets/pet-queries.ts');
+const oldPostQueries = old('src/features/posts/post-queries.ts');
 for (const rpc of [
   'get_pet_members',
   'create_pet_invite',
@@ -160,6 +167,37 @@ for (const [name, requestField] of [
 }
 console.log(
   'PASS: legacy RPC and destructive Edge request/response contracts match the 1.1.1 release commit.',
+);
+
+// Production read-only GET with post_videos returned PGRST200 (missing
+// relationship); the 1.1.1 post_media-only relation is the legacy contract.
+assert.match(oldPostQueries, /\.select\('\*, post_media\(\*\)'\)/);
+assert.doesNotMatch(oldPostQueries, /post_videos\(\*\)/);
+assert.equal(postContract.getPostSelect('LEGACY_PET'), '*, post_media(*)');
+assert.equal(
+  postContract.getPostSelect('FAMILY_MULTI_PET'),
+  '*, post_media(*), post_videos(*)',
+);
+assert.equal(
+  (postQueries.match(/\.select\(getPostSelect\(capability\)\)/g) ?? []).length,
+  2,
+  'Journal list and post detail must both select by backend capability',
+);
+assert.match(
+  postQueries,
+  /enabled: Boolean\(user && petId && capability\.data\)/,
+);
+assert.match(
+  postQueries,
+  /enabled: Boolean\(user && postId && capability\.data\)/,
+);
+assert.match(postQueries, /post\.post_videos \?\? null/);
+assert.match(home, /const postsQuery = usePosts\(petId\)/);
+assert.match(home, /postsQuery\.isError \|\|/);
+assert.match(journal, /const postsQuery = usePosts\(petId, dateRange\)/);
+assert.match(journal, /petsState\.isError \|\| postsQuery\.isError/);
+console.log(
+  'PASS: legacy Journal/Home use the 1.1.1 Pet-scoped posts relation, while new backend video joins remain unchanged.',
 );
 
 assert.match(capability, /\.from\('family_members'\)/);

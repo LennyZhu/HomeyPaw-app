@@ -7,6 +7,8 @@ import {
 } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/auth-context';
+import { useBackendCapability } from '@/features/family/backend-capability';
+import type { BackendCapability } from '@/features/family/backend-capability-state';
 import { petFamilyKeys } from '@/features/family/family-queries';
 import { useStorageSignedUrls } from '@/features/media/storage-signed-url';
 import {
@@ -26,6 +28,7 @@ import {
 } from './post-publishing';
 import type { PostFormValues } from './post-schema';
 import type { PostMediaDraft } from './post-media';
+import { getPostSelect } from './post-query-contract';
 import {
   createPostVideoSignedUrl,
   createPostVideoThumbnailSignedUrls,
@@ -84,7 +87,7 @@ export const postKeys = {
 
 type PostWithRelations = Post & {
   post_media: PostMedia[] | null;
-  post_videos: PostVideo | PostVideo[] | null;
+  post_videos?: PostVideo | PostVideo[] | null;
 };
 
 function normalizePost(post: PostWithRelations): PostWithMedia {
@@ -93,7 +96,7 @@ function normalizePost(post: PostWithRelations): PostWithMedia {
     post_media: post.post_media ?? [],
     post_videos: Array.isArray(post.post_videos)
       ? (post.post_videos[0] ?? null)
-      : post.post_videos,
+      : (post.post_videos ?? null),
   };
 }
 
@@ -124,10 +127,11 @@ async function fetchPostPage(
   petId: string,
   cursor: PostCursor | null,
   dateRange: JournalDateRange | undefined,
+  capability: BackendCapability,
 ): Promise<PostPage> {
   let query = requireSupabase()
     .from('posts')
-    .select('*, post_media(*), post_videos(*)')
+    .select(getPostSelect(capability))
     .eq('pet_id', petId)
     .order('event_date', { ascending: false })
     .order('created_at', { ascending: false })
@@ -157,7 +161,7 @@ async function fetchPostPage(
   const hasNextPage = data.length > postPageSize;
   const posts = data
     .slice(0, postPageSize)
-    .map((post) => normalizePost(post as PostWithRelations));
+    .map((post) => normalizePost(post as unknown as PostWithRelations));
   const lastPost = posts.at(-1);
 
   return {
@@ -173,10 +177,10 @@ async function fetchPostPage(
   };
 }
 
-async function fetchPost(postId: string) {
+async function fetchPost(postId: string, capability: BackendCapability) {
   const { data, error } = await requireSupabase()
     .from('posts')
-    .select('*, post_media(*), post_videos(*)')
+    .select(getPostSelect(capability))
     .eq('id', postId)
     .order('position', { ascending: true, referencedTable: 'post_media' })
     .maybeSingle();
@@ -185,7 +189,7 @@ async function fetchPost(postId: string) {
     throw error;
   }
 
-  return data ? normalizePost(data as PostWithRelations) : null;
+  return data ? normalizePost(data as unknown as PostWithRelations) : null;
 }
 
 async function deletePost(postId: string) {
@@ -202,6 +206,7 @@ async function deletePost(postId: string) {
 
 export function usePosts(petId: string | null, dateRange?: JournalDateRange) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useInfiniteQuery<
     PostPage,
@@ -210,10 +215,11 @@ export function usePosts(petId: string | null, dateRange?: JournalDateRange) {
     ReturnType<typeof postKeys.list>,
     PostCursor | null
   >({
-    enabled: Boolean(user && petId),
+    enabled: Boolean(user && petId && capability.data),
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     initialPageParam: null as PostCursor | null,
-    queryFn: ({ pageParam }) => fetchPostPage(petId!, pageParam, dateRange),
+    queryFn: ({ pageParam }) =>
+      fetchPostPage(petId!, pageParam, dateRange, capability.data!),
     queryKey: postKeys.list(user?.id, petId, dateRange),
   });
 }
@@ -231,10 +237,11 @@ export function usePetMemory(petId: string | null, today = new Date()) {
 
 export function usePost(postId: string) {
   const { user } = useAuth();
+  const capability = useBackendCapability();
 
   return useQuery({
-    enabled: Boolean(user && postId),
-    queryFn: () => fetchPost(postId),
+    enabled: Boolean(user && postId && capability.data),
+    queryFn: () => fetchPost(postId, capability.data!),
     queryKey: postKeys.detail(user?.id, postId),
   });
 }
