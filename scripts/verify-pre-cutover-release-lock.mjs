@@ -187,6 +187,27 @@ try {
     }),
   );
   expectLock(
+    'Journal Video SECURITY DEFINER mutation blocked',
+    await client.rpc('create_post_v2', {
+      post_id: randomUUID(),
+      post_pet_id: petId,
+      post_content: 'Blocked video RPC',
+      post_tag: 'other',
+      post_event_date: new Date().toISOString().slice(0, 10),
+      post_location_name: null,
+    }),
+  );
+  expectLock(
+    'Journal Video SECURITY DEFINER update blocked',
+    await client.rpc('update_post_v2', {
+      target_post_id: postId,
+      post_content: 'Blocked video update',
+      post_tag: 'other',
+      post_event_date: new Date().toISOString().slice(0, 10),
+      post_location_name: null,
+    }),
+  );
+  expectLock(
     'Care mutation blocked',
     await client.rpc('create_care_log', {
       care_id: randomUUID(),

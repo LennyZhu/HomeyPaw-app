@@ -1,4 +1,4 @@
--- First cutover step. Only a trusted direct database session may release this lock.
+-- Bootstrap before Journal Video and Family DDL. First cutover step. Only a trusted direct database session may release this lock.
 create table private.pre_cutover_release_lock (
   singleton boolean primary key default true check (singleton),
   enabled boolean not null default true,
@@ -37,7 +37,7 @@ revoke execute on function public.is_pre_cutover_release_locked()
 grant execute on function public.is_pre_cutover_release_locked()
   to service_role, authenticated;
 
--- Install against every pre-Phase-A application table. Keep the list explicit
+-- Install against existing legacy application tables only. Keep the list explicit
 -- so unrelated tables in public are not changed by a Production schema drift.
 -- Triggers also guard SECURITY DEFINER RPCs and service-role PostgREST writes.
 do $$
@@ -48,7 +48,7 @@ begin
     where schemaname = 'public'
       and tablename in (
         'profiles', 'pets', 'pet_members', 'pet_invites', 'posts',
-        'post_media', 'post_videos', 'media_cleanup_jobs',
+        'post_media',
         'care_logs', 'care_tasks', 'care_task_completions',
         'chat_messages', 'chat_read_states', 'care_shifts', 'care_shift_tasks'
       )

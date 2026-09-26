@@ -32,6 +32,11 @@ create table public.post_videos (
     check (mime_type = 'video/mp4')
 );
 
+-- Extend the committed bootstrap lock in the same migration transaction.
+create trigger pre_cutover_release_lock
+  before insert or update or delete on public.post_videos
+  for each row execute function private.assert_release_write_allowed();
+
 comment on table public.post_videos is
   'One private MP4 and JPEG timeline thumbnail per Journal post. Binary objects live in dedicated private Storage buckets.';
 comment on column public.post_videos.file_size_bytes is
@@ -361,6 +366,11 @@ create table public.media_cleanup_jobs (
   constraint media_cleanup_jobs_last_error
     check (last_error is null or char_length(last_error) <= 2000)
 );
+
+-- Extend the committed bootstrap lock in the same migration transaction.
+create trigger pre_cutover_release_lock
+  before insert or update or delete on public.media_cleanup_jobs
+  for each row execute function private.assert_release_write_allowed();
 
 comment on table public.media_cleanup_jobs is
   'Persistent retry queue for MP4/JPEG objects that were referenced by committed database rows and later removed.';
