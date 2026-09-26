@@ -4,6 +4,10 @@
 -- are installed so a concurrent mutation cannot escape the compatibility pass.
 begin;
 
+-- Trusted direct migration only; expires at transaction end.
+set local homeypaw.pre_cutover_migration_bypass = 'on';
+
+
 lock table
   public.pets,
   public.pet_members,

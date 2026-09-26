@@ -1,3 +1,8 @@
+begin;
+
+-- Trusted direct migration only; expires at transaction end.
+set local homeypaw.pre_cutover_migration_bypass = 'on';
+
 create table public.families (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now()
@@ -420,3 +425,5 @@ create policy "Family owners can read invite metadata"
   for select
   to authenticated
   using ((select private.is_family_owner(family_id)));
+
+commit;

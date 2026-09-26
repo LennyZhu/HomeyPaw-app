@@ -11,9 +11,13 @@ const migrations = readdirSync(directory)
 const pending = migrations.filter(
   (name) => name.slice(0, 14) > '20260912160000',
 );
-assert.equal(pending.length, 16);
+assert.equal(pending.length, 17);
 assert.equal(pending[0], '20260914110000_pre_cutover_release_lock.sql');
 assert.equal(pending[1], '20260914120000_journal_video_backend_foundation.sql');
+assert.equal(
+  pending[2],
+  '20260914130000_pre_cutover_trusted_migration_bypass.sql',
+);
 assert.equal(
   migrations.filter((name) => name.endsWith('_pre_cutover_release_lock.sql'))
     .length,
@@ -36,8 +40,8 @@ function sql(statement, user = 'postgres') {
     { input: statement, encoding: 'utf8' },
   );
 }
-function value(statement) {
-  const result = sql(statement);
+function value(statement, user = 'postgres') {
+  const result = sql(statement, user);
   assert.equal(result.status, 0, result.stderr);
   return result.stdout.trim();
 }
@@ -93,6 +97,94 @@ function failMigration(filename, absentTable) {
   );
   assert.equal(value(`select to_regclass('${absentTable}') is null;`), 't');
 }
+
+function verifyBypass() {
+  // Reproduce the verified hosted CLI login identity in local Docker only.
+  value(
+    `do $$begin
+    if not exists (select 1 from pg_roles where rolname='cli_login_postgres') then
+      create role cli_login_postgres login;
+    end if;
+  end$$; grant postgres to cli_login_postgres;`,
+    'supabase_admin',
+  );
+  const trusted = (statement) =>
+    sql(
+      `set session authorization cli_login_postgres; ${statement}`,
+      'supabase_admin',
+    );
+  const denied = (result) => {
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /PRE_CUTOVER_RELEASE_LOCK/u);
+  };
+  const pet = '19cd08aa-0b97-48c5-8b25-2e1801e6e222';
+  const user = '19cd08aa-0b97-48c5-8b25-2e1801e6e111';
+  denied(
+    trusted(
+      "insert into public.pets(name,species) values ('No flag','other');",
+    ),
+  );
+  // Auth fixture setup uses the local Auth-admin equivalent, not CLI privileges.
+  value(`begin; set local homeypaw.pre_cutover_migration_bypass='on';
+    insert into auth.users(id,email,raw_user_meta_data) values ('${user}','migration-local@example.test','{"display_name":"Migration"}'); commit;`);
+  const allowed = trusted(`begin;
+    set local homeypaw.pre_cutover_migration_bypass='on';
+    insert into public.pets(id,name,species) values ('${pet}','Legacy fixture','other');
+    insert into public.pet_members(pet_id,user_id,role) values ('${pet}','${user}','owner');
+    commit;
+    select coalesce(current_setting('homeypaw.pre_cutover_migration_bypass',true),'')='on';`);
+  assert.equal(allowed.status, 0, allowed.stderr);
+  assert.equal(allowed.stdout.trim().split('\n').at(-1), 'f');
+  const expired =
+    trusted(`begin; set local homeypaw.pre_cutover_migration_bypass='on'; commit;
+    insert into public.pets(name,species) values ('Expired','other');`);
+  denied(expired);
+  value(`create function public.cutover_flag_spoof() returns void
+    language plpgsql security definer set search_path='' as $$begin
+      perform set_config('homeypaw.pre_cutover_migration_bypass','on',true);
+      insert into public.pets(name,species) values ('Spoof','other');
+    end$$;
+    revoke all on function public.cutover_flag_spoof() from public;
+    grant execute on function public.cutover_flag_spoof() to authenticated,service_role;`);
+  for (const role of ['authenticated', 'service_role']) {
+    denied(
+      sql(
+        `set role ${role}; select public.cutover_flag_spoof();`,
+        'authenticator',
+      ),
+    );
+  }
+  value('drop function public.cutover_flag_spoof();');
+  // Apply the exact pending files with the hosted CLI session identity and real data.
+  for (const filename of pending.slice(3)) {
+    const result = trusted(readFileSync(`${directory}/${filename}`, 'utf8'));
+    assert.equal(result.status, 0, `${filename}: ${result.stderr}`);
+    assert.equal(
+      value(
+        'select enabled from private.pre_cutover_release_lock where singleton;',
+      ),
+      't',
+    );
+    if (filename.startsWith('20260919091047')) {
+      assert.equal(
+        value(`select count(*) from public.pets p join public.family_members m
+        on m.family_id=p.family_id where p.id='${pet}' and m.user_id='${user}' and m.role='owner';`),
+        '1',
+      );
+      console.log('PASS: actual CLI identity + Phase A legacy backfill');
+    }
+  }
+  denied(
+    trusted(
+      "insert into public.pets(name,species) values ('After chain','other');",
+    ),
+  );
+  console.log(
+    'PASS: trusted identity AND LOCAL flag; spoofed API SECURITY DEFINER blocked; flag expires; exact remaining chain succeeds',
+  );
+  reset('20260914130000');
+}
+
 const legacy = [
   'public.profiles',
   'public.posts',
@@ -113,7 +205,8 @@ try {
   console.log(
     'PASS: Case A — failed Video migration rolls back; legacy remains locked',
   );
-  reset('20260914120000');
+  reset('20260914130000');
+  verifyBypass();
   failMigration(
     '20260919091047_multi_pet_family_phase_a_foundation.sql',
     'public.families',

@@ -1,5 +1,9 @@
 begin;
 
+-- Trusted direct migration only; expires at transaction end.
+set local homeypaw.pre_cutover_migration_bypass = 'on';
+
+
 lock table public.families,
   public.pets,
   public.family_members,
