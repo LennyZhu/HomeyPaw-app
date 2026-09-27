@@ -365,29 +365,27 @@ export default function FamilySettingsScreen() {
               ) : null}
             </View>
           ))}
-          {pets[0] ? (
-            <SettingsRow
-              icon="mail-outline"
-              label={t('family.lifecycle.manageInvites')}
-              last
-              onPress={() => router.push(`/pets/${pets[0]?.id}/members`)}
-              subtitle={
-                isOwner
-                  ? t('family.invite.fixedRules', {
-                      maximum: familyMemberLimit,
-                    })
-                  : undefined
-              }
-            />
-          ) : (
-            <AppText
-              style={styles.cardNote}
-              tone="secondary"
-              variant="subheadline"
-            >
-              {t('family.lifecycle.invitesNeedPet')}
-            </AppText>
-          )}
+          {isOwner ? (
+            pets[0] ? (
+              <SettingsRow
+                icon="mail-outline"
+                label={t('family.lifecycle.manageInvites')}
+                last
+                onPress={() => router.push(`/pets/${pets[0]?.id}/members`)}
+                subtitle={t('family.invite.fixedRules', {
+                  maximum: familyMemberLimit,
+                })}
+              />
+            ) : (
+              <AppText
+                style={styles.cardNote}
+                tone="secondary"
+                variant="subheadline"
+              >
+                {t('family.lifecycle.invitesNeedPet')}
+              </AppText>
+            )
+          ) : null}
         </View>
       </View>
 
