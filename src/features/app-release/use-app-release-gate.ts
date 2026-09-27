@@ -37,6 +37,12 @@ export function useAppReleaseGate() {
         getInstalledAppIdentity(),
         data as AppReleasePolicy | null,
       );
+      // Allow local UI development with an older native Dev Client.
+      // Request version headers and server mutation gates remain unchanged.
+      if (__DEV__ && result === 'upgrade') {
+        setState({ status: 'allowed' });
+        return;
+      }
       if (result === 'upgrade' || result === 'maintenance') {
         setState({
           status: result,

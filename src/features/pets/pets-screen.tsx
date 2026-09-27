@@ -81,12 +81,6 @@ export default function PetsScreen() {
         visible={isCreateMenuOpen}
       />
 
-      <AppButton
-        label={t('profile.manageFamilies')}
-        onPress={() => router.push('/families')}
-        variant="secondary"
-      />
-
       {petsQuery.isPending ? (
         <LoadingView label={t('pets.loading.list')} />
       ) : null}
