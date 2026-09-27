@@ -4,20 +4,21 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { petFamilyKeys } from '@/features/family/family-queries';
+import { familyKeys } from '@/features/family/family-query-keys';
 import { petKeys } from '@/features/pets/pet-queries';
 import { logError } from '@/lib/logger';
 import { requireSupabase } from '@/lib/supabase/client';
 
 import {
   chatKeys,
-  clearChatPetCache,
+  clearChatFamilyCache,
   fetchChatChannelVersion,
   fetchChatMessageById,
   isChatAccessError,
   mergeChatMessage,
   removeChatMessageFromCache,
 } from './chat-queries';
+import { getFamilyChatTopic } from './chat-scope';
 import {
   consumeCreatedMessageId,
   shouldInvalidateChatUnread,
@@ -33,14 +34,14 @@ type UseChatRealtimeOptions = {
   channelVersion: number | undefined;
   enabled: boolean;
   onAccessLost: () => void;
-  petId: string | null;
+  familyId: string | null;
   userId: string | undefined;
 };
 
 type BroadcastEnvelope = {
   payload?: {
     message_id?: unknown;
-    pet_id?: unknown;
+    family_id?: unknown;
     type?: unknown;
   };
 };
@@ -61,7 +62,7 @@ export function useChatRealtime({
   channelVersion,
   enabled,
   onAccessLost,
-  petId,
+  familyId,
   userId,
 }: UseChatRealtimeOptions) {
   const queryClient = useQueryClient();
@@ -72,14 +73,14 @@ export function useChatRealtime({
   const [controlStatus, setControlStatus] =
     useState<ChatRealtimeStatus>('idle');
   const validateRef = useRef<() => Promise<void>>(async () => undefined);
-  const rotationRef = useRef<(rotatedPetId: string) => Promise<void>>(
+  const rotationRef = useRef<(rotatedFamilyId: string) => Promise<void>>(
     async () => undefined,
   );
 
   useEffect(() => {
     if (
       !enabled ||
-      !petId ||
+      !familyId ||
       !userId ||
       channelVersion === undefined ||
       controlStatus !== 'subscribed'
@@ -87,9 +88,9 @@ export function useChatRealtime({
       return;
 
     const client = requireSupabase();
-    const messageQueryKey = chatKeys.messages(userId, petId);
-    const versionQueryKey = chatKeys.version(userId, petId);
-    const topic = `pet:${petId}:chat:v${channelVersion}`;
+    const messageQueryKey = chatKeys.messages(userId, familyId);
+    const versionQueryKey = chatKeys.version(userId, familyId);
+    const topic = getFamilyChatTopic(familyId, channelVersion);
     let active = true;
     let retryAttempted = false;
     let rotationRunning = false;
@@ -100,11 +101,13 @@ export function useChatRealtime({
     const loseAccess = async () => {
       if (!active) return;
       await queryClient.cancelQueries({ queryKey: chatKeys.all(userId) });
-      clearChatPetCache(queryClient, userId, petId);
+      clearChatFamilyCache(queryClient, userId, familyId);
       queryClient.removeQueries({
-        queryKey: petFamilyKeys.members(userId, petId),
+        queryKey: familyKeys.members(userId, familyId),
       });
-      queryClient.removeQueries({ queryKey: petKeys.detail(userId, petId) });
+      queryClient.removeQueries({
+        queryKey: familyKeys.detail(userId, familyId),
+      });
       await queryClient.invalidateQueries({ queryKey: petKeys.all(userId) });
       if (active) onAccessLost();
     };
@@ -113,18 +116,18 @@ export function useChatRealtime({
       await Promise.all([
         queryClient.cancelQueries({ queryKey: messageQueryKey }),
         queryClient.cancelQueries({
-          queryKey: chatKeys.members(userId, petId),
+          queryKey: chatKeys.members(userId, familyId),
         }),
         queryClient.cancelQueries({
-          queryKey: chatKeys.unread(userId, petId),
+          queryKey: chatKeys.unread(userId, familyId),
         }),
       ]);
       queryClient.removeQueries({ queryKey: messageQueryKey });
       queryClient.removeQueries({
-        queryKey: chatKeys.members(userId, petId),
+        queryKey: chatKeys.members(userId, familyId),
       });
       queryClient.removeQueries({
-        queryKey: chatKeys.unread(userId, petId),
+        queryKey: chatKeys.unread(userId, familyId),
       });
     };
 
@@ -140,13 +143,13 @@ export function useChatRealtime({
       if (active) queryClient.setQueryData(versionQueryKey, nextVersion);
     };
 
-    const reconcileRotation = async (rotatedPetId: string) => {
-      if (!active || rotatedPetId !== petId || rotationRunning) return;
+    const reconcileRotation = async (rotatedFamilyId: string) => {
+      if (!active || rotatedFamilyId !== familyId || rotationRunning) return;
       rotationRunning = true;
       setConnection({ status: 'connecting', topic });
 
       try {
-        const nextVersion = await fetchChatChannelVersion(petId);
+        const nextVersion = await fetchChatChannelVersion(familyId);
         if (!active) return;
         if (nextVersion === channelVersion) {
           setConnection({ status: 'subscribed', topic });
@@ -176,7 +179,7 @@ export function useChatRealtime({
       if (!active) return;
       try {
         await client.realtime.setAuth();
-        const currentVersion = await fetchChatChannelVersion(petId);
+        const currentVersion = await fetchChatChannelVersion(familyId);
         if (!active) return;
 
         if (currentVersion !== channelVersion) {
@@ -187,10 +190,10 @@ export function useChatRealtime({
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: messageQueryKey }),
           queryClient.invalidateQueries({
-            queryKey: chatKeys.members(userId, petId),
+            queryKey: chatKeys.members(userId, familyId),
           }),
           queryClient.invalidateQueries({
-            queryKey: chatKeys.unread(userId, petId),
+            queryKey: chatKeys.unread(userId, familyId),
           }),
         ]);
       } catch (error) {
@@ -219,14 +222,14 @@ export function useChatRealtime({
       try {
         const message = await fetchChatMessageById(messageId);
         if (!active) return;
-        if (message?.pet_id === petId) {
+        if (message?.family_id === familyId) {
           mergeChatMessage(queryClient, messageQueryKey, message);
           if (
             invalidateUnread &&
             shouldInvalidateChatUnread(message.sender_id, userId)
           ) {
             await queryClient.invalidateQueries({
-              queryKey: chatKeys.unread(userId, petId),
+              queryKey: chatKeys.unread(userId, familyId),
             });
           }
         } else if (invalidateUnread) {
@@ -249,7 +252,7 @@ export function useChatRealtime({
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: messageQueryKey }),
         queryClient.invalidateQueries({
-          queryKey: chatKeys.unread(userId, petId),
+          queryKey: chatKeys.unread(userId, familyId),
         }),
       ]);
     };
@@ -276,10 +279,10 @@ export function useChatRealtime({
             void Promise.all([
               queryClient.invalidateQueries({ queryKey: messageQueryKey }),
               queryClient.invalidateQueries({
-                queryKey: chatKeys.members(userId, petId),
+                queryKey: chatKeys.members(userId, familyId),
               }),
               queryClient.invalidateQueries({
-                queryKey: chatKeys.unread(userId, petId),
+                queryKey: chatKeys.unread(userId, familyId),
               }),
             ]);
             return;
@@ -290,7 +293,7 @@ export function useChatRealtime({
             setConnection({ status: 'connecting', topic });
             retryTimer = setTimeout(() => {
               retryTimer = null;
-              void fetchChatChannelVersion(petId)
+              void fetchChatChannelVersion(familyId)
                 .then((latestVersion) => {
                   if (!active) return;
                   if (latestVersion !== channelVersion) {
@@ -341,7 +344,7 @@ export function useChatRealtime({
     controlStatus,
     enabled,
     onAccessLost,
-    petId,
+    familyId,
     queryClient,
     userId,
   ]);
@@ -361,13 +364,14 @@ export function useChatRealtime({
 
       controlChannel = client
         .channel(controlTopic, { config: { private: true } })
-        .on('broadcast', { event: 'chat_channel_rotated' }, (event) => {
-          const rotatedPetId = (event as BroadcastEnvelope).payload?.pet_id;
+        .on('broadcast', { event: 'family_chat_channel_rotated' }, (event) => {
+          const rotatedFamilyId = (event as BroadcastEnvelope).payload
+            ?.family_id;
           if (
-            typeof rotatedPetId === 'string' &&
-            uuidPattern.test(rotatedPetId)
+            typeof rotatedFamilyId === 'string' &&
+            uuidPattern.test(rotatedFamilyId)
           ) {
-            void rotationRef.current(rotatedPetId);
+            void rotationRef.current(rotatedFamilyId);
           }
         })
         .subscribe((status) => {
@@ -437,8 +441,8 @@ export function useChatRealtime({
   }, [enabled]);
 
   const expectedTopic =
-    enabled && petId && channelVersion !== undefined
-      ? `pet:${petId}:chat:v${channelVersion}`
+    enabled && familyId && channelVersion !== undefined
+      ? getFamilyChatTopic(familyId, channelVersion)
       : null;
   const status: ChatRealtimeStatus = !expectedTopic
     ? 'idle'

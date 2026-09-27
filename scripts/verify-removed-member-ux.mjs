@@ -39,7 +39,6 @@ for (const key of [
   ['care', 'user-a', 'history', 'pet-a'],
   ['care-schedule', 'user-a', 'pet', 'pet-a'],
   ['care-tasks', 'user-a', 'occurrences', 'pet-a'],
-  ['chat', 'user-a', 'messages', 'pet-a'],
   ['family', 'user-a', 'members', 'pet-a'],
   ['pet', 'user-a', 'pet-a'],
   ['posts', 'user-a', 'list', 'pet-a'],
@@ -75,8 +74,17 @@ assert.equal(
   access.shouldClearRevokedPetQuery(['profile', 'user-a'], 'user-a', 'pet-a'),
   false,
 );
+assert.equal(
+  access.shouldClearRevokedPetQuery(
+    ['chat', 'user-a', 'family', 'family-a', 'messages'],
+    'user-a',
+    'pet-a',
+    { pages: [{ messages: [{ pet_id: 'pet-a' }] }] },
+  ),
+  false,
+);
 console.log(
-  'PASS: revoked-pet Journal, Chat, Care, Reminder, Schedule, Family, and pet caches are cleared without crossing user or pet scope.',
+  'PASS: revoked-pet Journal, Care, Reminder, Schedule, Family, and pet caches are cleared without crossing user or pet scope.',
 );
 
 const [
@@ -106,10 +114,11 @@ const [
   read('package.json'),
 ]);
 
-assert.match(provider, /clearRevokedPetAccess/u);
+assert.match(provider, /clearChatFamilyCache/u);
+assert.doesNotMatch(provider, /clearRevokedPetAccess/u);
 assert.match(
   provider,
-  /setQueryData\(chatKeys\.unread\(user\.id, petId\), 0\)/u,
+  /setQueryData\(chatKeys\.unread\(user\.id, familyId\), 0\)/u,
 );
 assert.match(cleanup, /removeQueries/u);
 assert.match(cleanup, /filter\(\(pet\) => pet\.id !== petId\)/u);
@@ -123,7 +132,7 @@ assert.match(realtime, /removeChannel/u);
 assert.match(journalScreen, /Boolean\(petsState\.currentPet\)/u);
 assert.match(journalScreen, /posts\.empty\.noPetTitle/u);
 assert.match(homeScreen, /petsState\.isSuccess && !pet/u);
-assert.match(chatScreen, /if \(!pet\)/u);
+assert.match(chatScreen, /if \(!familyId\)/u);
 assert.match(scheduleScreen, /!pet && petsState\.isSuccess/u);
 assert.match(remindersScreen, /!pet && petsState\.isSuccess/u);
 assert.doesNotMatch(push, /CHAT_CREATED|CHAT_MESSAGE|chat_message_created/u);

@@ -507,6 +507,7 @@
     },
     "errors": {
       "invalidInvite": "This invite code is invalid or has expired.",
+      "verifyUnavailable": "Unable to verify the invite right now. Please try again later.",
       "network": "We couldn't verify the invitation. Check your connection and try again.",
       "createInvite": "We couldn't create an invitation. Try again shortly.",
       "revokeInvite": "We couldn't revoke the invitation. Try again shortly.",
@@ -678,8 +679,8 @@
         "memberCount_one": "{{count}} family member",
         "memberCount_other": "{{count}} family members",
         "members": "View family members",
-        "switchPet": "Currently in {{name}}'s family chat",
-        "switchHint": "Double tap to switch to another pet's private chat"
+        "switchPet": "Current pet: {{name}} · shared Family Chat",
+        "switchHint": "Switch the displayed pet. Family Chat stays the same."
       },
       "members": {
         "title": "Family members",
@@ -717,6 +718,10 @@
         "retryHint": "Long press to retry with the same safe message identifier",
         "deleteHint": "Long press to show the delete confirmation",
         "actionsHint": "Long press to show the available message actions"
+      },
+      "noFamily": {
+        "title": "Join your Family Chat",
+        "body": "Create or join a family to chat with your family members."
       },
       "noPet": {
         "title": "No family chat yet",

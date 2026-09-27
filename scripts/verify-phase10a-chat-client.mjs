@@ -16,6 +16,7 @@ function message(id, clientMessageId, createdAt, extra = {}) {
     client_message_id: clientMessageId,
     created_at: createdAt,
     id,
+    family_id: 'family-a',
     pet_id: 'pet-a',
     sender_id: 'user-a',
     updated_at: createdAt,

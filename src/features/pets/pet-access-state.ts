@@ -4,7 +4,6 @@ const petDataQueryRoots = new Set([
   'care',
   'care-schedule',
   'care-tasks',
-  'chat',
   'family',
   'pet',
   'posts',

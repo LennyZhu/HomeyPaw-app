@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 
+import { shouldClearFamilyChatQuery } from '@/features/chat/chat-scope';
 import { petKeys } from '@/features/pets/pet-queries';
 import { shouldClearRevokedPetQuery } from '@/features/pets/pet-access-state';
 import type { Pet } from '@/types/database';
@@ -27,6 +28,7 @@ export function clearRevokedFamilyAccess(input: {
       state: { data: unknown };
     }) =>
       shouldClearFamilyQuery(query.queryKey, userId, familyId) ||
+      shouldClearFamilyChatQuery(query.queryKey, userId, familyId) ||
       revokedPetIds.some((petId) =>
         shouldClearRevokedPetQuery(
           query.queryKey,

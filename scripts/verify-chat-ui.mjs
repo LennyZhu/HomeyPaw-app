@@ -28,7 +28,7 @@ const [screen, list, english, chinese] = await Promise.all([
   ).then(JSON.parse),
 ]);
 
-assert.match(screen, /numberOfLines=\{1\}[\s\S]*\{pet\.name\}/u);
+assert.match(screen, /numberOfLines=\{1\}[\s\S]*\{chatTitle\}/u);
 assert.match(screen, /ellipsizeMode="tail"/u);
 assert.match(screen, /chat\.live\.header\.subtitle/u);
 assert.doesNotMatch(

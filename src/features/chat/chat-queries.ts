@@ -23,6 +23,8 @@ import {
   type ChatPage,
 } from './chat-cache';
 
+import { chatKeys } from './chat-scope';
+
 export type { ChatListMessage, ChatPage } from './chat-cache';
 
 export const CHAT_PAGE_SIZE = 30;
@@ -36,32 +38,22 @@ export type ChatMemberSummary = {
   userId: string;
 };
 
-export const chatKeys = {
-  all: (userId: string | undefined) => ['chat', userId] as const,
-  members: (userId: string | undefined, petId: string) =>
-    [...chatKeys.all(userId), 'members', petId] as const,
-  messages: (userId: string | undefined, petId: string) =>
-    [...chatKeys.all(userId), 'messages', petId] as const,
-  unread: (userId: string | undefined, petId: string) =>
-    [...chatKeys.all(userId), 'unread', petId] as const,
-  version: (userId: string | undefined, petId: string) =>
-    [...chatKeys.all(userId), 'version', petId] as const,
-};
+export { chatKeys } from './chat-scope';
 
 export function isChatAccessError(error: unknown) {
   if (!error || typeof error !== 'object') return false;
   const candidate = error as { code?: string; message?: string };
   return (
     candidate.code === '42501' ||
-    candidate.message?.toLowerCase().includes('pet not found') === true ||
+    candidate.message?.toLowerCase().includes('family not found') === true ||
     candidate.message?.toLowerCase().includes('jwt') === true
   );
 }
 
-export async function fetchChatChannelVersion(petId: string) {
+export async function fetchChatChannelVersion(familyId: string) {
   const { data, error } = await requireSupabase().rpc(
-    'get_pet_chat_channel_version',
-    { target_pet_id: petId },
+    'get_family_chat_channel_version',
+    { target_family_id: familyId },
   );
 
   if (error) throw error;
@@ -69,16 +61,16 @@ export async function fetchChatChannelVersion(petId: string) {
 }
 
 async function fetchChatPage(
-  petId: string,
+  familyId: string,
   cursor: ChatCursor | null,
 ): Promise<ChatPage> {
   const { data, error } = await requireSupabase().rpc(
-    'get_chat_messages_page',
+    'get_family_chat_messages_page',
     {
       before_created_at: cursor?.createdAt ?? null,
       before_message_id: cursor?.id ?? null,
       requested_limit: CHAT_PAGE_SIZE,
-      target_pet_id: petId,
+      target_family_id: familyId,
     },
   );
 
@@ -98,7 +90,7 @@ export async function fetchChatMessageById(messageId: string) {
   const { data, error } = await requireSupabase()
     .from('chat_messages')
     .select(
-      'id, pet_id, sender_id, client_message_id, body, created_at, updated_at',
+      'id, family_id, pet_id, sender_id, client_message_id, body, created_at, updated_at',
     )
     .eq('id', messageId)
     .maybeSingle();
@@ -108,12 +100,15 @@ export async function fetchChatMessageById(messageId: string) {
 }
 
 async function fetchChatMembers(
-  petId: string,
+  familyId: string,
   queryClient: QueryClient,
 ): Promise<ChatMemberSummary[]> {
-  const { data, error } = await requireSupabase().rpc('get_pet_chat_members', {
-    target_pet_id: petId,
-  });
+  const { data, error } = await requireSupabase().rpc(
+    'get_family_chat_members',
+    {
+      target_family_id: familyId,
+    },
+  );
 
   if (error) throw error;
   const avatarPaths = data.flatMap((member) =>
@@ -137,53 +132,65 @@ async function fetchChatMembers(
 }
 
 async function sendChatMessage(
-  petId: string,
+  familyId: string,
   clientMessageId: string,
   body: string,
 ) {
-  const { data, error } = await requireSupabase().rpc('send_chat_message', {
-    message_body: body,
-    target_client_message_id: clientMessageId,
-    target_pet_id: petId,
-  });
+  const { data, error } = await requireSupabase().rpc(
+    'send_family_chat_message',
+    {
+      message_body: body,
+      target_client_message_id: clientMessageId,
+      target_family_id: familyId,
+    },
+  );
 
   if (error) throw error;
   return data;
 }
 
 async function updateChatMessage(messageId: string, body: string) {
-  const { data, error } = await requireSupabase().rpc('update_chat_message', {
-    message_body: body,
-    target_message_id: messageId,
-  });
+  const { data, error } = await requireSupabase().rpc(
+    'update_family_chat_message',
+    {
+      message_body: body,
+      target_message_id: messageId,
+    },
+  );
 
   if (error) throw error;
   return data;
 }
 
 async function deleteChatMessage(messageId: string) {
-  const { data, error } = await requireSupabase().rpc('delete_chat_message', {
+  const { data, error } = await requireSupabase().rpc(
+    'delete_family_chat_message',
+    {
+      target_message_id: messageId,
+    },
+  );
+
+  if (error) throw error;
+  return data;
+}
+
+async function markChatRead(familyId: string, messageId: string) {
+  const { data, error } = await requireSupabase().rpc('mark_family_chat_read', {
     target_message_id: messageId,
+    target_family_id: familyId,
   });
 
   if (error) throw error;
   return data;
 }
 
-async function markChatRead(petId: string, messageId: string) {
-  const { data, error } = await requireSupabase().rpc('mark_chat_read', {
-    target_message_id: messageId,
-    target_pet_id: petId,
-  });
-
-  if (error) throw error;
-  return data;
-}
-
-async function fetchUnreadCount(petId: string) {
-  const { data, error } = await requireSupabase().rpc('get_chat_unread_count', {
-    target_pet_id: petId,
-  });
+async function fetchUnreadCount(familyId: string) {
+  const { data, error } = await requireSupabase().rpc(
+    'get_family_chat_unread_count',
+    {
+      target_family_id: familyId,
+    },
+  );
 
   if (error) throw error;
   return data;
@@ -240,15 +247,15 @@ function markOptimisticMessageFailed(
   );
 }
 
-export function clearChatPetCache(
+export function clearChatFamilyCache(
   queryClient: QueryClient,
   userId: string | undefined,
-  petId: string,
+  familyId: string,
 ) {
-  queryClient.removeQueries({ queryKey: chatKeys.messages(userId, petId) });
-  queryClient.removeQueries({ queryKey: chatKeys.members(userId, petId) });
-  queryClient.removeQueries({ queryKey: chatKeys.unread(userId, petId) });
-  queryClient.removeQueries({ queryKey: chatKeys.version(userId, petId) });
+  queryClient.removeQueries({ queryKey: chatKeys.messages(userId, familyId) });
+  queryClient.removeQueries({ queryKey: chatKeys.members(userId, familyId) });
+  queryClient.removeQueries({ queryKey: chatKeys.unread(userId, familyId) });
+  queryClient.removeQueries({ queryKey: chatKeys.version(userId, familyId) });
 }
 
 export function getChronologicalMessages(
@@ -257,20 +264,20 @@ export function getChronologicalMessages(
   return getChronologicalMessagesFromPages(data?.pages);
 }
 
-export function useChatChannelVersion(petId: string | null, enabled = true) {
+export function useChatChannelVersion(familyId: string | null, enabled = true) {
   const { user } = useAuth();
   return useQuery({
-    enabled: Boolean(user && petId && enabled),
-    queryFn: () => fetchChatChannelVersion(petId!),
-    queryKey: chatKeys.version(user?.id, petId ?? ''),
+    enabled: Boolean(user && familyId && enabled),
+    queryFn: () => fetchChatChannelVersion(familyId!),
+    queryKey: chatKeys.version(user?.id, familyId ?? ''),
     retry: false,
     staleTime: 0,
   });
 }
 
-export function useChatMessages(petId: string | null, enabled: boolean) {
+export function useChatMessages(familyId: string | null, enabled: boolean) {
   const { user } = useAuth();
-  const queryKey = chatKeys.messages(user?.id, petId ?? '');
+  const queryKey = chatKeys.messages(user?.id, familyId ?? '');
   return useInfiniteQuery<
     ChatPage,
     Error,
@@ -278,42 +285,42 @@ export function useChatMessages(petId: string | null, enabled: boolean) {
     typeof queryKey,
     ChatCursor | null
   >({
-    enabled: Boolean(user && petId && enabled),
+    enabled: Boolean(user && familyId && enabled),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null as ChatCursor | null,
-    queryFn: ({ pageParam }) => fetchChatPage(petId!, pageParam),
+    queryFn: ({ pageParam }) => fetchChatPage(familyId!, pageParam),
     queryKey,
     retry: false,
     staleTime: 0,
   });
 }
 
-export function useChatMembers(petId: string | null, enabled: boolean) {
+export function useChatMembers(familyId: string | null, enabled: boolean) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   return useQuery({
-    enabled: Boolean(user && petId && enabled),
-    queryFn: () => fetchChatMembers(petId!, queryClient),
-    queryKey: chatKeys.members(user?.id, petId ?? ''),
+    enabled: Boolean(user && familyId && enabled),
+    queryFn: () => fetchChatMembers(familyId!, queryClient),
+    queryKey: chatKeys.members(user?.id, familyId ?? ''),
     retry: false,
   });
 }
 
-export function useChatUnreadCount(petId: string | null, enabled: boolean) {
+export function useChatUnreadCount(familyId: string | null, enabled: boolean) {
   const { user } = useAuth();
   return useQuery({
-    enabled: Boolean(user && petId && enabled),
-    queryFn: () => fetchUnreadCount(petId!),
-    queryKey: chatKeys.unread(user?.id, petId ?? ''),
+    enabled: Boolean(user && familyId && enabled),
+    queryFn: () => fetchUnreadCount(familyId!),
+    queryKey: chatKeys.unread(user?.id, familyId ?? ''),
     retry: false,
     staleTime: 0,
   });
 }
 
-export function useSendChatMessage(petId: string) {
+export function useSendChatMessage(familyId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const queryKey = chatKeys.messages(user?.id, petId);
+  const queryKey = chatKeys.messages(user?.id, familyId);
 
   return useMutation({
     mutationFn: ({
@@ -322,7 +329,7 @@ export function useSendChatMessage(petId: string) {
     }: {
       body: string;
       clientMessageId: string;
-    }) => sendChatMessage(petId, clientMessageId, body),
+    }) => sendChatMessage(familyId, clientMessageId, body),
     onError: (_error, variables) => {
       markOptimisticMessageFailed(
         queryClient,
@@ -338,7 +345,8 @@ export function useSendChatMessage(petId: string) {
         deliveryState: 'sending',
         id: `optimistic:${variables.clientMessageId}`,
         optimistic: true,
-        pet_id: petId,
+        family_id: familyId,
+        pet_id: null,
         sender_id: user!.id,
         updated_at: new Date().toISOString(),
       });
@@ -349,10 +357,10 @@ export function useSendChatMessage(petId: string) {
   });
 }
 
-export function useDeleteChatMessage(petId: string) {
+export function useDeleteChatMessage(familyId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const queryKey = chatKeys.messages(user?.id, petId);
+  const queryKey = chatKeys.messages(user?.id, familyId);
 
   return useMutation({
     mutationFn: deleteChatMessage,
@@ -362,10 +370,10 @@ export function useDeleteChatMessage(petId: string) {
   });
 }
 
-export function useUpdateChatMessage(petId: string) {
+export function useUpdateChatMessage(familyId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const queryKey = chatKeys.messages(user?.id, petId);
+  const queryKey = chatKeys.messages(user?.id, familyId);
 
   return useMutation({
     mutationFn: ({ body, messageId }: { body: string; messageId: string }) =>
@@ -376,14 +384,14 @@ export function useUpdateChatMessage(petId: string) {
   });
 }
 
-export function useMarkChatRead(petId: string) {
+export function useMarkChatRead(familyId: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (messageId: string) => markChatRead(petId, messageId),
+    mutationFn: (messageId: string) => markChatRead(familyId, messageId),
     onMutate: async () => {
-      const queryKey = chatKeys.unread(user?.id, petId);
+      const queryKey = chatKeys.unread(user?.id, familyId);
       await queryClient.cancelQueries({ queryKey });
       const previousCount = queryClient.getQueryData<number>(queryKey);
       queryClient.setQueryData(queryKey, 0);
@@ -392,14 +400,14 @@ export function useMarkChatRead(petId: string) {
     onError: (_error, _messageId, context) => {
       if (context?.previousCount !== undefined) {
         queryClient.setQueryData(
-          chatKeys.unread(user?.id, petId),
+          chatKeys.unread(user?.id, familyId),
           context.previousCount,
         );
       }
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: chatKeys.unread(user?.id, petId),
+        queryKey: chatKeys.unread(user?.id, familyId),
       });
     },
   });

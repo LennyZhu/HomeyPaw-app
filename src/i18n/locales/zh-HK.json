@@ -507,6 +507,7 @@
     },
     "errors": {
       "invalidInvite": "邀請碼無效或已失效。",
+      "verifyUnavailable": "暫時無法驗證邀請碼，請稍後再試。",
       "network": "暫時無法驗證邀請，請檢查網絡後再試。",
       "createInvite": "暫時無法建立邀請，請稍後再試。",
       "revokeInvite": "暫時無法撤銷邀請，請稍後再試。",
@@ -678,8 +679,8 @@
         "memberCount_one": "{{count}} 位家人",
         "memberCount_other": "{{count}} 位家人",
         "members": "查看家庭成員",
-        "switchPet": "目前是{{name}}的家庭聊天室",
-        "switchHint": "輕點切換另一隻毛孩的私人聊天室"
+        "switchPet": "目前毛孩：{{name}} · 共用家庭聊天室",
+        "switchHint": "切換顯示的毛孩，家庭聊天室保持不變"
       },
       "members": {
         "title": "家庭成員",
@@ -717,6 +718,10 @@
         "retryHint": "長按並使用相同的安全訊息識別碼重新傳送",
         "deleteHint": "長按以顯示刪除確認",
         "actionsHint": "長按以顯示可用的訊息操作"
+      },
+      "noFamily": {
+        "title": "加入你的家庭聊天室",
+        "body": "建立或加入家庭，即可與家人聊天。"
       },
       "noPet": {
         "title": "還沒有家庭聊天室",

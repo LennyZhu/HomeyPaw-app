@@ -4,26 +4,27 @@ import {
   type PropsWithChildren,
   use,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
 
 import { CHAT_ENABLED } from '@/config/features';
 import { useAuth } from '@/features/auth/auth-context';
-import { clearRevokedPetAccess } from '@/features/pets/pet-access-cleanup';
-import { useCurrentPet } from '@/features/pets/use-current-pet';
+import { familyKeys } from '@/features/family/family-query-keys';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 
 import {
   chatKeys,
-  clearChatPetCache,
+  clearChatFamilyCache,
   useChatChannelVersion,
   useChatUnreadCount,
 } from './chat-queries';
 import {
-  createChatScopeKey,
   getDisplayedChatUnread,
   type ChatRealtimeStatus,
 } from './chat-presentation';
+import { createChatScopeKey } from './chat-scope';
 import { useChatRealtime } from './use-chat-realtime';
 
 type ChatSessionContextValue = {
@@ -42,47 +43,47 @@ const ChatSessionContext = createContext<ChatSessionContextValue | null>(null);
 export function ChatSessionProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const petsState = useCurrentPet();
-  const petId = petsState.currentPetId;
+  const familyState = useCurrentFamily();
+  const familyId = familyState.currentFamilyId;
   const [accessLostScope, setAccessLostScope] = useState<string | null>(null);
   const [activeChatScope, setActiveChatScope] = useState<string | null>(null);
-  const scope = createChatScopeKey(user?.id, petId);
+  const scope = createChatScopeKey(user?.id, familyId);
   const accessLost = Boolean(scope && accessLostScope === scope);
   const isChatActive = Boolean(scope && activeChatScope === scope);
 
+  useEffect(() => {
+    const userId = user?.id;
+    if (!userId || !familyId) return;
+    return () => {
+      void queryClient.cancelQueries({
+        queryKey: [...chatKeys.all(userId), 'family', familyId],
+      });
+      clearChatFamilyCache(queryClient, userId, familyId);
+    };
+  }, [familyId, queryClient, user?.id]);
+
   const clearAccess = useCallback(() => {
-    if (!user || !petId) return;
-    setAccessLostScope(`${user.id}:${petId}`);
-    queryClient.setQueryData(chatKeys.unread(user.id, petId), 0);
-    clearChatPetCache(queryClient, user.id, petId);
-    clearRevokedPetAccess({
-      petId,
-      queryClient,
-      setCurrentFamilyId: petsState.setCurrentFamilyId,
-      setCurrentPetId: petsState.setCurrentPetId,
-      userId: user.id,
-    });
-  }, [
-    petId,
-    petsState.setCurrentFamilyId,
-    petsState.setCurrentPetId,
-    queryClient,
-    user,
-  ]);
+    if (!user || !familyId) return;
+    setAccessLostScope(`${user.id}:${familyId}`);
+    queryClient.setQueryData(chatKeys.unread(user.id, familyId), 0);
+    clearChatFamilyCache(queryClient, user.id, familyId);
+    // Revalidate membership without clearing the active Pet or unrelated data.
+    void queryClient.invalidateQueries({ queryKey: familyKeys.list(user.id) });
+  }, [familyId, queryClient, user]);
 
   const versionQuery = useChatChannelVersion(
-    petId,
+    familyId,
     CHAT_ENABLED && !accessLost,
   );
   const realtime = useChatRealtime({
     channelVersion: versionQuery.data,
-    enabled: Boolean(CHAT_ENABLED && user && petId && !accessLost),
+    enabled: Boolean(CHAT_ENABLED && user && familyId && !accessLost),
     onAccessLost: clearAccess,
-    petId,
+    familyId,
     userId: user?.id,
   });
   const unreadQuery = useChatUnreadCount(
-    petId,
+    familyId,
     realtime.status === 'subscribed' && !accessLost,
   );
 
