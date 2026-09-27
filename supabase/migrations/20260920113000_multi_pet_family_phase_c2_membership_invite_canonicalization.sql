@@ -27,13 +27,28 @@ where exists (
     )
 );
 
+-- BEFORE INSERT cap checks run before conflict resolution. At cap, an UPSERT
+-- of an existing row is incorrectly treated as an eleventh member.
+-- UPDATE uses the cap trigger's OLD-row exclusion; skip unchanged mirrors.
+update public.pet_members as mirror
+set role = member.role, created_at = member.created_at
+from public.pets as pet
+join public.family_members as member on member.family_id = pet.family_id
+where mirror.pet_id = pet.id
+  and mirror.user_id = member.user_id
+  and (mirror.role is distinct from member.role
+    or mirror.created_at is distinct from member.created_at);
+
+-- The migration holds table locks: only genuinely missing rows enter INSERT.
 insert into public.pet_members (pet_id, user_id, role, created_at)
 select pet.id, member.user_id, member.role, member.created_at
 from public.pets as pet
 join public.family_members as member on member.family_id = pet.family_id
-order by pet.id, member.user_id
-on conflict (pet_id, user_id) do update
-set role = excluded.role, created_at = excluded.created_at;
+where not exists (
+  select 1 from public.pet_members as mirror
+  where mirror.pet_id = pet.id and mirror.user_id = member.user_id
+)
+order by pet.id, member.user_id;
 
 -- A canonical Family invite has exactly one legacy representation. Existing
 -- Phase B1 rows must have the same identity; move that representation to the
