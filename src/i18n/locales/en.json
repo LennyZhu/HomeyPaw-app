@@ -547,11 +547,13 @@
       "date": "Date",
       "startsOn": "Starts on",
       "time": "Time",
-      "weekDay": "Day of week",
       "monthDay": "Day of month",
       "note": "Note (optional)",
       "timeZone": "Schedule time zone",
-      "category": "Category"
+      "category": "Category",
+      "weekDays": "Repeat on",
+      "end": "Ends",
+      "endsOn": "End date"
     },
     "form": {
       "titlePlaceholder": "For example, evening medicine",
@@ -559,7 +561,8 @@
       "monthDayHint": "Months without this date are skipped.",
       "timeZone": "Fixed family schedule: {{timeZone}}",
       "yearlyHint": "Repeats every year on this date and time.",
-      "yearlyLeapHint": "In non-leap years, this reminder will occur on February 28."
+      "yearlyLeapHint": "In non-leap years, this reminder will occur on February 28.",
+      "selectWeekdays": "Select weekdays"
     },
     "types": {
       "custom": "Custom"
@@ -631,9 +634,10 @@
       "date": "Choose a valid date.",
       "time": "Choose a valid time.",
       "future": "Choose a future date and time.",
-      "weekDay": "Choose a day of the week.",
+      "weekDay": "Select at least one weekday.",
       "monthDay": "Enter a day from 1 to 31.",
-      "note": "The note cannot exceed 300 characters."
+      "note": "The note cannot exceed 300 characters.",
+      "endsOn": "End date must be on or after the start date."
     },
     "errors": {
       "load": "We couldn't load reminders, or you no longer have access.",
@@ -648,6 +652,11 @@
     "categories": {
       "standard": "Reminder",
       "birthday": "Birthday"
+    },
+    "end": {
+      "never": "Never",
+      "date": "On a date",
+      "until": "Until {{date}}"
     }
   },
   "chat": {

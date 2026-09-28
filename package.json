@@ -147,7 +147,10 @@
     "verify:family-chat-client": "node --experimental-strip-types scripts/verify-family-chat-client.mjs",
     "verify:family-chat-sql": "node scripts/verify-family-chat-sql.mjs",
     "verify:family-chat-push-client": "node --experimental-strip-types scripts/verify-family-chat-push-client.mjs",
-    "verify:family-chat-push-sql": "node scripts/verify-family-chat-push-sql.mjs"
+    "verify:family-chat-push-sql": "node scripts/verify-family-chat-push-sql.mjs",
+    "verify:reminder-recurrence-v2": "node --experimental-strip-types scripts/verify-reminder-recurrence-v2.mjs",
+    "verify:reminder-recurrence-v2-sql": "node scripts/verify-reminder-recurrence-v2-sql.mjs",
+    "verify:care-task-notification-plan": "node --experimental-strip-types scripts/verify-care-task-notification-plan.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

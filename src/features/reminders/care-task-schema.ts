@@ -7,7 +7,10 @@ import type {
   CareType,
 } from '@/types/database';
 
-import { localDateTimeToInstant } from './care-task-recurrence';
+import {
+  isValidCareTaskDate,
+  localDateTimeToInstant,
+} from './care-task-recurrence';
 
 export type CareTaskKind = Exclude<CareType, 'health'> | 'custom';
 
@@ -20,7 +23,9 @@ export type CareTaskFormValues = {
   note: string;
   scheduleType: CareTaskScheduleType;
   title: string;
-  weekDay: string;
+  weekDays: number[];
+  endMode: 'never' | 'date';
+  endsOn: string;
 };
 
 export function createCareTaskFormSchema(t: TFunction, timeZone: string) {
@@ -38,7 +43,7 @@ export function createCareTaskFormSchema(t: TFunction, timeZone: string) {
       category: z.enum(['standard', 'birthday']),
       date: z
         .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/u, t('reminders.validation.date')),
+        .refine(isValidCareTaskDate, t('reminders.validation.date')),
       localTime: z
         .string()
         .regex(/^([01]\d|2[0-3]):[0-5]\d$/u, t('reminders.validation.time')),
@@ -50,7 +55,9 @@ export function createCareTaskFormSchema(t: TFunction, timeZone: string) {
         .trim()
         .min(1, t('reminders.validation.title'))
         .max(100, t('reminders.validation.title')),
-      weekDay: z.string(),
+      weekDays: z.array(z.number().int().min(1).max(7)),
+      endMode: z.enum(['never', 'date']),
+      endsOn: z.string(),
     })
     .superRefine((values, context) => {
       if (values.scheduleType === 'once') {
@@ -68,15 +75,28 @@ export function createCareTaskFormSchema(t: TFunction, timeZone: string) {
         }
       }
 
-      if (
-        values.scheduleType === 'weekly' &&
-        !/^[1-7]$/u.test(values.weekDay)
-      ) {
+      if (values.scheduleType === 'weekly' && values.weekDays.length === 0) {
         context.addIssue({
           code: 'custom',
           message: t('reminders.validation.weekDay'),
-          path: ['weekDay'],
+          path: ['weekDays'],
         });
+      }
+
+      if (values.scheduleType !== 'once' && values.endMode === 'date') {
+        if (!isValidCareTaskDate(values.endsOn)) {
+          context.addIssue({
+            code: 'custom',
+            message: t('reminders.validation.date'),
+            path: ['endsOn'],
+          });
+        } else if (values.endsOn < values.date) {
+          context.addIssue({
+            code: 'custom',
+            message: t('reminders.validation.endsOn'),
+            path: ['endsOn'],
+          });
+        }
       }
 
       if (values.scheduleType === 'monthly') {

@@ -12,6 +12,7 @@ import { lightColors, radius, spacing } from '@/theme';
 import { formatReminderDate, reminderDatePickerLocale } from '../reminder-date';
 
 type Props = {
+  dateAccessory?: React.ReactNode;
   date: string;
   dateLabel: string;
   onDateChange: (date: string) => void;
@@ -29,6 +30,7 @@ function timeValue(value: string) {
 
 export function TaskDateTimeFields({
   date,
+  dateAccessory,
   dateLabel,
   onDateChange,
   onTimeChange,
@@ -81,6 +83,7 @@ export function TaskDateTimeFields({
           />
         ) : null}
       </View>
+      {dateAccessory}
       <View style={styles.field}>
         <AppText variant="subheadline">{timeLabel}</AppText>
         {Platform.OS === 'ios' ? (

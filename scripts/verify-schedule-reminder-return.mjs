@@ -150,7 +150,7 @@ assert.match(
 assert.match(reminderScreen, /stageScheduleReminderReturn/u);
 assert.match(reminderScreen, /taskId,/u);
 assert.match(reminderScreen, /monthDay: String\(day\)/u);
-assert.match(reminderScreen, /weekDay: String\(jsDay === 0 \? 7 : jsDay\)/u);
+assert.match(reminderScreen, /weekDays: \[jsDay === 0 \? 7 : jsDay\]/u);
 assert.match(queries, /invalidateQueries\(\{ queryKey: careTaskKeys\.all/u);
 console.log(
   'PASS: canonical task handoff, targeted occurrence refetch, date anchors, auto-selection, and enabled Create Shift CTA are wired.',

@@ -21,6 +21,7 @@ import {
   formatTaskDateTime,
   getCareTaskStatus,
   getScheduleLabel,
+  getTaskEndLabel,
   taskKindLabel,
 } from './care-task-display';
 import {
@@ -271,6 +272,12 @@ export default function CareTaskDetailScreen() {
           label={t('reminders.fields.repeat')}
           value={getScheduleLabel(task, i18n.language, t)}
         />
+        {task.schedule_type !== 'once' ? (
+          <DetailRow
+            label={t('reminders.fields.end')}
+            value={getTaskEndLabel(task, i18n.language, t)}
+          />
+        ) : null}
         <DetailRow
           label={t('reminders.fields.timeZone')}
           value={task.time_zone}

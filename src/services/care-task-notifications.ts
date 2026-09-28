@@ -3,6 +3,11 @@ import { AppState, Platform } from 'react-native';
 
 import { fetchCareTaskOccurrences } from '@/features/reminders/care-task-api';
 import i18n from '@/i18n';
+import {
+  occurrenceKey,
+  planCareTaskNotifications,
+  rollingWindowDays,
+} from './care-task-notification-plan';
 import { shouldSuppressChatPush } from './chat-push-presentation';
 
 import {
@@ -16,8 +21,7 @@ export type CareTaskNotificationPermission =
   'granted' | 'denied' | 'undetermined' | 'unsupported';
 
 const channelId = 'pawday-reminders';
-const rollingWindowDays = 30;
-const maximumScheduledNotifications = 48;
+
 const activeSyncs = new Map<string, Promise<CareTaskNotificationSyncResult>>();
 
 export type CareTaskNotificationSyncResult = {
@@ -80,10 +84,6 @@ export async function requestCareTaskNotificationPermission() {
   return getCareTaskNotificationPermission();
 }
 
-function occurrenceKey(taskId: string, scheduledFor: string) {
-  return `${taskId}|${scheduledFor}`;
-}
-
 async function cancelStoredNotifications(userId: string) {
   const mappings = await listStoredCareTaskNotifications(userId);
   let canceled = 0;
@@ -128,13 +128,7 @@ async function runSync(
     windowEnd,
     windowStart: now,
   });
-  const desired = occurrences
-    .filter(
-      (occurrence) =>
-        !occurrence.completion_id &&
-        new Date(occurrence.scheduled_for).getTime() > now.getTime() + 5_000,
-    )
-    .slice(0, maximumScheduledNotifications);
+  const desired = planCareTaskNotifications(occurrences, now);
   const desiredByKey = new Map(
     desired.map((occurrence) => [
       occurrenceKey(occurrence.task_id, occurrence.scheduled_for),

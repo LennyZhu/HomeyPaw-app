@@ -4,6 +4,7 @@ import { AppText } from '@/components/app-text';
 import { lightColors, radius, spacing, typography } from '@/theme';
 
 type Props = {
+  dateAccessory?: React.ReactNode;
   date: string;
   dateLabel: string;
   onDateChange: (date: string) => void;
@@ -24,6 +25,7 @@ export function TaskDateTimeFields(props: Props) {
           value={props.date}
         />
       </View>
+      {props.dateAccessory}
       <View style={styles.field}>
         <AppText variant="subheadline">{props.timeLabel}</AppText>
         <TextInput

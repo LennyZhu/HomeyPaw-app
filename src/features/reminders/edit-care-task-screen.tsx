@@ -53,7 +53,9 @@ function taskToValues(task: CareTask): CareTaskFormValues {
     note: task.note ?? '',
     scheduleType: task.schedule_type,
     title: task.title,
-    weekDay: String(task.week_day ?? 1),
+    weekDays: task.week_days ?? (task.week_day ? [task.week_day] : [1]),
+    endMode: task.ends_on ? 'date' : 'never',
+    endsOn: task.ends_on ?? task.starts_on ?? onceDate,
   };
 }
 

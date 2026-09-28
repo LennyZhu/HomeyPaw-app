@@ -547,11 +547,13 @@
       "date": "日期",
       "startsOn": "開始日期",
       "time": "時間",
-      "weekDay": "星期幾",
       "monthDay": "每月日期",
       "note": "備註（選填）",
       "timeZone": "排程時區",
-      "category": "類別"
+      "category": "類別",
+      "weekDays": "重複星期",
+      "end": "結束",
+      "endsOn": "結束日期"
     },
     "form": {
       "titlePlaceholder": "例如：晚上吃藥",
@@ -559,7 +561,8 @@
       "monthDayHint": "如果該月沒有這一天，會跳過該月。",
       "timeZone": "固定家庭排程：{{timeZone}}",
       "yearlyHint": "每年於這個日期和時間提醒。",
-      "yearlyLeapHint": "非閏年會於 2 月 28 日提醒。"
+      "yearlyLeapHint": "非閏年會於 2 月 28 日提醒。",
+      "selectWeekdays": "選擇平日"
     },
     "types": {
       "custom": "自訂"
@@ -631,9 +634,10 @@
       "date": "請選擇有效日期。",
       "time": "請選擇有效時間。",
       "future": "請選擇未來的日期和時間。",
-      "weekDay": "請選擇星期幾。",
+      "weekDay": "請至少選擇一個星期。",
       "monthDay": "請輸入 1 至 31。",
-      "note": "備註不可超過 300 個字元。"
+      "note": "備註不可超過 300 個字元。",
+      "endsOn": "結束日期不可早於開始日期。"
     },
     "errors": {
       "load": "暫時無法載入提醒，或你已失去存取權。",
@@ -648,6 +652,11 @@
     "categories": {
       "standard": "一般提醒",
       "birthday": "生日"
+    },
+    "end": {
+      "never": "永不結束",
+      "date": "指定日期",
+      "until": "截至 {{date}}"
     }
   },
   "chat": {

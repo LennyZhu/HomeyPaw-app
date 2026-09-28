@@ -292,6 +292,8 @@ export type Database = {
           title: string;
           updated_at: string;
           week_day: number | null;
+          week_days: number[] | null;
+          ends_on: string | null;
         };
         Insert: never;
         Update: never;
@@ -809,6 +811,25 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['care_tasks']['Row'];
       };
+      create_care_task_v2: {
+        Args: {
+          target_pet_id: string;
+          task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_category?: Database['public']['Enums']['care_task_category'];
+          task_id: string;
+          task_local_time: string | null;
+          task_month_day: number | null;
+          task_note: string | null;
+          task_schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          task_scheduled_at: string | null;
+          task_starts_on: string | null;
+          task_time_zone: string;
+          task_title: string;
+          task_week_days: number[] | null;
+          task_ends_on: string | null;
+        };
+        Returns: Database['public']['Tables']['care_tasks']['Row'];
+      };
       create_pet: {
         Args: {
           pet_adoption_date?: string | null;
@@ -901,6 +922,42 @@ export type Database = {
           time_zone: string;
           title: string;
           week_day: number | null;
+        }[];
+      };
+      get_care_task_occurrences_v2: {
+        Args: {
+          target_pet_id?: string | null;
+          window_end: string;
+          window_start: string;
+        };
+        Returns: {
+          can_edit: boolean;
+          can_undo: boolean;
+          care_log_id: string | null;
+          care_type: Database['public']['Enums']['care_type'] | null;
+          completed_at: string | null;
+          completed_by: string | null;
+          completer_display_name: string | null;
+          completion_id: string | null;
+          created_by: string | null;
+          creator_display_name: string | null;
+          is_active: boolean;
+          local_time: string | null;
+          month_day: number | null;
+          note: string | null;
+          task_category: Database['public']['Enums']['care_task_category'];
+          pet_id: string;
+          pet_name: string;
+          schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          scheduled_at: string | null;
+          scheduled_for: string;
+          starts_on: string | null;
+          task_id: string;
+          time_zone: string;
+          title: string;
+          week_day: number | null;
+          week_days: number[] | null;
+          ends_on: string | null;
         }[];
       };
       get_care_schedule_range: {
@@ -1138,6 +1195,24 @@ export type Database = {
           task_time_zone: string;
           task_title: string;
           task_week_day: number | null;
+        };
+        Returns: Database['public']['Tables']['care_tasks']['Row'];
+      };
+      update_care_task_v2: {
+        Args: {
+          target_task_id: string;
+          task_category?: Database['public']['Enums']['care_task_category'];
+          task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_local_time: string | null;
+          task_month_day: number | null;
+          task_note: string | null;
+          task_schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          task_scheduled_at: string | null;
+          task_starts_on: string | null;
+          task_time_zone: string;
+          task_title: string;
+          task_week_days: number[] | null;
+          task_ends_on: string | null;
         };
         Returns: Database['public']['Tables']['care_tasks']['Row'];
       };
