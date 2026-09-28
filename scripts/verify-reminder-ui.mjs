@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import ts from 'typescript';
 
 import {
   formatReminderDate,
@@ -115,3 +116,131 @@ assert.equal(
   'Changes only affect future reminders. Past records stay unchanged.',
 );
 console.log('PASS: Reminder list, create, and edit copy is user-facing.');
+
+assert.doesNotMatch(
+  form,
+  /reminders\.form\.timeZone|timeZoneNote|globe-outline/u,
+);
+assert.doesNotMatch(
+  detail,
+  /reminders\.fields\.timeZone|value=\{task\.time_zone\}/u,
+);
+for (const locale of [english, chinese]) {
+  assert.equal('timeZone' in locale.reminders.form, false);
+  assert.equal('timeZone' in locale.reminders.fields, false);
+}
+const [newScreen, editScreen, notifications] = await Promise.all([
+  read('src/features/reminders/new-care-task-screen.tsx'),
+  read('src/features/reminders/edit-care-task-screen.tsx'),
+  read('src/services/care-task-notifications.ts'),
+]);
+assert.match(newScreen, /useState\(\(\) => getDeviceTimeZone\(\)\)/u);
+assert.match(newScreen, /timeZone=\{timeZone\}/u);
+assert.match(editScreen, /timeZone: task\.time_zone/u);
+assert.match(editScreen, /timeZone=\{task\.time_zone\}/u);
+assert.match(form, /createCareTaskFormSchema\(t, timeZone\)/u);
+assert.match(queries, /task_time_zone: timeZone/u);
+assert.match(
+  queries,
+  /localDateTimeToInstant\(values\.date, values\.localTime, timeZone\)/u,
+);
+assert.match(notifications, /timeZone: occurrence\.time_zone/u);
+assert.match(notifications, /new Date\(occurrence\.scheduled_for\)/u);
+assert.match(notifications, /SchedulableTriggerInputTypes\.DATE/u);
+
+// Inspect presentation only: timezone props and formatter arguments remain valid.
+const rawIana =
+  /\b(?:Africa|America|Antarctica|Arctic|Asia|Atlantic|Australia|Europe|Indian|Pacific|Etc)\/[\w+/-]+/u;
+const rawZoneValue = /^(?:[\w]+\.)*(?:timeZone|(?:\w+_)?time_zone)$/u;
+const visibleProps = new Set([
+  'label',
+  'value',
+  'title',
+  'text',
+  'placeholder',
+  'accessibilityLabel',
+  'accessibilityHint',
+]);
+function assertNoRawTimeZonePresentation(source, path) {
+  const file = ts.createSourceFile(
+    path,
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  const check = (value) => {
+    if (!value) return;
+    if (ts.isIdentifier(value) || ts.isPropertyAccessExpression(value)) {
+      assert.doesNotMatch(
+        value.getText(file),
+        rawZoneValue,
+        `${path}: raw timezone value displayed`,
+      );
+    } else if (ts.isStringLiteralLike(value)) {
+      assert.doesNotMatch(
+        value.text,
+        rawIana,
+        `${path}: raw IANA literal displayed`,
+      );
+    } else if (ts.isTemplateExpression(value)) {
+      assert.doesNotMatch(value.head.text, rawIana, path);
+      for (const span of value.templateSpans) {
+        check(span.expression);
+        assert.doesNotMatch(span.literal.text, rawIana, path);
+      }
+    } else if (
+      ts.isBinaryExpression(value) &&
+      value.operatorToken.kind === ts.SyntaxKind.PlusToken
+    ) {
+      check(value.left);
+      check(value.right);
+    }
+  };
+  const visit = (node) => {
+    if (ts.isJsxText(node)) assert.doesNotMatch(node.text, rawIana, path);
+    if (
+      ts.isJsxExpression(node) &&
+      (ts.isJsxElement(node.parent) || ts.isJsxFragment(node.parent))
+    )
+      check(node.expression);
+    if (ts.isJsxAttribute(node) && visibleProps.has(node.name.getText(file))) {
+      check(
+        node.initializer && ts.isJsxExpression(node.initializer)
+          ? node.initializer.expression
+          : node.initializer,
+      );
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+}
+assert.throws(() =>
+  assertNoRawTimeZonePresentation(
+    '<AppText>{task.time_zone}</AppText>',
+    'raw-value.tsx',
+  ),
+);
+assert.throws(() =>
+  assertNoRawTimeZonePresentation(
+    '<AppText>Asia/Hong_Kong</AppText>',
+    'raw-literal.tsx',
+  ),
+);
+assert.doesNotThrow(() =>
+  assertNoRawTimeZonePresentation(
+    '<CareTaskForm timeZone={task.time_zone} /><AppText>{formatTaskTime(instant, task.time_zone, locale)}</AppText>',
+    'internal-timezone.tsx',
+  ),
+);
+const uiPaths = (
+  await readdir(new URL('src/', root), { recursive: true })
+).filter((path) => path.endsWith('.tsx'));
+await Promise.all(
+  uiPaths.map(async (path) =>
+    assertNoRawTimeZonePresentation(await read(`src/${path}`), path),
+  ),
+);
+console.log(
+  `PASS: Reminder timezone presentation removed; RPC/schema/notification timezone wiring retained; ${uiPaths.length} UI source files (including Schedule) have no direct raw timezone presentation.`,
+);

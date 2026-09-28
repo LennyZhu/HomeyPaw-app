@@ -549,7 +549,6 @@
       "time": "時間",
       "monthDay": "每月日期",
       "note": "備註（選填）",
-      "timeZone": "排程時區",
       "category": "類別",
       "weekDays": "重複星期",
       "end": "結束",
@@ -559,7 +558,6 @@
       "titlePlaceholder": "例如：晚上吃藥",
       "notePlaceholder": "劑量、準備事項或家庭備註",
       "monthDayHint": "如果該月沒有這一天，會跳過該月。",
-      "timeZone": "固定家庭排程：{{timeZone}}",
       "yearlyHint": "每年於這個日期和時間提醒。",
       "yearlyLeapHint": "非閏年會於 2 月 28 日提醒。",
       "selectWeekdays": "選擇平日"

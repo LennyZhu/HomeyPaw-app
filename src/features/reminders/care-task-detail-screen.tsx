@@ -278,10 +278,6 @@ export default function CareTaskDetailScreen() {
             value={getTaskEndLabel(task, i18n.language, t)}
           />
         ) : null}
-        <DetailRow
-          label={t('reminders.fields.timeZone')}
-          value={task.time_zone}
-        />
         <DetailRow label={t('reminders.createdByLabel')} value={creatorName} />
         {task.note ? (
           <DetailRow label={t('reminders.fields.note')} value={task.note} />

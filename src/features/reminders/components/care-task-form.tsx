@@ -391,17 +391,6 @@ export function CareTaskForm({
         )}
       />
 
-      <View style={styles.timeZoneNote}>
-        <Ionicons
-          color={lightColors.textTertiary}
-          name="globe-outline"
-          size={16}
-        />
-        <AppText tone="tertiary" variant="footnote">
-          {t('reminders.form.timeZone', { timeZone })}
-        </AppText>
-      </View>
-
       <AppButton
         label={submitLabel}
         loading={isSubmitting}
@@ -517,6 +506,5 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.primarySoft,
     borderColor: lightColors.primary,
   },
-  timeZoneNote: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   pressed: { opacity: 0.62 },
 });
