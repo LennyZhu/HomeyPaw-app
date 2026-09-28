@@ -1,6 +1,6 @@
 import { useContentLayout } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
 import { StyleSheet, View } from 'react-native';
@@ -49,6 +49,7 @@ export default function TabsLayout() {
 
 function TabsNavigator() {
   const { t } = useTranslation();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isWide, width, fontScale } = useContentLayout();
   const chatSession = useChatSession();
@@ -116,9 +117,15 @@ function TabsNavigator() {
       />
       <Tabs.Screen
         name="create"
+        listeners={{
+          tabPress: (event) => {
+            event.preventDefault();
+            router.navigate('/posts/new');
+          },
+        }}
         options={{
           title: t('tabs.create'),
-          tabBarAccessibilityLabel: t('tabs.create'),
+          tabBarAccessibilityLabel: t('posts.create.title'),
           tabBarIcon: CreateTabIcon,
           tabBarLabel: () => null,
         }}

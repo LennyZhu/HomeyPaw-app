@@ -21,7 +21,7 @@ assert.match(create, /compactOption: \{ minHeight: 44 \}/u);
 assert.match(create, /compactOptionIcon: \{ width: 32, height: 32 \}/u);
 assert.match(create, /careSectionLabel: \{ marginTop: spacing\.xs \}/u);
 assert.match(create, /careSheet: \{[\s\S]*minHeight: 540,/u);
-assert.match(create, /activeMenu === 'care' && styles\.careSheet/u);
+assert.match(create, /style=\{\[styles\.sheet, styles\.careSheet\]\}/u);
 assert.match(
   create,
   /contentContainerStyle=\{\[styles\.options, styles\.careOptions\]\}/u,

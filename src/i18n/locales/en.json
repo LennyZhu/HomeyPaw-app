@@ -211,11 +211,7 @@
     "emptyBody": "You will be able to add photos, notes, a date and tags. Phase 1 only previews this entry point.",
     "choosePhoto": "Choose photos",
     "menu": {
-      "title": "New",
-      "journal": "New Journal",
-      "care": "Record Care",
-      "reminder": "New Reminder",
-      "schedule": "New Schedule"
+      "care": "Record Care"
     }
   },
   "posts": {

@@ -211,11 +211,7 @@
     "emptyBody": "之後可以加入相片、文字、日期和標籤。Phase 1 暫時只展示流程入口。",
     "choosePhoto": "選擇相片",
     "menu": {
-      "title": "新增",
-      "journal": "記錄日記",
-      "care": "記錄照顧",
-      "reminder": "新增提醒",
-      "schedule": "新增排班"
+      "care": "記錄照顧"
     }
   },
   "posts": {

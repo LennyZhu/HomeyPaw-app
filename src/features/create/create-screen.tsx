@@ -1,11 +1,6 @@
 import { contentStyles } from '@/components/content-container';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import {
-  type Href,
-  useFocusEffect,
-  useLocalSearchParams,
-  useRouter,
-} from 'expo-router';
+import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState, type ComponentProps } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,26 +16,18 @@ import {
 import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { lightColors, radius, shadows, spacing } from '@/theme';
 
-import { primaryCreateActions } from './create-menu-model';
-
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
-type CreateMenu = 'care' | 'root';
 
 export default function CreateScreen() {
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { t } = useTranslation();
   const router = useRouter();
   const petsState = useCurrentPet();
   const [visible, setVisible] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<CreateMenu>(() =>
-    mode === 'care' ? 'care' : 'root',
-  );
 
   useFocusEffect(
     useCallback(() => {
       setVisible(true);
-      setActiveMenu(mode === 'care' ? 'care' : 'root');
-    }, [mode]),
+    }, []),
   );
 
   const close = () => {
@@ -67,32 +54,16 @@ export default function CreateScreen() {
               accessibilityViewIsModal
               accessible={false}
               onPress={(event) => event.stopPropagation()}
-              style={[styles.sheet, activeMenu === 'care' && styles.careSheet]}
+              style={[styles.sheet, styles.careSheet]}
             >
               <View style={styles.handle} />
               <View style={styles.headingRow}>
-                {activeMenu === 'care' ? (
-                  <Pressable
-                    accessibilityLabel={t('common.back')}
-                    accessibilityRole="button"
-                    onPress={() => setActiveMenu('root')}
-                    style={styles.headerAction}
-                  >
-                    <Ionicons
-                      color={lightColors.textSecondary}
-                      name="chevron-back"
-                      size={24}
-                    />
-                  </Pressable>
-                ) : null}
                 <AppText
                   accessibilityRole="header"
                   style={styles.headingTitle}
                   variant="title1"
                 >
-                  {activeMenu === 'care'
-                    ? t('create.menu.care')
-                    : t('create.menu.title')}
+                  {t('create.menu.care')}
                 </AppText>
                 <Pressable
                   accessibilityLabel={t('common.close')}
@@ -108,7 +79,7 @@ export default function CreateScreen() {
                 </Pressable>
               </View>
 
-              {activeMenu === 'care' && petsState.currentPet ? (
+              {petsState.currentPet ? (
                 <ScrollView
                   contentContainerStyle={[styles.options, styles.careOptions]}
                   showsVerticalScrollIndicator={false}
@@ -156,7 +127,7 @@ export default function CreateScreen() {
                     />
                   ))}
                 </ScrollView>
-              ) : activeMenu === 'care' ? (
+              ) : (
                 <QuickOption
                   icon="paw-outline"
                   label={t(
@@ -171,18 +142,6 @@ export default function CreateScreen() {
                   }
                   primary
                 />
-              ) : (
-                <View style={styles.options}>
-                  {primaryCreateActions.map((action) => (
-                    <QuickOption
-                      icon={action.icon}
-                      key={action.id}
-                      label={t(action.labelKey)}
-                      onPress={() => open(action.destination.href)}
-                      primary={action.id === 'journal'}
-                    />
-                  ))}
-                </View>
               )}
             </Pressable>
           </SafeAreaView>
