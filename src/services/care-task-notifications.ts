@@ -1,8 +1,9 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import { fetchCareTaskOccurrences } from '@/features/reminders/care-task-api';
 import i18n from '@/i18n';
+import { shouldSuppressChatPush } from './chat-push-presentation';
 
 import {
   clearStoredCareTaskNotifications,
@@ -26,12 +27,18 @@ export type CareTaskNotificationSyncResult = {
 };
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    const suppress = shouldSuppressChatPush(
+      notification.request.content.data ?? {},
+      AppState.currentState,
+    );
+    return {
+      shouldPlaySound: !suppress,
+      shouldSetBadge: false,
+      shouldShowBanner: !suppress,
+      shouldShowList: !suppress,
+    };
+  },
 });
 
 function isIosPermissionGranted(

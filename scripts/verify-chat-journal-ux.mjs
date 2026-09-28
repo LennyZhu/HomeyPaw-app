@@ -105,9 +105,10 @@ assert.match(screen, /hasCachedMessages: messagesQuery\.data !== undefined/u);
 assert.doesNotMatch(screen, /useChatRealtime/u);
 assert.match(screen, /setChatActive\(true\)/u);
 assert.match(screen, /useMarkChatRead/u);
+assert.match(pushFiles, /validate_family_notification_delivery/u);
 assert.doesNotMatch(
   pushFiles,
-  /CHAT_CREATED|CHAT_MESSAGE|chat_message_created/u,
+  /mark_family_chat_read|family_chat_read_states/u,
 );
 console.log(
   'PASS: session-level private Realtime owns unread invalidation and cleanup; Chat cache remains renderable while reconnecting.',
@@ -122,4 +123,6 @@ assert.match(packageJson, /verify:chat-journal-ux/u);
 console.log(
   'PASS: background Journal fetch is silent and only manual pull drives RefreshControl.',
 );
-console.log('PASS: no Chat remote push event or worker path was added.');
+console.log(
+  'PASS: Push revalidates delivery before sending and never writes Chat read state.',
+);

@@ -97,7 +97,7 @@
   "familyPush": {
     "permission": {
       "title": "Turn on family notifications",
-      "body": "Get notified when family adds a journal entry, care record or reminder.",
+      "body": "Get notified when family sends a chat message or adds a journal entry, care record or reminder.",
       "enable": "Turn On Notifications",
       "later": "Not Now"
     }

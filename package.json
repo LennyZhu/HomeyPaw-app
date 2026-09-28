@@ -145,7 +145,9 @@
     "verify:minimum-client-version": "node --experimental-strip-types scripts/verify-minimum-client-version.mjs",
     "verify:production-family-migration-preflight": "node scripts/verify-production-family-migration-preflight.mjs",
     "verify:family-chat-client": "node --experimental-strip-types scripts/verify-family-chat-client.mjs",
-    "verify:family-chat-sql": "node scripts/verify-family-chat-sql.mjs"
+    "verify:family-chat-sql": "node scripts/verify-family-chat-sql.mjs",
+    "verify:family-chat-push-client": "node --experimental-strip-types scripts/verify-family-chat-push-client.mjs",
+    "verify:family-chat-push-sql": "node scripts/verify-family-chat-push-sql.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

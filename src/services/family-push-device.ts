@@ -80,6 +80,7 @@ async function runRegistration() {
     device_expo_push_token: token.data,
     device_installation_id: getOrCreatePushInstallationId(),
     device_platform: Platform.OS,
+    device_chat_push_v1: true,
   });
   if (error) throw error;
   return true;

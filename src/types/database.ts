@@ -615,6 +615,7 @@ export type Database = {
       register_push_device: {
         Args: {
           device_app_version: string;
+          device_chat_push_v1?: boolean;
           device_expo_push_token: string;
           device_installation_id: string;
           device_platform: string;

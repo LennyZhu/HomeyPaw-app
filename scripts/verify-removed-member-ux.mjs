@@ -135,8 +135,9 @@ assert.match(homeScreen, /petsState\.isSuccess && !pet/u);
 assert.match(chatScreen, /if \(!familyId\)/u);
 assert.match(scheduleScreen, /!pet && petsState\.isSuccess/u);
 assert.match(remindersScreen, /!pet && petsState\.isSuccess/u);
-assert.doesNotMatch(push, /CHAT_CREATED|CHAT_MESSAGE|chat_message_created/u);
+assert.match(push, /validate_family_notification_delivery/u);
+assert.doesNotMatch(push, /mark_family_chat_read|family_chat_read_states/u);
 assert.match(packageJson, /verify:removed-member-ux/u);
 console.log(
-  'PASS: foreground, resume, and cold-start convergence paths retain Realtime cleanup and schedule no Chat push.',
+  'PASS: foreground, resume, and cold-start convergence retain Realtime cleanup; Push revalidates recipients without changing Chat read state.',
 );

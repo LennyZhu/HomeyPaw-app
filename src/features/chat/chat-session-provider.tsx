@@ -13,6 +13,7 @@ import { CHAT_ENABLED } from '@/config/features';
 import { useAuth } from '@/features/auth/auth-context';
 import { familyKeys } from '@/features/family/family-query-keys';
 import { useCurrentFamily } from '@/features/family/use-current-family';
+import { setFocusedChatForPush } from '@/services/chat-push-presentation';
 
 import {
   chatKeys,
@@ -50,6 +51,15 @@ export function ChatSessionProvider({ children }: PropsWithChildren) {
   const scope = createChatScopeKey(user?.id, familyId);
   const accessLost = Boolean(scope && accessLostScope === scope);
   const isChatActive = Boolean(scope && activeChatScope === scope);
+
+  useEffect(() => {
+    setFocusedChatForPush(
+      isChatActive && !accessLost && familyId && user
+        ? { familyId, userId: user.id }
+        : null,
+    );
+    return () => setFocusedChatForPush(null);
+  }, [accessLost, familyId, isChatActive, user]);
 
   useEffect(() => {
     const userId = user?.id;

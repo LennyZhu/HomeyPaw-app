@@ -1,13 +1,26 @@
 export type FamilyActivityKind = 'journal' | 'care' | 'health' | 'reminder';
 
-export type FamilyNotificationEvent = {
+type NotificationEventBase = {
   event_id: string;
-  event_type: 'journal_created' | 'care_log_created' | 'reminder_created';
-  activity_kind: FamilyActivityKind;
-  pet_id: string;
   actor_user_id: string;
   source_id: string;
 };
+
+export type FamilyNotificationEvent = NotificationEventBase &
+  (
+    | {
+        event_type: 'chat_message';
+        activity_kind: 'chat';
+        family_id: string;
+        pet_id: null;
+        sender_name: string | null;
+      }
+    | {
+        event_type: 'journal_created' | 'care_log_created' | 'reminder_created';
+        activity_kind: FamilyActivityKind;
+        pet_id: string;
+      }
+  );
 
 export type FamilyPushTarget = {
   delivery_id: string;
@@ -21,21 +34,29 @@ export type ExpoPushMessage = {
   title: 'HomeyPaw';
   body: string;
   sound: 'default';
-  data: {
-    type: FamilyNotificationEvent['event_type'];
-    petId: string;
-    sourceId: string;
-  };
+  data:
+    | {
+        type: 'journal_created' | 'care_log_created' | 'reminder_created';
+        petId: string;
+        sourceId: string;
+      }
+    | {
+        type: 'chat_message';
+        familyId: string;
+        messageId: string;
+      };
 };
 
 const localizedBodies = {
   en: {
+    chat: 'You received a new family chat message',
     journal: 'A family member added a new journal entry.',
     care: 'A family member recorded pet care.',
     health: 'A family member recorded a health observation.',
     reminder: 'A family member added a reminder.',
   },
   'zh-HK': {
+    chat: '你收到一則新的家庭聊天訊息',
     journal: '家人新增了一篇日記',
     care: '家人新增了一筆照顧記錄',
     health: '家人新增了一筆健康狀況記錄',
@@ -48,6 +69,33 @@ export function buildFamilyPushMessage(
   target: FamilyPushTarget,
 ): ExpoPushMessage {
   const locale = target.recipient_locale === 'en' ? 'en' : 'zh-HK';
+  if (event.event_type === 'chat_message') {
+    // Never include the message body or Pet metadata. Strip control characters
+    // and cap the trusted Profile nickname by Unicode code points.
+    const senderName = Array.from(
+      (event.sender_name ?? '')
+        .replace(/[\p{Cc}\p{Cf}]/gu, ' ')
+        .replace(/\s+/gu, ' ')
+        .trim(),
+    )
+      .slice(0, 40)
+      .join('');
+    return {
+      to: target.expo_push_token,
+      title: 'HomeyPaw',
+      body: senderName
+        ? locale === 'en'
+          ? `${senderName} sent a new message`
+          : `${senderName} 發來一則新訊息`
+        : localizedBodies[locale].chat,
+      sound: 'default',
+      data: {
+        type: 'chat_message',
+        familyId: event.family_id,
+        messageId: event.source_id,
+      },
+    };
+  }
   return {
     to: target.expo_push_token,
     title: 'HomeyPaw',
