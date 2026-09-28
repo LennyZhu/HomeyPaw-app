@@ -673,19 +673,15 @@
         "title": "Message actions"
       },
       "header": {
-        "title": "{{name}}'s family chat",
-        "subtitle_one": "Family Chat · {{count}} family member",
-        "subtitle_other": "Family Chat · {{count}} family members",
+        "title": "Family Chat",
         "memberCount_one": "{{count}} family member",
         "memberCount_other": "{{count}} family members",
-        "members": "View family members",
-        "switchPet": "Current pet: {{name}} · shared Family Chat",
-        "switchHint": "Switch the displayed pet. Family Chat stays the same."
+        "members": "View family members"
       },
       "members": {
         "title": "Family members",
-        "body_one": "{{count}} person can access {{name}}'s chat.",
-        "body_other": "{{count}} people can access {{name}}'s chat.",
+        "body_one": "{{count}} family member can access this chat.",
+        "body_other": "{{count}} family members can access this chat.",
         "owner": "Owner",
         "member": "Member"
       },

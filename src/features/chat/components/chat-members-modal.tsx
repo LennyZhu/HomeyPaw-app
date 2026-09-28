@@ -15,14 +15,12 @@ import type { ChatMemberSummary } from '../chat-queries';
 type ChatMembersModalProps = {
   members: ChatMemberSummary[];
   onClose: () => void;
-  petName: string;
   visible: boolean;
 };
 
 export function ChatMembersModal({
   members,
   onClose,
-  petName,
   visible,
 }: ChatMembersModalProps) {
   const { t } = useTranslation();
@@ -43,7 +41,6 @@ export function ChatMembersModal({
             <AppText tone="secondary" variant="footnote">
               {t('chat.live.members.body', {
                 count: members.length,
-                name: petName,
               })}
             </AppText>
           </View>

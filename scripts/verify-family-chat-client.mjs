@@ -234,6 +234,17 @@ assert.match(screen, /useSendChatMessage\(familyId/);
 assert.match(screen, /key=\{familyId\}/);
 assert.doesNotMatch(screen, /if \(!pet\)|key=\{pet\.id\}|petId:/);
 assert.match(screen, /if \(!familyId\)/);
+assert.doesNotMatch(
+  screen,
+  /currentPet|PetSwitcherModal|PetAvatar|setCurrentPetId|isSwitcherOpen|familyPets/,
+);
+assert.match(screen, /chat\.live\.header\.title/);
+assert.match(screen, /chat\.live\.header\.memberCount/);
+assert.doesNotMatch(
+  screen,
+  /familyName|familyLabel|familyId\.slice|family\.lifecycle\.emptyFamily/,
+);
+assert.match(screen, /onPress=\{\(\) => setIsMembersOpen\(true\)\}/);
 client.clear();
 console.log(
   'PASS: same-Family Pet switch keeps query/cache/messages/send/session/realtime/unread; zero Pet works; Family/user changes isolate rooms; Pet cleanup cannot evict Family history; repeated realtime/RPC echoes replace optimistic state without duplicates.',

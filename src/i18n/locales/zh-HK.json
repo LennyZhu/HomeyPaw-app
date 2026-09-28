@@ -673,19 +673,15 @@
         "title": "訊息操作"
       },
       "header": {
-        "title": "{{name}}的家庭聊天室",
-        "subtitle_one": "家庭聊天室 · {{count}}位家人",
-        "subtitle_other": "家庭聊天室 · {{count}}位家人",
+        "title": "家庭聊天室",
         "memberCount_one": "{{count}} 位家人",
         "memberCount_other": "{{count}} 位家人",
-        "members": "查看家庭成員",
-        "switchPet": "目前毛孩：{{name}} · 共用家庭聊天室",
-        "switchHint": "切換顯示的毛孩，家庭聊天室保持不變"
+        "members": "查看家庭成員"
       },
       "members": {
         "title": "家庭成員",
-        "body_one": "{{count}} 位家人可進入{{name}}的聊天室。",
-        "body_other": "{{count}} 位家人可進入{{name}}的聊天室。",
+        "body_one": "{{count}} 位家人可進入家庭聊天室。",
+        "body_other": "{{count}} 位家人可進入家庭聊天室。",
         "owner": "管理者",
         "member": "成員"
       },

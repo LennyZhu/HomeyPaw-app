@@ -12,8 +12,6 @@ import { EmptyState } from '@/components/empty-state';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
-import { PetAvatar } from '@/features/pets/components/pet-avatar';
-import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
 import { useCurrentFamily } from '@/features/family/use-current-family';
 import { logError } from '@/lib/logger';
 import { lightColors, layout, radius, spacing } from '@/theme';
@@ -42,10 +40,8 @@ export default function ChatScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const familyState = useCurrentFamily();
-  const pet = familyState.currentPet;
   const familyId = familyState.currentFamilyId;
-  const chatTitle = pet?.name ?? t('chat.title');
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const chatTitle = t('chat.live.header.title');
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ChatListMessage | null>(null);
   const [visibleCursor, setVisibleCursor] = useState<{
@@ -289,52 +285,27 @@ export default function ChatScreen() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Pressable
-          accessibilityHint={
-            familyState.familyPets.length > 0
-              ? t('chat.live.header.switchHint')
-              : undefined
-          }
-          accessibilityLabel={t('chat.live.header.switchPet', {
-            name: chatTitle,
-          })}
-          accessibilityRole="button"
-          disabled={familyState.familyPets.length === 0}
-          onPress={() => setIsSwitcherOpen(true)}
-          style={({ pressed }) => [
-            styles.petSelector,
-            pressed && styles.pressed,
-          ]}
-        >
-          <PetAvatar
-            accessibilityLabel={t('pets.avatar.accessibility', {
-              name: chatTitle,
+        <View style={styles.titleCopy}>
+          <AppText
+            accessibilityLabel={chatTitle}
+            accessibilityRole="header"
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            variant="title3"
+          >
+            {chatTitle}
+          </AppText>
+          <AppText
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            tone="secondary"
+            variant="caption"
+          >
+            {t('chat.live.header.memberCount', {
+              count: members.length,
             })}
-            avatarPath={pet?.avatar_path ?? null}
-            name={chatTitle}
-            size={44}
-          />
-          <View style={styles.titleCopy}>
-            <AppText
-              accessibilityLabel={chatTitle}
-              accessibilityRole="header"
-              ellipsizeMode="tail"
-              numberOfLines={1}
-              style={styles.petName}
-              variant="headline"
-            >
-              {chatTitle}
-            </AppText>
-            <AppText tone="secondary" variant="caption">
-              {t('chat.live.header.subtitle', { count: members.length })}
-            </AppText>
-          </View>
-          <Ionicons
-            color={lightColors.textSecondary}
-            name="chevron-down"
-            size={17}
-          />
-        </Pressable>
+          </AppText>
+        </View>
 
         <Pressable
           accessibilityLabel={t('chat.live.header.members')}
@@ -434,25 +405,9 @@ export default function ChatScreen() {
         />
       ) : null}
 
-      <PetSwitcherModal
-        currentPetId={familyState.currentPetId}
-        onAddPet={() => {
-          setIsSwitcherOpen(false);
-          router.push('/pets/new');
-        }}
-        onClose={() => setIsSwitcherOpen(false)}
-        onSelectPet={(nextPetId) => {
-          familyState.setCurrentPetId(nextPetId);
-          setIsSwitcherOpen(false);
-        }}
-        pets={familyState.familyPets}
-        visible={isSwitcherOpen}
-      />
-
       <ChatMembersModal
         members={members}
         onClose={() => setIsMembersOpen(false)}
-        petName={chatTitle}
         visible={isMembersOpen}
       />
 
@@ -489,15 +444,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
     paddingVertical: spacing.sm,
   },
-  petSelector: {
-    minHeight: 52,
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
   titleCopy: { flex: 1, gap: 2 },
-  petName: { flexShrink: 1 },
   membersButton: {
     width: 46,
     height: 46,
