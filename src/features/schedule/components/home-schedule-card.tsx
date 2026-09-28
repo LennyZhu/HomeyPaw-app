@@ -25,6 +25,7 @@ import {
   groupCareScheduleByShift,
   isCareScheduleItemCompleted,
   isScheduleAccessDenied,
+  selectCurrentCareScheduleItems,
   truncateCareScheduleGroups,
 } from '../care-schedule-model';
 import {
@@ -63,14 +64,16 @@ export function HomeScheduleCard({
     startLocalDate: range.start,
   });
   const refetchSchedule = scheduleQuery.refetch;
+  const currentItems = useMemo(
+    () => selectCurrentCareScheduleItems(scheduleQuery.data ?? []),
+    [scheduleQuery.data],
+  );
   const selectedShifts = useMemo(
     () =>
       groupCareScheduleByShift(
-        (scheduleQuery.data ?? []).filter(
-          (item) => item.local_date === selectedDate,
-        ),
+        currentItems.filter((item) => item.local_date === selectedDate),
       ),
-    [scheduleQuery.data, selectedDate],
+    [currentItems, selectedDate],
   );
   const selectedGroups = useMemo(
     () => groupCareScheduleByAssignee(selectedShifts),
@@ -115,7 +118,7 @@ export function HomeScheduleCard({
 
       <View style={styles.calendarCard}>
         <ScheduleMonthCalendar
-          items={scheduleQuery.data ?? []}
+          items={currentItems}
           month={range.start}
           onSelectDate={setSelectedDate}
           selectedDate={selectedDate}

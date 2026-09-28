@@ -102,6 +102,11 @@ function getScheduleItemState(item: CareScheduleItem) {
     : ('pending' as const);
 }
 
+// Current calendars/lists omit cancellations; range queries retain history.
+export function selectCurrentCareScheduleItems(items: CareScheduleItem[]) {
+  return items.filter((item) => getScheduleItemState(item) !== 'canceled');
+}
+
 export function groupCareScheduleByAssignee(shifts: CareScheduleShift[]) {
   const groups = new Map<string, CareScheduleAssigneeGroup>();
 
@@ -186,8 +191,9 @@ export function shouldExpandScheduleGroup(group: CareScheduleAssigneeGroup) {
 export function summarizeScheduleDay(
   items: CareScheduleItem[],
 ): ScheduleDaySummary {
+  const currentItems = selectCurrentCareScheduleItems(items);
   const members = new Map<string, ScheduleMemberSummary>();
-  for (const item of items) {
+  for (const item of currentItems) {
     if (item.assignee_user_id && !members.has(item.assignee_user_id)) {
       members.set(item.assignee_user_id, {
         avatarPath: item.assignee_avatar_path,
@@ -199,11 +205,11 @@ export function summarizeScheduleDay(
   }
 
   return {
-    completedCount: items.filter(isCareScheduleItemCompleted).length,
-    itemCount: items.length,
+    completedCount: currentItems.filter(isCareScheduleItemCompleted).length,
+    itemCount: currentItems.length,
     members: [...members.values()],
     memberIds: [...members.keys()],
-    unassignedCount: items.filter(
+    unassignedCount: currentItems.filter(
       (item) => !item.assignee_user_id && item.shift_status === 'scheduled',
     ).length,
   };
