@@ -914,7 +914,6 @@
     }
   },
   "profile": {
-    "title": "Me",
     "avatar": "User profile picture",
     "avatarWithName": "{{name}}'s profile picture",
     "loading": "Loading your profile…",

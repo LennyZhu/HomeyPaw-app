@@ -914,7 +914,6 @@
     }
   },
   "profile": {
-    "title": "我的",
     "avatar": "使用者頭像",
     "avatarWithName": "{{name}}的個人頭像",
     "loading": "載入個人資料…",
