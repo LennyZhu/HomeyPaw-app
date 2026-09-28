@@ -24,7 +24,6 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import {
   SafeAreaProvider,
-  SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -234,18 +233,20 @@ export function PostPhotoViewer({
       visible={visible}
     >
       <SafeAreaProvider>
-        <SafeAreaView
-          accessibilityViewIsModal
-          edges={['top', 'bottom']}
-          style={styles.viewer}
-        >
+        <View accessibilityViewIsModal style={styles.viewer}>
           <StatusBar style="light" />
           <IconButton
             accessibilityLabel={t('common.close')}
             color={lightColors.onPrimary}
             icon="close"
             onPress={onClose}
-            style={[styles.closeButton, { top: insets.top + spacing.md }]}
+            style={[
+              styles.closeButton,
+              {
+                top: insets.top + spacing.md,
+                right: insets.right + spacing.xl,
+              },
+            ]}
           />
           {canSavePostPhotoToLibrary && currentPhoto ? (
             <Pressable
@@ -263,7 +264,10 @@ export function PostPhotoViewer({
               onPress={() => void handleSavePhoto()}
               style={({ pressed }) => [
                 styles.saveButton,
-                { top: insets.top + spacing.md },
+                {
+                  top: insets.top + spacing.md,
+                  left: insets.left + spacing.xl,
+                },
                 pressed && styles.pressedButton,
               ]}
             >
@@ -328,7 +332,14 @@ export function PostPhotoViewer({
 
           {media.length > 1 ? (
             <View
-              style={[styles.controls, { bottom: insets.bottom + spacing.md }]}
+              style={[
+                styles.controls,
+                {
+                  bottom: insets.bottom + spacing.md,
+                  left: insets.left + spacing.xl,
+                  right: insets.right + spacing.xl,
+                },
+              ]}
             >
               <ViewerNavigationButton
                 disabled={currentIndex === 0}
@@ -362,6 +373,13 @@ export function PostPhotoViewer({
               accessibilityRole="alert"
               style={[
                 styles.saveFeedback,
+                {
+                  bottom:
+                    insets.bottom +
+                    spacing.md +
+                    layout.minimumTouchTarget +
+                    spacing.md,
+                },
                 saveFeedback.tone === 'error'
                   ? styles.saveFeedbackError
                   : styles.saveFeedbackSuccess,
@@ -375,7 +393,7 @@ export function PostPhotoViewer({
               </AppText>
             </View>
           ) : null}
-        </SafeAreaView>
+        </View>
       </SafeAreaProvider>
     </Modal>
   );
@@ -438,7 +456,7 @@ function ZoomablePostPhoto({
       scheduleOnRN(reportZoomChange, shouldCaptureZoomedPhotoPan(scale.value));
       translateY.value = clampZoomedPhotoOffset(
         translateY.value,
-        viewportHeight * 0.78,
+        viewportHeight,
         scale.value,
       );
     });
@@ -455,7 +473,7 @@ function ZoomablePostPhoto({
       );
       translateY.value = clampZoomedPhotoOffset(
         startTranslateY.value + event.translationY,
-        viewportHeight * 0.78,
+        viewportHeight,
         scale.value,
       );
     })
@@ -575,12 +593,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.xl,
     zIndex: 3,
+    elevation: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   saveButton: {
     position: 'absolute',
     left: spacing.xl,
     zIndex: 3,
+    elevation: 3,
     minHeight: layout.minimumTouchTarget,
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
@@ -590,9 +610,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.lg,
   },
-  pages: { flex: 1 },
+  pages: { ...StyleSheet.absoluteFill },
   page: { alignItems: 'center', justifyContent: 'center' },
-  zoomSurface: { width: '100%', height: '78%' },
+  zoomSurface: { width: '100%', height: '100%' },
   image: { width: '100%', height: '100%' },
   imageLoader: { position: 'absolute' },
   errorState: {
@@ -603,6 +623,8 @@ const styles = StyleSheet.create({
   errorText: { textAlign: 'center' },
   controls: {
     position: 'absolute',
+    zIndex: 3,
+    elevation: 3,
     right: spacing.xl,
     bottom: spacing.md,
     left: spacing.xl,
@@ -616,6 +638,7 @@ const styles = StyleSheet.create({
     bottom: spacing.md + layout.minimumTouchTarget + spacing.md,
     left: spacing.xl,
     zIndex: 4,
+    elevation: 4,
     alignItems: 'center',
     alignSelf: 'center',
     borderRadius: radius.full,

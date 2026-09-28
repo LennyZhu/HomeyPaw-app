@@ -200,6 +200,28 @@ assert(viewer.includes('{media.length > 1 ? ('));
 assert(!viewer.includes('useWindowDimensions'));
 assert(!viewer.includes('scrollToIndex'));
 assert(!viewer.includes('key={`${item.id}-${width}-${height}'));
+assert.match(
+  viewer,
+  /<View accessibilityViewIsModal style=\{styles.viewer\}>/u,
+);
+assert.match(viewer, /pages: \{ \.\.\.StyleSheet.absoluteFill \}/u);
+assert.match(viewer, /zoomSurface: \{ width: '100%', height: '100%' \}/u);
+assert(viewer.includes('contentFit="contain"'));
+assert(!viewer.includes('viewportHeight * 0.78'));
+for (const style of ['closeButton', 'saveButton', 'controls']) {
+  const overlay = viewer.match(
+    new RegExp(`\\n  ${style}: \\{([\\s\\S]*?)\\n  \\},`, 'u'),
+  )?.[1];
+  assert(overlay?.includes("position: 'absolute'"));
+  assert(overlay?.includes('zIndex: 3'));
+  assert(overlay?.includes('elevation: 3'));
+}
+for (const edge of ['top', 'bottom', 'left', 'right']) {
+  assert(viewer.includes(`insets.${edge} + spacing.`));
+}
+console.log(
+  'PASS: Photo Viewer uses a full viewport contain canvas with safe-area controls above the pager.',
+);
 console.log(
   'PASS: Viewer hides single-photo navigation while preserving multi-photo buttons, swipe, page indicator, zoom pan, and Save to Photos through currentIndex.',
 );

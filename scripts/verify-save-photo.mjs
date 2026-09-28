@@ -168,7 +168,7 @@ const mediaLibraryPlugin = app.plugins.find(
   (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-media-library',
 );
 assert(mediaLibraryPlugin);
-assert.deepEqual(mediaLibraryPlugin[1].granularPermissions, ['photo']);
+assert.deepEqual(mediaLibraryPlugin[1].granularPermissions, ['photo', 'video']);
 assert.equal(mediaLibraryPlugin[1].isAccessMediaLocationEnabled, false);
 assert.equal(
   typeof app.locales.en.ios.NSPhotoLibraryAddUsageDescription,
