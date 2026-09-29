@@ -19,6 +19,7 @@ import {
   usePetPostAuthors,
 } from '@/features/family/family-queries';
 import { resolveHistoricalActorDisplayName } from '@/features/family/historical-actor';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 import { HomeSectionHeader } from '@/features/home/components/home-section-header';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { PetAvatar } from '@/features/pets/components/pet-avatar';
@@ -48,6 +49,9 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const { i18n, t } = useTranslation();
   const petsState = useCurrentPet();
+  const { currentMembership } = useCurrentFamily();
+  const canUseEmptyPetAction =
+    !petsState.currentFamilyId || currentMembership?.role === 'owner';
   const petId = petsState.currentPetId;
   const petQuery = usePet(petId ?? '');
   const postsQuery = usePosts(petId);
@@ -291,22 +295,25 @@ export default function HomeScreen() {
       {petsState.isSuccess && !pet ? (
         <View style={styles.emptyWrap}>
           <EmptyState
-            actionLabel={t(
-              petsState.currentFamilyId
-                ? 'pets.empty.action'
-                : 'family.create.action',
-            )}
+            {...(canUseEmptyPetAction
+              ? {
+                  actionLabel: t(
+                    petsState.currentFamilyId
+                      ? 'pets.empty.action'
+                      : 'family.create.action',
+                  ),
+                  onActionPress: () =>
+                    router.push(
+                      petsState.currentFamilyId ? '/pets/new' : '/families/new',
+                    ),
+                }
+              : {})}
             body={t(
               petsState.currentFamilyId
                 ? 'pets.empty.homeBody'
                 : 'pets.empty.noFamilyHomeBody',
             )}
             icon="paw-outline"
-            onActionPress={() =>
-              router.push(
-                petsState.currentFamilyId ? '/pets/new' : '/families/new',
-              )
-            }
             title={t('pets.empty.homeTitle')}
           />
           {!petsState.currentFamilyId ? (
@@ -357,6 +364,10 @@ export default function HomeScreen() {
           </HomeSection>
 
           <HomeScheduleCard
+            canAddSchedule={
+              currentMembership?.role === 'owner' ||
+              currentMembership?.role === 'member'
+            }
             onAccessLoss={petsState.refetch}
             petId={pet.id}
             selectedDate={selectedScheduleDate}

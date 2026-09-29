@@ -97,6 +97,7 @@ export function getScheduleLabel(
     | 'starts_on'
     | 'time_zone'
     | 'week_day'
+    | 'week_days'
   >,
   locale: string,
   t: TFunction,
@@ -109,7 +110,9 @@ export function getScheduleLabel(
     : '';
   if (task.schedule_type === 'weekly') {
     return t('reminders.scheduleLabel.weekly', {
-      day: t(`reminders.weekDays.${task.week_day}`),
+      day: (task.week_days ?? (task.week_day ? [task.week_day] : []))
+        .map((day) => t(`reminders.weekDays.${day}`))
+        .join(locale.startsWith('zh') ? '、' : ', '),
       time,
     });
   }
@@ -143,4 +146,18 @@ export function scheduleTypeLabel(
   t: TFunction,
 ) {
   return t(`reminders.schedule.${scheduleType}`);
+}
+
+export function getTaskEndLabel(
+  task: Pick<CareTask, 'ends_on'>,
+  locale: string,
+  t: TFunction,
+) {
+  if (!task.ends_on) return t('reminders.end.never');
+  const [year, month, day] = task.ends_on.split('-').map(Number);
+  const date = new Intl.DateTimeFormat(locale, {
+    dateStyle: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(year!, month! - 1, day)));
+  return t('reminders.end.until', { date });
 }

@@ -30,13 +30,21 @@ export type Database = {
           client_message_id: string;
           created_at: string;
           id: string;
-          pet_id: string;
+          family_id: string;
+          pet_id: string | null;
           sender_id: string | null;
           updated_at: string;
         };
         Insert: never;
         Update: never;
         Relationships: [
+          {
+            foreignKeyName: 'chat_messages_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'chat_messages_pet_id_fkey';
             columns: ['pet_id'];
@@ -62,6 +70,26 @@ export type Database = {
             columns: ['pet_id'];
             isOneToOne: false;
             referencedRelation: 'pets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      family_chat_read_states: {
+        Row: {
+          last_read_at: string;
+          last_read_message_id: string;
+          family_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [
+          {
+            foreignKeyName: 'family_chat_read_states_family_id_fkey';
+            columns: ['family_id'];
+            isOneToOne: false;
+            referencedRelation: 'families';
             referencedColumns: ['id'];
           },
         ];
@@ -264,6 +292,8 @@ export type Database = {
           title: string;
           updated_at: string;
           week_day: number | null;
+          week_days: number[] | null;
+          ends_on: string | null;
         };
         Insert: never;
         Update: never;
@@ -397,6 +427,32 @@ export type Database = {
             columns: ['pet_id'];
             isOneToOne: false;
             referencedRelation: 'pets';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      post_read_states: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string | null;
+          first_read_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          user_id?: string | null;
+          first_read_at?: string;
+        };
+        Update: {
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'post_read_states_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'posts';
             referencedColumns: ['id'];
           },
         ];
@@ -587,6 +643,7 @@ export type Database = {
       register_push_device: {
         Args: {
           device_app_version: string;
+          device_chat_push_v1?: boolean;
           device_expo_push_token: string;
           device_installation_id: string;
           device_platform: string;
@@ -655,7 +712,10 @@ export type Database = {
           requested_limit?: number;
           target_pet_id: string;
         };
-        Returns: Database['public']['Tables']['chat_messages']['Row'][];
+        Returns: Omit<
+          Database['public']['Tables']['chat_messages']['Row'],
+          'family_id'
+        >[];
       };
       get_chat_unread_count: {
         Args: { target_pet_id: string };
@@ -675,6 +735,19 @@ export type Database = {
           member_user_id: string;
         }[];
       };
+      mark_post_read: {
+        Args: { target_post_id: string };
+        Returns: string;
+      };
+      get_post_readers: {
+        Args: { target_post_id: string };
+        Returns: {
+          reader_user_id: string;
+          reader_display_name: string;
+          reader_avatar_path: string | null;
+          first_read_at: string;
+        }[];
+      };
       mark_chat_read: {
         Args: { target_message_id: string; target_pet_id: string };
         Returns: Database['public']['Tables']['chat_read_states']['Row'];
@@ -688,6 +761,53 @@ export type Database = {
         Returns: Database['public']['Tables']['chat_messages']['Row'];
       };
       update_chat_message: {
+        Args: { message_body: string; target_message_id: string };
+        Returns: Database['public']['Tables']['chat_messages']['Row'];
+      };
+      delete_family_chat_message: {
+        Args: { target_message_id: string };
+        Returns: boolean;
+      };
+      get_family_chat_messages_page: {
+        Args: {
+          before_created_at?: string | null;
+          before_message_id?: string | null;
+          requested_limit?: number;
+          target_family_id: string;
+        };
+        Returns: Database['public']['Tables']['chat_messages']['Row'][];
+      };
+      get_family_chat_unread_count: {
+        Args: { target_family_id: string };
+        Returns: number;
+      };
+      get_family_chat_channel_version: {
+        Args: { target_family_id: string };
+        Returns: number;
+      };
+      get_family_chat_members: {
+        Args: { target_family_id: string };
+        Returns: {
+          member_avatar_url: string | null;
+          member_display_name: string;
+          member_joined_at: string;
+          member_role: Database['public']['Enums']['pet_member_role'];
+          member_user_id: string;
+        }[];
+      };
+      mark_family_chat_read: {
+        Args: { target_message_id: string; target_family_id: string };
+        Returns: Database['public']['Tables']['family_chat_read_states']['Row'];
+      };
+      send_family_chat_message: {
+        Args: {
+          message_body: string;
+          target_client_message_id: string;
+          target_family_id: string;
+        };
+        Returns: Database['public']['Tables']['chat_messages']['Row'];
+      };
+      update_family_chat_message: {
         Args: { message_body: string; target_message_id: string };
         Returns: Database['public']['Tables']['chat_messages']['Row'];
       };
@@ -727,6 +847,25 @@ export type Database = {
           task_time_zone: string;
           task_title: string;
           task_week_day: number | null;
+        };
+        Returns: Database['public']['Tables']['care_tasks']['Row'];
+      };
+      create_care_task_v2: {
+        Args: {
+          target_pet_id: string;
+          task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_category?: Database['public']['Enums']['care_task_category'];
+          task_id: string;
+          task_local_time: string | null;
+          task_month_day: number | null;
+          task_note: string | null;
+          task_schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          task_scheduled_at: string | null;
+          task_starts_on: string | null;
+          task_time_zone: string;
+          task_title: string;
+          task_week_days: number[] | null;
+          task_ends_on: string | null;
         };
         Returns: Database['public']['Tables']['care_tasks']['Row'];
       };
@@ -822,6 +961,42 @@ export type Database = {
           time_zone: string;
           title: string;
           week_day: number | null;
+        }[];
+      };
+      get_care_task_occurrences_v2: {
+        Args: {
+          target_pet_id?: string | null;
+          window_end: string;
+          window_start: string;
+        };
+        Returns: {
+          can_edit: boolean;
+          can_undo: boolean;
+          care_log_id: string | null;
+          care_type: Database['public']['Enums']['care_type'] | null;
+          completed_at: string | null;
+          completed_by: string | null;
+          completer_display_name: string | null;
+          completion_id: string | null;
+          created_by: string | null;
+          creator_display_name: string | null;
+          is_active: boolean;
+          local_time: string | null;
+          month_day: number | null;
+          note: string | null;
+          task_category: Database['public']['Enums']['care_task_category'];
+          pet_id: string;
+          pet_name: string;
+          schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          scheduled_at: string | null;
+          scheduled_for: string;
+          starts_on: string | null;
+          task_id: string;
+          time_zone: string;
+          title: string;
+          week_day: number | null;
+          week_days: number[] | null;
+          ends_on: string | null;
         }[];
       };
       get_care_schedule_range: {
@@ -1059,6 +1234,24 @@ export type Database = {
           task_time_zone: string;
           task_title: string;
           task_week_day: number | null;
+        };
+        Returns: Database['public']['Tables']['care_tasks']['Row'];
+      };
+      update_care_task_v2: {
+        Args: {
+          target_task_id: string;
+          task_category?: Database['public']['Enums']['care_task_category'];
+          task_care_type: Database['public']['Enums']['care_type'] | null;
+          task_local_time: string | null;
+          task_month_day: number | null;
+          task_note: string | null;
+          task_schedule_type: Database['public']['Enums']['care_task_schedule_type'];
+          task_scheduled_at: string | null;
+          task_starts_on: string | null;
+          task_time_zone: string;
+          task_title: string;
+          task_week_days: number[] | null;
+          task_ends_on: string | null;
         };
         Returns: Database['public']['Tables']['care_tasks']['Row'];
       };

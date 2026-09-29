@@ -7,7 +7,10 @@ const importSource = (path) =>
   import(`${pathToFileURL(resolve(process.cwd(), path)).href}?v=${Date.now()}`);
 const read = (path) => readFile(resolve(process.cwd(), path), 'utf8');
 
-const chat = await importSource('src/features/chat/chat-presentation.ts');
+const chat = {
+  ...(await importSource('src/features/chat/chat-presentation.ts')),
+  ...(await importSource('src/features/chat/chat-scope.ts')),
+};
 const journal = await importSource('src/features/journal/manual-refresh.ts');
 const manualRefresh = await importSource('src/lib/manual-refresh.ts');
 
@@ -27,16 +30,16 @@ assert.equal(chat.getDisplayedChatUnread(2, false), 2);
 assert.equal(chat.getDisplayedChatUnread(2, true), 0);
 assert.equal(chat.getDisplayedChatUnread(1, false), 1);
 assert.notEqual(
-  chat.createChatScopeKey('user-a', 'pet-a'),
-  chat.createChatScopeKey('user-a', 'pet-b'),
+  chat.createChatScopeKey('user-a', 'family-a'),
+  chat.createChatScopeKey('user-a', 'family-b'),
 );
 assert.notEqual(
-  chat.createChatScopeKey('user-a', 'pet-a'),
-  chat.createChatScopeKey('user-b', 'pet-a'),
+  chat.createChatScopeKey('user-a', 'family-a'),
+  chat.createChatScopeKey('user-b', 'family-a'),
 );
-assert.equal(chat.createChatScopeKey(undefined, 'pet-a'), null);
+assert.equal(chat.createChatScopeKey(undefined, 'family-a'), null);
 console.log(
-  'PASS: other-member unread, self-message exclusion, duplicate ID dedupe, read visibility, and pet/user isolation.',
+  'PASS: other-member unread, self-message exclusion, duplicate ID dedupe, read visibility, and family/user isolation.',
 );
 
 assert.equal(journal.isJournalInitialLoading(true, false, true), true);
@@ -102,9 +105,10 @@ assert.match(screen, /hasCachedMessages: messagesQuery\.data !== undefined/u);
 assert.doesNotMatch(screen, /useChatRealtime/u);
 assert.match(screen, /setChatActive\(true\)/u);
 assert.match(screen, /useMarkChatRead/u);
+assert.match(pushFiles, /validate_family_notification_delivery/u);
 assert.doesNotMatch(
   pushFiles,
-  /CHAT_CREATED|CHAT_MESSAGE|chat_message_created/u,
+  /mark_family_chat_read|family_chat_read_states/u,
 );
 console.log(
   'PASS: session-level private Realtime owns unread invalidation and cleanup; Chat cache remains renderable while reconnecting.',
@@ -119,4 +123,6 @@ assert.match(packageJson, /verify:chat-journal-ux/u);
 console.log(
   'PASS: background Journal fetch is silent and only manual pull drives RefreshControl.',
 );
-console.log('PASS: no Chat remote push event or worker path was added.');
+console.log(
+  'PASS: Push revalidates delivery before sending and never writes Chat read state.',
+);

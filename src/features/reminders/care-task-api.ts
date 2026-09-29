@@ -8,7 +8,7 @@ export async function fetchCareTaskOccurrences(input: {
   windowStart: Date;
 }): Promise<CareTaskOccurrence[]> {
   const { data, error } = await requireSupabase().rpc(
-    'get_care_task_occurrences',
+    'get_care_task_occurrences_v2',
     {
       target_pet_id: input.petId ?? null,
       window_end: input.windowEnd.toISOString(),

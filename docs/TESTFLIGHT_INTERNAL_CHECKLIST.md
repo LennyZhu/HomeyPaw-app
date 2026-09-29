@@ -1,5 +1,21 @@
 # TestFlight Internal Testing Checklist
 
+## Pending Acceptance — HomeyPaw 1.3.0 (10)
+
+Prepared 2026-09-29. These checks require a separately authorized release build and manual acceptance; none is marked PASS by static config verification. The planned build number assumes ASC Build 10 is unused.
+
+- [ ] Confirm ASC Build 10 is unused and the archive is `1.3.0 (10)` / `com.zhushunli.homeypaw`.
+- [ ] Launch without Metro/Dev Client; confirm Production backend, strict release minimum-version behavior, signing and `aps-environment=production` in the signed archive.
+- [ ] Upgrade from 1.2.0 on the same installation: authorized notification registration uses Chat capability and updates one existing device row; login, foreground and token refresh remain functional.
+- [ ] Journal text/photos remain functional; choose/publish/play/save a video (15-second input limit, 25 MiB processed output), including denied/limited Photos and save permissions.
+- [ ] Two capable Owner/Member clients: background Chat Push, tap navigation, active-Chat foreground suppression and unread state; no self, Viewer, removed-member or legacy-device Chat Push.
+- [ ] Multi-weekday Reminder creation/edit, Select weekdays action, inclusive end date, completion history, Schedule reconciliation and local notifications.
+- [ ] Journal Detail / explicit photo or video opening records one first-view receipt; passive Feed does not. Metadata and compact readers modal show current authorized readers; no per-media count or unread inference.
+- [ ] Home Schedule entry/add flow, Photo Viewer fullscreen/dots/zoom/control toggle/save, and iPhone/iPad safe-area/navigation behavior.
+- [ ] Notification denial does not block core use; no new microphone/contacts/GPS/tracking prompts; localized Photos/video/save and photo-camera purposes remain accurate.
+- [ ] Live ASC questionnaire, published website policy and in-app legal copy match the 1.3.0 inventory; verify review credentials and sample Family in Review Information.
+- [ ] Record actual evidence and approve the mixed-client/minimum-version strategy after availability and Production smoke; config preparation does not change any release gate.
+
 ## Historical Result — HomeyPaw 1.1.0 Build 4
 
 - Bundle Identifier：`com.zhushunli.homeypaw`

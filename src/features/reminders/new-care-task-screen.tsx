@@ -58,7 +58,9 @@ function defaultValues(requestedDate?: string): CareTaskFormValues {
     note: '',
     scheduleType: 'once',
     title: '',
-    weekDay: String(jsDay === 0 ? 7 : jsDay),
+    weekDays: [jsDay === 0 ? 7 : jsDay],
+    endMode: 'never',
+    endsOn: date,
   };
 }
 

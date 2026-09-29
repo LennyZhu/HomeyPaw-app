@@ -111,10 +111,6 @@ export default function ProfileScreen() {
 
   return (
     <Screen contentContainerStyle={styles.screenContent} scroll>
-      <AppText accessibilityRole="header" variant="largeTitle">
-        {t('profile.title')}
-      </AppText>
-
       {presentation.showInitialLoading ? (
         <LoadingView label={t('profile.loading')} />
       ) : null}
@@ -229,12 +225,11 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   screenContent: {
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
   },
   profileHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: spacing.xxxl,
   },
   profileCopy: {
     minWidth: 0,

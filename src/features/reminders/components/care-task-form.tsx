@@ -16,6 +16,8 @@ import {
   type CareTaskFormValues,
   type CareTaskKind,
 } from '../care-task-schema';
+import { toggleCareTaskWeekDay } from '../care-task-recurrence';
+import { TaskEndDateField } from './task-end-date-field';
 import { TaskDateTimeFields } from './task-date-time-fields';
 
 type Props = {
@@ -67,6 +69,7 @@ export function CareTaskForm({
     resolver: zodResolver(schema),
   });
   const scheduleType = useWatch({ control, name: 'scheduleType' });
+  const endMode = useWatch({ control, name: 'endMode' });
   const category = useWatch({ control, name: 'category' });
   const date = useWatch({ control, name: 'date' });
   const isLeapDay = scheduleType === 'yearly' && date.endsWith('-02-29');
@@ -208,6 +211,51 @@ export function CareTaskForm({
               name="localTime"
               render={({ field: timeField }) => (
                 <TaskDateTimeFields
+                  dateAccessory={
+                    scheduleType !== 'once' ? (
+                      <View style={styles.field}>
+                        <Controller
+                          control={control}
+                          name="endMode"
+                          render={({ field }) => (
+                            <Field label={t('reminders.fields.end')}>
+                              <View style={styles.chips}>
+                                <ChoiceChip
+                                  label={t('reminders.end.never')}
+                                  selected={field.value === 'never'}
+                                  onPress={() => field.onChange('never')}
+                                />
+                                <ChoiceChip
+                                  label={t('reminders.end.date')}
+                                  selected={field.value === 'date'}
+                                  onPress={() => {
+                                    if (getValues('endsOn') < date)
+                                      setValue('endsOn', date);
+                                    field.onChange('date');
+                                  }}
+                                />
+                              </View>
+                            </Field>
+                          )}
+                        />
+                        {endMode === 'date' ? (
+                          <Controller
+                            control={control}
+                            name="endsOn"
+                            render={({ field, fieldState }) => (
+                              <TaskEndDateField
+                                value={field.value}
+                                minimumDate={date}
+                                label={t('reminders.fields.endsOn')}
+                                onChange={field.onChange}
+                                error={fieldState.error?.message}
+                              />
+                            )}
+                          />
+                        ) : null}
+                      </View>
+                    ) : null
+                  }
                   date={dateField.value}
                   dateLabel={
                     scheduleType === 'once'
@@ -231,21 +279,41 @@ export function CareTaskForm({
       {scheduleType === 'weekly' ? (
         <Controller
           control={control}
-          name="weekDay"
+          name="weekDays"
           render={({ field, fieldState }) => (
-            <Field label={t('reminders.fields.weekDay')}>
+            <View style={styles.field}>
+              <View style={styles.weekDaysHeader}>
+                <AppText variant="subheadline">
+                  {t('reminders.fields.weekDays')}
+                </AppText>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => field.onChange([1, 2, 3, 4, 5])}
+                  style={({ pressed }) => [
+                    styles.weekDaysShortcut,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <AppText tone="secondary" variant="footnote">
+                    {t('reminders.form.selectWeekdays')}
+                  </AppText>
+                </Pressable>
+              </View>
               <View style={styles.chips}>
                 {weekDays.map((day) => (
                   <ChoiceChip
                     key={day}
                     label={t(`reminders.weekDays.${day}`)}
-                    onPress={() => field.onChange(String(day))}
-                    selected={field.value === String(day)}
+                    onPress={() =>
+                      field.onChange(toggleCareTaskWeekDay(field.value, day))
+                    }
+                    selected={field.value.includes(day)}
+                    multiple
                   />
                 ))}
               </View>
               <FieldError message={fieldState.error?.message} />
-            </Field>
+            </View>
           )}
         />
       ) : null}
@@ -323,17 +391,6 @@ export function CareTaskForm({
         )}
       />
 
-      <View style={styles.timeZoneNote}>
-        <Ionicons
-          color={lightColors.textTertiary}
-          name="globe-outline"
-          size={16}
-        />
-        <AppText tone="tertiary" variant="footnote">
-          {t('reminders.form.timeZone', { timeZone })}
-        </AppText>
-      </View>
-
       <AppButton
         label={submitLabel}
         loading={isSubmitting}
@@ -371,15 +428,17 @@ function ChoiceChip({
   label,
   onPress,
   selected,
+  multiple = false,
 }: {
   icon?: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
   onPress: () => void;
   selected: boolean;
+  multiple?: boolean;
 }) {
   return (
     <Pressable
-      accessibilityRole="radio"
+      accessibilityRole={multiple ? 'checkbox' : 'radio'}
       accessibilityState={{ checked: selected }}
       onPress={onPress}
       style={({ pressed }) => [
@@ -419,6 +478,19 @@ const styles = StyleSheet.create({
   inputError: { borderColor: lightColors.error },
   noteInput: { minHeight: 100, paddingTop: spacing.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  weekDaysHeader: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  weekDaysShortcut: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
   chip: {
     minHeight: 42,
     alignItems: 'center',
@@ -434,6 +506,5 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.primarySoft,
     borderColor: lightColors.primary,
   },
-  timeZoneNote: { alignItems: 'center', flexDirection: 'row', gap: spacing.xs },
   pressed: { opacity: 0.62 },
 });

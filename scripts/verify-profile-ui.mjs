@@ -265,3 +265,60 @@ assert.equal(zh.about.openAppStore, '前往 App Store');
 console.log(
   'PASS: Join Family, Edit Profile, About, bilingual actions, and eight-character invites remain intact.',
 );
+
+const legal = await read('src/features/profile/legal-screen.tsx');
+assert.match(
+  await read('src/app/privacy-policy.tsx'),
+  /<LegalScreen kind="privacy"/u,
+);
+assert.ok(legal.includes('t(`about.${kind}Body`)'));
+assert.ok(
+  legal.includes(
+    "kind === 'privacy' ? 'about.privacyUpdated' : 'about.updated'",
+  ),
+  'Privacy gets its own date without redating unchanged Terms',
+);
+assert.equal(en.about.privacyUpdated, 'Updated September 29, 2026');
+assert.equal(zh.about.privacyUpdated, '更新日期：2026 年 9 月 29 日');
+for (const [copy, required, forbidden] of [
+  [
+    en.about.privacyBody,
+    [
+      /short videos/u,
+      /choose to take a photo/u,
+      /does not record video or use the microphone/u,
+      /first-view time/u,
+      /Passive Feed browsing and preloading do not count/u,
+      /app functionality/u,
+      /cross-app tracking/u,
+      /Chat notifications/u,
+      /sender's display name/u,
+      /never include message text/u,
+    ],
+    /does not use[^.]*camera|Chat does not send|policy URL will be added/u,
+  ],
+  [
+    zh.about.privacyBody,
+    [
+      /短影片/u,
+      /選擇拍照/u,
+      /不錄製影片，也不使用麥克風/u,
+      /首次查看時間/u,
+      /Feed 瀏覽或預載媒體不算查看/u,
+      /App 功能/u,
+      /跨 App 追蹤/u,
+      /聊天通知/u,
+      /發訊者暱稱/u,
+      /不包含聊天正文/u,
+    ],
+    /不使用[^。]*相機|Chat 不發送|公開政策網址會在/u,
+  ],
+]) {
+  for (const fact of required) assert.match(copy, fact);
+  assert.doesNotMatch(copy, forbidden);
+  assert.ok(copy.includes('https://homeypaw.vercel.app/privacy'));
+  assert.ok(copy.includes('\n\n'), 'Privacy remains readable in paragraphs');
+}
+console.log(
+  'PASS: bundled bilingual privacy UI covers photo-only Camera, library Video/save, first intentional Journal views and privacy-safe Chat Push; no stale camera/push claims, and Terms date is independent.',
+);

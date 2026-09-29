@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { Buffer } from 'node:buffer';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
@@ -37,6 +38,7 @@ const {
   groupCareScheduleByShift,
   isCareScheduleItemMutable,
   scheduleItemsByDate,
+  selectCurrentCareScheduleItems,
   shouldExpandScheduleGroup,
   summarizeScheduleDay,
   truncateCareScheduleGroups,
@@ -314,6 +316,117 @@ assert.equal(
   ),
   true,
 );
+
+const completedJason = scheduleItem({
+  assignee_display_name: 'Jason',
+  assignee_user_id: 'jason',
+  completion_id: 'jason-completion',
+  shift_id: 'jason-shift',
+});
+const canceledAgnes = scheduleItem({
+  assignee_display_name: 'Agnes',
+  assignee_user_id: 'agnes',
+  shift_id: 'agnes-shift',
+  shift_status: 'canceled',
+  shift_task_id: 'agnes-task',
+});
+const canceledJason = scheduleItem({
+  assignee_display_name: 'Jason',
+  assignee_user_id: 'jason',
+  shift_id: 'jason-shift',
+  shift_task_id: 'jason-canceled-task',
+  shift_task_status: 'canceled',
+});
+const futureJason = scheduleItem({
+  ...completedJason,
+  completion_id: null,
+  local_date: '2099-09-22',
+  source_scheduled_for: '2099-09-22T05:00:00Z',
+});
+const canceledUnassigned = scheduleItem({
+  assignee_user_id: null,
+  shift_task_status: 'canceled',
+});
+for (const { label, history, expected, completedCount } of [
+  {
+    label: 'completed Jason plus canceled Agnes',
+    history: [completedJason, canceledAgnes],
+    expected: [completedJason],
+    completedCount: 1,
+  },
+  {
+    label: 'mixed completed/canceled items within one Jason shift',
+    history: [completedJason, canceledJason],
+    expected: [completedJason],
+    completedCount: 1,
+  },
+  {
+    label: 'all-canceled day including unassigned and completed history',
+    history: [
+      canceledAgnes,
+      canceledUnassigned,
+      { ...completedJason, shift_task_status: 'canceled' },
+    ],
+    expected: [],
+    completedCount: 0,
+  },
+  {
+    label: 'completed result remains visible',
+    history: [completedJason],
+    expected: [completedJason],
+    completedCount: 1,
+  },
+  {
+    label: 'future pending schedule remains visible',
+    history: [futureJason],
+    expected: [futureJason],
+    completedCount: 0,
+  },
+]) {
+  const historySnapshot = structuredClone(history);
+  const current = selectCurrentCareScheduleItems(history);
+  assert.deepEqual(current, expected, label);
+  const summary = summarizeScheduleDay(history);
+  assert.equal(summary.itemCount, expected.length, label);
+  assert.equal(summary.completedCount, completedCount, label);
+  assert.equal(summary.unassignedCount, 0, label);
+  assert.deepEqual(summary.memberIds, expected.length ? ['jason'] : [], label);
+  assert.deepEqual(
+    summary.members.map((member) => member.userId),
+    summary.memberIds,
+    label,
+  );
+  const groups = groupCareScheduleByAssignee(groupCareScheduleByShift(current));
+  assert.deepEqual(
+    groups.map((group) => group.key),
+    summary.memberIds,
+    label,
+  );
+  assert.equal(groups[0]?.items.length ?? 0, expected.length, label);
+  assert.equal(groups[0]?.completedCount ?? 0, completedCount, label);
+  assert.equal(
+    groups[0]?.pendingCount ?? 0,
+    expected.length - completedCount,
+    label,
+  );
+  assert.equal(groups[0]?.canceledCount ?? 0, 0, label);
+  const home = truncateCareScheduleGroups(groups, 4);
+  assert.equal(home.hiddenCount, 0, label);
+  assert.equal(home.visibleGroups.length, groups.length, label);
+  assert.deepEqual(
+    history,
+    historySnapshot,
+    'presentation must retain history',
+  );
+  assert.equal(
+    groupCareScheduleByShift(history).flatMap((group) => group.items).length,
+    history.length,
+    'raw shift grouping must still expose every historical item',
+  );
+}
+console.log(
+  'PASS: canceled shifts/tasks cannot contribute current calendar avatars, counts, groups, or Home rows; mixed/completed/future schedules remain visible and raw history stays intact.',
+);
 const shift = shifts[0];
 assert(shift);
 assert.equal(canManageCareShift(shift, 'owner', 'owner-a'), true);
@@ -430,6 +543,19 @@ assert(homeSchedule.includes('const homeItemLimit = 4'));
 assert(homeSchedule.includes('truncateCareScheduleGroups'));
 assert(homeSchedule.includes('/schedule?date=${encodeURIComponent(date)}'));
 assert(homeSchedule.includes("t('schedule.overflowCount'"));
+for (const source of [homeSchedule, scheduleScreen]) {
+  assert(
+    source.includes('selectCurrentCareScheduleItems(scheduleQuery.data ?? [])'),
+  );
+  assert(
+    source.includes(
+      'currentItems.filter((item) => item.local_date === selectedDate)',
+    ),
+  );
+  assert(source.includes('items={currentItems}'));
+}
+assert(calendar.includes('summarizeScheduleDay(itemsByDate[cell.date] ?? [])'));
+assert(editScreen.includes('groupCareScheduleByShift(rangeQuery.data ?? [])'));
 assert(newScreen.includes('<CareTaskOccurrencePicker'));
 assert(newScreen.includes('<ScheduleAssigneeSelector'));
 assert(editScreen.includes('<ScheduleAssigneeSelector'));

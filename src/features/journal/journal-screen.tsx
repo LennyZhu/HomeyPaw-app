@@ -26,6 +26,7 @@ import { useCurrentPet } from '@/features/pets/use-current-pet';
 import { PostMediaPreview } from '@/features/posts/components/post-media-preview';
 import { PostPhotoViewer } from '@/features/posts/components/post-photo-viewer';
 import { PostVideoThumbnail } from '@/features/posts/components/post-video-thumbnail';
+import { useMarkPostRead } from '@/features/posts/post-read-queries';
 import { getRelativeDateKind } from '@/features/posts/post-date-label';
 import {
   type PostWithMedia,
@@ -58,6 +59,7 @@ export default function JournalScreen() {
   const { i18n, t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
+  const markPostRead = useMarkPostRead();
   const petsState = useCurrentPet();
   const petId = petsState.currentPetId;
   const journalContextKey = createJournalContextKey(user?.id, petId);
@@ -339,12 +341,14 @@ export default function JournalScreen() {
               videoThumbnailUrls={videoThumbnailUrlsQuery.data ?? {}}
               onPhotoError={recoverPhotoUrl}
               onVideoThumbnailError={recoverVideoThumbnailUrl}
-              onOpenPhoto={(initialIndex) =>
-                setPhotoViewer({ initialIndex, media: item.post.post_media })
-              }
-              onOpenVideo={() =>
-                router.push(`/posts/${item.post.id}/video` as Href)
-              }
+              onOpenPhoto={(initialIndex) => {
+                setPhotoViewer({ initialIndex, media: item.post.post_media });
+                void markPostRead(item.post);
+              }}
+              onOpenVideo={() => {
+                router.push(`/posts/${item.post.id}/video` as Href);
+                void markPostRead(item.post);
+              }}
               onPress={() => router.push(`/posts/${item.post.id}` as Href)}
               post={item.post}
             />

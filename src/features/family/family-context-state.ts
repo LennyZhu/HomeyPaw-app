@@ -74,8 +74,12 @@ export function shouldClearFamilyQuery(
   familyId?: string,
 ) {
   return (
-    queryKey[0] === 'families' &&
     queryKey[1] === userId &&
-    (!familyId || queryKey.includes(familyId))
+    ((queryKey[0] === 'families' &&
+      (!familyId || queryKey.includes(familyId))) ||
+      // One account has one Family. Clear receipt identity/session data even
+      // when revoked Pets are no longer available in the local Pet cache.
+      queryKey[0] === 'post-read' ||
+      queryKey[0] === 'post-readers')
   );
 }

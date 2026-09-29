@@ -7,16 +7,26 @@ photo path. Timeline and Home request only private thumbnail signed URLs. The
 video viewer.
 
 Creation is controlled through `journalVideoCreationEnabled` in
-`src/config/capabilities.ts`. Production defaults to disabled. Local testing can
-enable it by setting this public flag while the backend URL is strictly local:
+`src/config/capabilities.ts`. The 1.3.0 release train explicitly sets
+`RELEASE_JOURNAL_VIDEO_CREATION_ENABLED = true`: non-DEV JavaScript bundles
+(Production, TestFlight and release-mode preview) enable Video creation without
+an environment flag or version comparison. Backend URL does not decide release
+availability. DEV bundles retain local-only opt-in:
 
 ```dotenv
 EXPO_PUBLIC_JOURNAL_VIDEO_CREATION_ENABLED=true
 ```
 
-The same flag is ignored for a remote backend. A future authenticated server
-capability can enable creation after reader-capable app adoption reaches the
-release threshold.
+The same environment flag is ignored for a remote DEV backend. Development
+clients running DEV JavaScript follow this rule; a release-mode bundle follows
+the release capability regardless of its EAS profile name. The existing
+`ServerCapabilities` argument is reserved and has no fetch/cache integration.
+There is no Video-specific remote kill switch. The existing app-wide release
+maintenance/minimum-version gates and backend write guards remain unchanged;
+they are not a selective Video switch. Changing the release constant requires
+a new binary. Existing 1.2.0 binaries are unchanged; no backend flag or OTA update
+is introduced. Before building the RC, assign its approved 1.3.0 version/build
+and complete the separate backend/worker release gates.
 
 The formal write path creates stable post and video UUIDs, compresses through
 the version-patched iOS compressor, generates a JPEG thumbnail, uploads the MP4
@@ -25,6 +35,18 @@ calls the v2 RPC. Completed Storage objects are removed when the transaction
 does not commit. If the RPC response is ambiguous, the client reconciles the
 stable post/video identity before cleanup and records unresolved object paths in
 local structured orphan state for a future sweeper.
+
+Failure safety does not promise zero orphan objects during an outage. Failed
+Storage deletion is recorded locally on a best-effort basis; unknown commits
+preserve objects to avoid deleting committed media. The local orphan registry
+has no automatic sweeper today. The server cleanup worker handles queued
+committed-media lifecycle deletions, not every uncommitted upload. These existing
+failure paths are unchanged by the release capability and need controlled RC
+failure/recovery verification.
+
+Run `npm run verify:journal-video-capability` for the actual capability module's
+release/DEV/local/remote matrix, and `npm run verify:journal-video-client` plus
+the Journal composer/create verifiers for unchanged pipeline and UI contracts.
 
 Photo and video drafts are mutually exclusive. Existing photo-only creates and
 edits retain their original RPC and composer behavior. Conversions involving a

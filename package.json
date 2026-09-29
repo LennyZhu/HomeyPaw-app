@@ -1,7 +1,7 @@
 {
   "name": "homeypaw",
   "main": "expo-router/entry",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.9.1",
@@ -133,6 +133,7 @@
     "verify:ipad-layout": "node --experimental-strip-types scripts/verify-ipad-layout.mjs",
     "verify:journal-video-backend": "node scripts/verify-journal-video-backend.mjs",
     "verify:journal-video-client": "node scripts/verify-journal-video-client.mjs",
+    "verify:journal-video-capability": "node scripts/verify-journal-video-capability.mjs",
     "verify:media-egress-cache": "node scripts/verify-media-egress-cache.mjs",
     "process:journal-video-cleanup": "node scripts/process-journal-video-cleanup.mjs",
     "process:media-cleanup": "node scripts/process-journal-video-cleanup.mjs",
@@ -140,10 +141,21 @@
     "verify:multi-pet-family-phase-c4i": "node scripts/verify-multi-pet-family-phase-c4i.mjs",
     "verify:multi-pet-family-phase-c4i-client": "node scripts/verify-multi-pet-family-phase-c4i-client.mjs",
     "verify:release-bridge": "node --experimental-strip-types scripts/verify-release-bridge.mjs",
+    "verify:release-config": "node scripts/verify-release-config.mjs",
     "verify:auth-foreground": "node --experimental-strip-types scripts/verify-auth-foreground.mjs",
     "verify:production-media-cleanup-worker": "node scripts/verify-production-media-cleanup-worker.mjs",
     "verify:minimum-client-version": "node --experimental-strip-types scripts/verify-minimum-client-version.mjs",
-    "verify:production-family-migration-preflight": "node scripts/verify-production-family-migration-preflight.mjs"
+    "verify:production-family-migration-preflight": "node scripts/verify-production-family-migration-preflight.mjs",
+    "verify:family-chat-client": "node --experimental-strip-types scripts/verify-family-chat-client.mjs",
+    "verify:family-chat-sql": "node scripts/verify-family-chat-sql.mjs",
+    "verify:family-chat-push-client": "node --experimental-strip-types scripts/verify-family-chat-push-client.mjs",
+    "verify:family-chat-push-sql": "node scripts/verify-family-chat-push-sql.mjs",
+    "verify:reminder-recurrence-v2": "node --experimental-strip-types scripts/verify-reminder-recurrence-v2.mjs",
+    "verify:reminder-recurrence-v2-sql": "node scripts/verify-reminder-recurrence-v2-sql.mjs",
+    "verify:care-task-notification-plan": "node --experimental-strip-types scripts/verify-care-task-notification-plan.mjs",
+    "verify:post-read-client": "node --experimental-strip-types scripts/verify-post-read-client.mjs",
+    "verify:post-read-sql": "node scripts/verify-post-read-sql.mjs",
+    "verify:profile-branding": "node scripts/verify-profile-branding.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

@@ -171,7 +171,7 @@ assert(
   realtime.includes('config: { private: true }') &&
     realtime.includes('await client.realtime.setAuth()') &&
     realtime.includes('const messageId = event.payload?.message_id') &&
-    realtime.includes('payload?.pet_id') &&
+    /payload\s*\?\.family_id/u.test(realtime) &&
     !realtime.includes('payload?.id') &&
     !realtime.includes('postgres_changes'),
   'Client must authenticate private Broadcast and ignore framework metadata.',
@@ -222,12 +222,14 @@ assert(
   'Chat writes are not serialized against concurrent membership rotation.',
 );
 assert(
-  realtime.includes(".on('broadcast', { event: 'chat_channel_rotated' }") &&
+  /\.on\(\s*'broadcast',\s*\{ event: 'family_chat_channel_rotated' \}/u.test(
+    realtime,
+  ) &&
     realtime.includes('`user:${userId}:chat-control`') &&
     !realtime.includes("event: 'membership_changed'") &&
     count(realtime, /config: \{ private: true \}/gu) === 2 &&
-    realtime.includes('fetchChatChannelVersion(petId)') &&
-    realtime.includes('clearChatPetCache') &&
+    realtime.includes('fetchChatChannelVersion(familyId)') &&
+    realtime.includes('clearChatFamilyCache') &&
     realtime.includes('membershipRecheckIntervalMs') &&
     realtime.includes('staleVersionRetryDelayMs') &&
     realtime.includes('retryAttempted = true'),
@@ -265,7 +267,7 @@ assert(
     migration.includes('message_sender_id <> caller_id') &&
     migration.includes('body = safe_body') &&
     migration.includes('updated_at = now()') &&
-    queries.includes("rpc('update_chat_message'") &&
+    queries.includes("'update_family_chat_message'") &&
     screen.includes('useUpdateChatMessage') &&
     messageList.includes('onEdit') &&
     editModal.includes('maxLength={messageLimit}'),
@@ -283,8 +285,8 @@ assert(
     screen.includes('ChatMembersModal') &&
     screen.includes('ProductionChatMessageList') &&
     screen.includes('ProductionChatComposer') &&
-    screen.includes('key={pet.id}') &&
-    sessionProvider.includes('clearChatPetCache') &&
+    screen.includes('key={familyId}') &&
+    sessionProvider.includes('clearChatFamilyCache') &&
     !composer.includes('Attachment') &&
     !screen.includes('image-picker'),
   'Real UI is missing core states or includes Phase 10B attachments.',

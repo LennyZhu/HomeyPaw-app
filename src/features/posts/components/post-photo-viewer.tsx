@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -24,7 +24,6 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import {
   SafeAreaProvider,
-  SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -82,6 +81,7 @@ export function PostPhotoViewer({
   const currentIndexRef = useRef(currentIndex);
   const pageWidthRef = useRef(0);
   const [pagerViewport, setPagerViewport] = useState({ height: 0, width: 0 });
+  const [controlsVisible, setControlsVisible] = useState(true);
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
   const [isCurrentPhotoZoomed, setIsCurrentPhotoZoomed] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{
@@ -93,6 +93,9 @@ export function PostPhotoViewer({
   const [savePhoto] = useState(() =>
     createPostPhotoSaver(postPhotoSaveDependencies),
   );
+  const handleToggleControls = useCallback(() => {
+    setControlsVisible((current) => !current);
+  }, []);
 
   useEffect(() => {
     if (!visible || media.length === 0) return;
@@ -145,21 +148,6 @@ export function PostPhotoViewer({
 
   if (!visible) return null;
 
-  const goToIndex = (index: number) => {
-    const nextIndex = clampPhotoViewerIndex(index, media.length);
-    currentIndexRef.current = nextIndex;
-    setCurrentIndex(nextIndex);
-    setIsCurrentPhotoZoomed(false);
-    setSaveFeedback(null);
-    listRef.current?.scrollToOffset({
-      animated: true,
-      offset: getPhotoViewerPageOffset(
-        nextIndex,
-        pagerViewport.width,
-        media.length,
-      ),
-    });
-  };
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const nextIndex = getPhotoViewerIndexFromOffset(
       event.nativeEvent.contentOffset.x,
@@ -234,20 +222,24 @@ export function PostPhotoViewer({
       visible={visible}
     >
       <SafeAreaProvider>
-        <SafeAreaView
-          accessibilityViewIsModal
-          edges={['top', 'bottom']}
-          style={styles.viewer}
-        >
+        <View accessibilityViewIsModal style={styles.viewer}>
           <StatusBar style="light" />
-          <IconButton
-            accessibilityLabel={t('common.close')}
-            color={lightColors.onPrimary}
-            icon="close"
-            onPress={onClose}
-            style={[styles.closeButton, { top: insets.top + spacing.md }]}
-          />
-          {canSavePostPhotoToLibrary && currentPhoto ? (
+          {controlsVisible ? (
+            <IconButton
+              accessibilityLabel={t('common.close')}
+              color={lightColors.onPrimary}
+              icon="close"
+              onPress={onClose}
+              style={[
+                styles.closeButton,
+                {
+                  top: insets.top + spacing.md,
+                  right: insets.right + spacing.xl,
+                },
+              ]}
+            />
+          ) : null}
+          {controlsVisible && canSavePostPhotoToLibrary && currentPhoto ? (
             <Pressable
               accessibilityLabel={
                 isSavingPhoto
@@ -263,7 +255,10 @@ export function PostPhotoViewer({
               onPress={() => void handleSavePhoto()}
               style={({ pressed }) => [
                 styles.saveButton,
-                { top: insets.top + spacing.md },
+                {
+                  top: insets.top + spacing.md,
+                  left: insets.left + spacing.xl,
+                },
                 pressed && styles.pressedButton,
               ]}
             >
@@ -276,9 +271,6 @@ export function PostPhotoViewer({
                   size={20}
                 />
               )}
-              <AppText tone="onPrimary" variant="subheadline">
-                {t('posts.photos.save')}
-              </AppText>
             </Pressable>
           ) : null}
 
@@ -308,6 +300,7 @@ export function PostPhotoViewer({
                     isLoading={isLoading}
                     item={item}
                     onImageError={onImageError}
+                    onToggleControls={handleToggleControls}
                     onZoomChange={
                       index === currentIndex
                         ? setIsCurrentPhotoZoomed
@@ -326,34 +319,33 @@ export function PostPhotoViewer({
             ) : null}
           </View>
 
-          {media.length > 1 ? (
+          {controlsVisible && media.length > 1 ? (
             <View
-              style={[styles.controls, { bottom: insets.bottom + spacing.md }]}
+              accessible
+              accessibilityLabel={t('posts.photos.viewerPosition', {
+                position: currentIndex + 1,
+                total: media.length,
+              })}
+              accessibilityRole="text"
+              pointerEvents="none"
+              style={[
+                styles.pageIndicator,
+                {
+                  bottom: insets.bottom + spacing.xl,
+                  left: insets.left + spacing.xl,
+                  right: insets.right + spacing.xl,
+                },
+              ]}
             >
-              <ViewerNavigationButton
-                disabled={currentIndex === 0}
-                icon="chevron-back"
-                label={t('posts.photos.previous')}
-                onPress={() => goToIndex(currentIndex - 1)}
-              />
-              <AppText
-                accessibilityLabel={t('posts.photos.viewerPosition', {
-                  position: currentIndex + 1,
-                  total: media.length,
-                })}
-                tone="onPrimary"
-              >
-                {t('posts.photos.viewerPosition', {
-                  position: currentIndex + 1,
-                  total: media.length,
-                })}
-              </AppText>
-              <ViewerNavigationButton
-                disabled={currentIndex >= media.length - 1}
-                icon="chevron-forward"
-                label={t('posts.photos.next')}
-                onPress={() => goToIndex(currentIndex + 1)}
-              />
+              {media.map((item, index) => (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.pageDot,
+                    index === currentIndex && styles.activePageDot,
+                  ]}
+                />
+              ))}
             </View>
           ) : null}
           {saveFeedback ? (
@@ -362,6 +354,13 @@ export function PostPhotoViewer({
               accessibilityRole="alert"
               style={[
                 styles.saveFeedback,
+                {
+                  bottom:
+                    insets.bottom +
+                    spacing.md +
+                    layout.minimumTouchTarget +
+                    spacing.md,
+                },
                 saveFeedback.tone === 'error'
                   ? styles.saveFeedbackError
                   : styles.saveFeedbackSuccess,
@@ -375,7 +374,7 @@ export function PostPhotoViewer({
               </AppText>
             </View>
           ) : null}
-        </SafeAreaView>
+        </View>
       </SafeAreaProvider>
     </Modal>
   );
@@ -387,6 +386,7 @@ function ZoomablePostPhoto({
   isLoading,
   item,
   onImageError,
+  onToggleControls,
   onZoomChange,
   total,
   uri,
@@ -398,6 +398,7 @@ function ZoomablePostPhoto({
   isLoading: boolean;
   item: PostMedia;
   onImageError: ((storagePath: string) => void) | undefined;
+  onToggleControls: () => void;
   onZoomChange: ((isZoomed: boolean) => void) | undefined;
   total: number;
   uri: string | undefined;
@@ -438,7 +439,7 @@ function ZoomablePostPhoto({
       scheduleOnRN(reportZoomChange, shouldCaptureZoomedPhotoPan(scale.value));
       translateY.value = clampZoomedPhotoOffset(
         translateY.value,
-        viewportHeight * 0.78,
+        viewportHeight,
         scale.value,
       );
     });
@@ -455,7 +456,7 @@ function ZoomablePostPhoto({
       );
       translateY.value = clampZoomedPhotoOffset(
         startTranslateY.value + event.translationY,
-        viewportHeight * 0.78,
+        viewportHeight,
         scale.value,
       );
     })
@@ -479,6 +480,19 @@ function ZoomablePostPhoto({
   const zoomGesture = isZoomed
     ? Gesture.Simultaneous(pinch, zoomedPan, doubleTap)
     : Gesture.Simultaneous(pinch, doubleTap);
+  const singleTap = Gesture.Tap()
+    .numberOfTaps(1)
+    .maxDistance(8)
+    .onTouchesDown((event, manager) => {
+      if (event.numberOfTouches > 1) manager.fail();
+    })
+    .onEnd((_event, success) => {
+      if (success) scheduleOnRN(onToggleControls);
+    });
+  // A tap waits for zoom gestures to fail; double taps never toggle controls.
+  const photoGesture = canShowImage
+    ? Gesture.Exclusive(zoomGesture, singleTap)
+    : singleTap;
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: scale.value },
@@ -488,9 +502,9 @@ function ZoomablePostPhoto({
   }));
 
   return (
-    <View style={[styles.page, { height: viewportHeight, width }]}>
-      {canShowImage ? (
-        <GestureDetector gesture={zoomGesture}>
+    <GestureDetector gesture={photoGesture}>
+      <View style={[styles.page, { height: viewportHeight, width }]}>
+        {canShowImage ? (
           <Animated.View style={[styles.zoomSurface, animatedStyle]}>
             <Image
               accessibilityLabel={t('posts.photos.fullscreen', {
@@ -514,58 +528,29 @@ function ZoomablePostPhoto({
               style={styles.image}
             />
           </Animated.View>
-        </GestureDetector>
-      ) : isLoading && !hasLoadError ? (
-        <ActivityIndicator color={lightColors.onPrimary} size="large" />
-      ) : (
-        <View accessibilityRole="alert" style={styles.errorState}>
-          <Ionicons
+        ) : isLoading && !hasLoadError ? (
+          <ActivityIndicator color={lightColors.onPrimary} size="large" />
+        ) : (
+          <View accessibilityRole="alert" style={styles.errorState}>
+            <Ionicons
+              color={lightColors.onPrimary}
+              name="image-outline"
+              size={40}
+            />
+            <AppText style={styles.errorText} tone="onPrimary">
+              {t('posts.photos.viewerLoadError')}
+            </AppText>
+          </View>
+        )}
+        {imageLoading && canShowImage ? (
+          <ActivityIndicator
             color={lightColors.onPrimary}
-            name="image-outline"
-            size={40}
+            size="large"
+            style={styles.imageLoader}
           />
-          <AppText style={styles.errorText} tone="onPrimary">
-            {t('posts.photos.viewerLoadError')}
-          </AppText>
-        </View>
-      )}
-      {imageLoading && canShowImage ? (
-        <ActivityIndicator
-          color={lightColors.onPrimary}
-          size="large"
-          style={styles.imageLoader}
-        />
-      ) : null}
-    </View>
-  );
-}
-
-function ViewerNavigationButton({
-  disabled,
-  icon,
-  label,
-  onPress,
-}: {
-  disabled: boolean;
-  icon: 'chevron-back' | 'chevron-forward';
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.navigationButton,
-        disabled && styles.disabledButton,
-        pressed && styles.pressedButton,
-      ]}
-    >
-      <Ionicons color={lightColors.onPrimary} name={icon} size={22} />
-    </Pressable>
+        ) : null}
+      </View>
+    </GestureDetector>
   );
 }
 
@@ -575,24 +560,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: spacing.xl,
     zIndex: 3,
+    elevation: 3,
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
   },
   saveButton: {
     position: 'absolute',
     left: spacing.xl,
     zIndex: 3,
+    elevation: 3,
     minHeight: layout.minimumTouchTarget,
+    minWidth: layout.minimumTouchTarget,
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
     borderRadius: radius.full,
-    flexDirection: 'row',
-    gap: spacing.sm,
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
   },
-  pages: { flex: 1 },
+  pages: { ...StyleSheet.absoluteFill },
   page: { alignItems: 'center', justifyContent: 'center' },
-  zoomSurface: { width: '100%', height: '78%' },
+  zoomSurface: { width: '100%', height: '100%' },
   image: { width: '100%', height: '100%' },
   imageLoader: { position: 'absolute' },
   errorState: {
@@ -601,21 +586,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   errorText: { textAlign: 'center' },
-  controls: {
+  pageIndicator: {
     position: 'absolute',
+    zIndex: 3,
+    elevation: 3,
     right: spacing.xl,
-    bottom: spacing.md,
+    bottom: spacing.xl,
     left: spacing.xl,
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
+  pageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  activePageDot: { backgroundColor: lightColors.onPrimary },
   saveFeedback: {
     position: 'absolute',
     right: spacing.xl,
     bottom: spacing.md + layout.minimumTouchTarget + spacing.md,
     left: spacing.xl,
     zIndex: 4,
+    elevation: 4,
     alignItems: 'center',
     alignSelf: 'center',
     borderRadius: radius.full,
@@ -624,14 +620,5 @@ const styles = StyleSheet.create({
   },
   saveFeedbackSuccess: { backgroundColor: lightColors.secondarySoft },
   saveFeedbackError: { backgroundColor: lightColors.error },
-  navigationButton: {
-    width: layout.minimumTouchTarget,
-    height: layout.minimumTouchTarget,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    borderRadius: radius.full,
-    justifyContent: 'center',
-  },
-  disabledButton: { opacity: 0.28 },
   pressedButton: { opacity: 0.62 },
 });

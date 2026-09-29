@@ -29,6 +29,11 @@ export default function PetsScreen() {
     petsQuery,
   } = useCurrentFamily();
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const canAddPet = Boolean(
+    backendCapability === 'FAMILY_MULTI_PET' &&
+    currentFamilyId &&
+    currentMembership?.role === 'owner',
+  );
 
   return (
     <Screen contentContainerStyle={styles.content} scroll>
@@ -55,11 +60,7 @@ export default function PetsScreen() {
       </View>
 
       <PetsCreateActionsModal
-        canAddPet={Boolean(
-          backendCapability === 'FAMILY_MULTI_PET' &&
-          currentFamilyId &&
-          currentMembership?.role === 'owner',
-        )}
+        canAddPet={canAddPet}
         canCreateOrJoinFamily={
           backendCapability === 'LEGACY_PET'
             ? petsQuery.isSuccess && petsQuery.data.length === 0
@@ -79,12 +80,6 @@ export default function PetsScreen() {
           router.push('/join-family' as Href);
         }}
         visible={isCreateMenuOpen}
-      />
-
-      <AppButton
-        label={t('profile.manageFamilies')}
-        onPress={() => router.push('/families')}
-        variant="secondary"
       />
 
       {petsQuery.isPending ? (
@@ -109,16 +104,23 @@ export default function PetsScreen() {
       petsQuery.data.length === 0 ? (
         <View style={styles.emptyWrap}>
           <EmptyState
-            actionLabel={t(
-              currentFamilyId ? 'pets.empty.action' : 'family.create.action',
-            )}
+            {...(!currentFamilyId || canAddPet
+              ? {
+                  actionLabel: t(
+                    currentFamilyId
+                      ? 'pets.empty.action'
+                      : 'family.create.action',
+                  ),
+                  onActionPress: () =>
+                    router.push(
+                      currentFamilyId ? '/pets/new' : '/families/new',
+                    ),
+                }
+              : {})}
             body={t(
               currentFamilyId ? 'pets.empty.body' : 'pets.empty.noFamilyBody',
             )}
             icon="paw-outline"
-            onActionPress={() =>
-              router.push(currentFamilyId ? '/pets/new' : '/families/new')
-            }
             title={t('pets.empty.title')}
           />
           {!currentFamilyId ? (

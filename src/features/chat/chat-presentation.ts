@@ -5,13 +5,6 @@ export function formatChatBadge(count: number | undefined) {
   return count > 99 ? '99+' : String(count);
 }
 
-export function createChatScopeKey(
-  userId: string | undefined,
-  petId: string | null,
-) {
-  return userId && petId ? `${userId}:${petId}` : null;
-}
-
 export function getDisplayedChatUnread(
   count: number | undefined,
   active: boolean,

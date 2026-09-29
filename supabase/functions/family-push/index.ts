@@ -236,6 +236,16 @@ Deno.serve(async (request) => {
 
     for (const target of (targets.data ?? []) as FamilyPushTarget[]) {
       try {
+        // Revalidate each individual delivery immediately before the external
+        // request; a deleted Chat row or revoked recipient is safely skipped.
+        const eligible = await admin.rpc(
+          'validate_family_notification_delivery',
+          {
+            target_delivery_id: target.delivery_id,
+          },
+        );
+        if (eligible.error) throw eligible.error;
+        if (eligible.data !== true) continue;
         const message = buildFamilyPushMessage(event, target);
         const ticket = classifyExpoTicket(
           await sendPush(message, target.delivery_id, useMock),

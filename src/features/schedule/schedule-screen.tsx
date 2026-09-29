@@ -46,6 +46,7 @@ import {
   getScheduleRole,
   groupCareScheduleByAssignee,
   groupCareScheduleByShift,
+  selectCurrentCareScheduleItems,
   isCareShiftAlreadyClaimed,
   isScheduleAccessDenied,
   shouldExpandScheduleGroup,
@@ -112,14 +113,16 @@ export default function ScheduleScreen() {
   const claimShift = useClaimCareShift(petId ?? '');
   const completeTask = useCompleteCareShiftTask(petId ?? '');
   const role = getScheduleRole(membersQuery.data ?? [], user?.id);
+  const currentItems = useMemo(
+    () => selectCurrentCareScheduleItems(scheduleQuery.data ?? []),
+    [scheduleQuery.data],
+  );
   const selectedShifts = useMemo(
     () =>
       groupCareScheduleByShift(
-        (scheduleQuery.data ?? []).filter(
-          (item) => item.local_date === selectedDate,
-        ),
+        currentItems.filter((item) => item.local_date === selectedDate),
       ),
-    [scheduleQuery.data, selectedDate],
+    [currentItems, selectedDate],
   );
   const selectedGroups = useMemo(
     () => groupCareScheduleByAssignee(selectedShifts),
@@ -298,7 +301,7 @@ export default function ScheduleScreen() {
           <ScheduleMonthCalendar
             fixedSixWeeks
             isUpdating={isBackgroundScheduleFetching}
-            items={scheduleQuery.data ?? []}
+            items={currentItems}
             month={month}
             onNextMonth={() => moveMonth(1)}
             onPreviousMonth={() => moveMonth(-1)}

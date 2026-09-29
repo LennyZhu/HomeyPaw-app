@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -33,14 +34,29 @@ function normalizeCode(value: string) {
     .slice(0, 8);
 }
 
-function isInvalidInviteError(error: unknown) {
+async function isInvalidInviteError(error: unknown) {
+  if (error instanceof FunctionsHttpError) {
+    if (error.context.status >= 500) return false;
+
+    try {
+      const body: unknown = await error.context.clone().json();
+      return Boolean(
+        body &&
+        typeof body === 'object' &&
+        'error' in body &&
+        typeof body.error === 'string' &&
+        /^invite_invalid$/i.test(body.error),
+      );
+    } catch {
+      return false;
+    }
+  }
+
   return Boolean(
     error &&
     typeof error === 'object' &&
-    (('message' in error &&
-      (String(error.message).includes('invite_invalid') ||
-        String(error.message).includes('non-2xx'))) ||
-      ('name' in error && String(error.name) === 'FunctionsHttpError')),
+    'message' in error &&
+    /\binvite_invalid\b/i.test(String(error.message)),
   );
 }
 
@@ -84,9 +100,13 @@ export default function JoinFamilyScreen() {
       setPreview(null);
       setSubmittedCode(null);
       setErrorMessage(
-        isInvalidInviteError(error)
-          ? t('family.errors.invalidInvite')
-          : t('family.errors.network'),
+        isAlreadyInFamilyError(error)
+          ? t('family.single.alreadyInFamily')
+          : (await isInvalidInviteError(error))
+            ? t('family.errors.invalidInvite')
+            : error instanceof FunctionsFetchError
+              ? t('family.errors.network')
+              : t('family.errors.verifyUnavailable'),
       );
     } finally {
       setIsPreviewing(false);
@@ -118,7 +138,7 @@ export default function JoinFamilyScreen() {
           ? t('family.single.alreadyInFamily')
           : isFamilyMemberLimitError(error)
             ? t('family.errors.memberLimit')
-            : isInvalidInviteError(error)
+            : (await isInvalidInviteError(error))
               ? t('family.errors.invalidInvite')
               : t('family.errors.network'),
       );

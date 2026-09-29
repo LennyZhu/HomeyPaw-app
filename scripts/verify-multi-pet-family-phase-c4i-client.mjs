@@ -16,6 +16,10 @@ const queries = read('src/features/family/family-queries.ts');
 const petQueries = read('src/features/pets/pet-queries.ts');
 const home = read('src/features/home/home-screen.tsx');
 const chat = read('src/features/chat/chat-screen.tsx');
+const chatQueries = read('src/features/chat/chat-queries.ts');
+const chatScope = read('src/features/chat/chat-scope.ts');
+const chatSession = read('src/features/chat/chat-session-provider.tsx');
+const chatRealtime = read('src/features/chat/use-chat-realtime.ts');
 const en = JSON.parse(read('src/i18n/locales/en.json'));
 const zh = JSON.parse(read('src/i18n/locales/zh-HK.json'));
 function check(label, condition) {
@@ -59,10 +63,39 @@ check(
   'Home with a zero-Pet Family does not offer Join',
   home.includes('!petsState.currentFamilyId ?'),
 );
+// A Family can chat with zero Pets. Create/Join belongs to the no-Family state.
+const noFamilyChat = chat.match(/if \(!familyId\) \{([\s\S]*?)\n  \}/u)?.[1];
+assert.ok(noFamilyChat, 'Chat must have an explicit no-Family state');
+for (const route of ['/families/new', '/join-family']) {
+  check(
+    `Chat offers ${route} only inside the no-Family state`,
+    noFamilyChat.includes(`router.push('${route}'`) &&
+      chat.split(`router.push('${route}'`).length === 2,
+  );
+}
 check(
-  'Chat zero-Pet state shows Join only when no Family exists',
-  chat.includes('!petsState.currentFamilyId ?') &&
-    chat.includes("petsState.currentFamilyId ? '/pets/new' : '/families/new'"),
+  'Chat queries and room identity use Family; zero Pets do not block Chat',
+  /const familyId = familyState\.currentFamilyId;/u.test(chat) &&
+    /useChatMessages\(\s*familyId,/u.test(chat) &&
+    /useChatMembers\(\s*familyId,/u.test(chat) &&
+    /key=\{familyId\}/u.test(chat) &&
+    !/if \(!pet\)|if \(!petId\)|key=\{pet\.id\}/u.test(chat),
+);
+check(
+  'Chat API reads canonical Family members and uses Family RPCs/cache keys',
+  chatQueries.includes("'get_family_chat_members'") &&
+    chatQueries.includes("'get_family_chat_messages_page'") &&
+    chatQueries.includes("'send_family_chat_message'") &&
+    chatQueries.includes('target_family_id: familyId') &&
+    chatScope.includes("'family', familyId") &&
+    !/target_pet_id|petId|pet_members/u.test(chatQueries + chatScope),
+);
+check(
+  'Chat session/realtime uses Family scope independently of the selected Pet',
+  chatSession.includes('familyState.currentFamilyId') &&
+    chatSession.includes('createChatScopeKey(user?.id, familyId)') &&
+    chatRealtime.includes('getFamilyChatTopic(familyId, channelVersion)') &&
+    !/currentPet|petId|pet_id|pet:/u.test(chatSession + chatRealtime),
 );
 check(
   'Pets actions wait for membership and hide Add Pet from non-Owners',

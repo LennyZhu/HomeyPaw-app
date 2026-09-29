@@ -1,5 +1,19 @@
 # Phase 7 — Family Reminders + Care Tasks + Local Notifications
 
+## Recurrence V2 mixed-version release checklist (2026-09-28)
+
+`20260928102325_reminder_recurrence_v2.sql` 保留 legacy create、update 與 occurrence RPC。舊 1.2.0 可繼續建立／編輯 simple reminder，並透過 legacy occurrence RPC 讀取新規則展開的時間；其 UI 無法完整表達多個 weekdays 或 `ends_on`。
+
+Legacy update 遇到多個 weekdays 或非 NULL `ends_on`，會以 SQLSTATE `22023`／`REMINDER_REQUIRES_NEWER_CLIENT` 明確拒絕，原規則不被修改。這個保護不代表舊 UI 已支援 advanced recurrence。
+
+下一版本正式開放 advanced recurrence 前，release checklist 必須完成：
+
+- 確認 additive migration、legacy simple reminder 與 v2 客戶端驗收通過。
+- 明確安排 mixed-client 過渡期；舊 UI 不能完整編輯 advanced rule，不能長期依賴此狀態。
+- 新版本正式 Available 並通過 Production smoke 後，按既有 release process 決定並執行 minimum-version cutover，避免舊 UI 長期遇到無法表達的規則。
+
+本次僅持久應用本地 migration；未連接 Production，未變更 minimum iOS、mutation gate 或其他 release gate。以下 Phase 7 歷史說明保留作基線參考。
+
 Phase 7 將「未來要做的家庭照顧」放在 `care_tasks`，完成後才以同一個資料庫 transaction 建立 `care_task_completions` 與既有 `care_logs`。`care_logs` 繼續只代表已發生的照顧事實，不承載待辦、排程或通知狀態。
 
 ## Migration

@@ -12,9 +12,7 @@ import { EmptyState } from '@/components/empty-state';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
-import { PetAvatar } from '@/features/pets/components/pet-avatar';
-import { PetSwitcherModal } from '@/features/pets/components/pet-switcher-modal';
-import { useCurrentPet } from '@/features/pets/use-current-pet';
+import { useCurrentFamily } from '@/features/family/use-current-family';
 import { logError } from '@/lib/logger';
 import { lightColors, layout, radius, spacing } from '@/theme';
 
@@ -41,15 +39,14 @@ export default function ChatScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
-  const petsState = useCurrentPet();
-  const pet = petsState.currentPet;
-  const petId = pet?.id ?? null;
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+  const familyState = useCurrentFamily();
+  const familyId = familyState.currentFamilyId;
+  const chatTitle = t('chat.live.header.title');
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<ChatListMessage | null>(null);
   const [visibleCursor, setVisibleCursor] = useState<{
     messageId: string;
-    petId: string;
+    familyId: string;
   } | null>(null);
   const messageListRef = useRef<FlatList<ChatListMessage>>(null);
   const lastReadRequestRef = useRef<string | null>(null);
@@ -62,6 +59,19 @@ export default function ChatScreen() {
     status: realtimeStatus,
     versionError,
   } = useChatSession();
+
+  useEffect(() => {
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      setEditTarget(null);
+      setVisibleCursor(null);
+      lastReadRequestRef.current = null;
+    });
+    return () => {
+      active = false;
+    };
+  }, [familyId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,21 +88,21 @@ export default function ChatScreen() {
 
   const isSubscribed = realtimeStatus === 'subscribed';
   const messagesQuery = useChatMessages(
-    petId,
+    familyId,
     isSubscribed && !sessionAccessLost,
   );
   const membersQuery = useChatMembers(
-    petId,
+    familyId,
     isSubscribed && !sessionAccessLost,
   );
   const unreadQuery = useChatUnreadCount(
-    petId,
+    familyId,
     isSubscribed && !sessionAccessLost,
   );
-  const sendMutation = useSendChatMessage(petId ?? '');
-  const updateMutation = useUpdateChatMessage(petId ?? '');
-  const deleteMutation = useDeleteChatMessage(petId ?? '');
-  const markReadMutation = useMarkChatRead(petId ?? '');
+  const sendMutation = useSendChatMessage(familyId ?? '');
+  const updateMutation = useUpdateChatMessage(familyId ?? '');
+  const deleteMutation = useDeleteChatMessage(familyId ?? '');
+  const markReadMutation = useMarkChatRead(familyId ?? '');
   const messages = useMemo(
     () => getChronologicalMessages(messagesQuery.data),
     [messagesQuery.data],
@@ -103,10 +113,15 @@ export default function ChatScreen() {
   const queryError = versionError ?? messagesQuery.error ?? membersQuery.error;
   const accessLost = sessionAccessLost || isChatAccessError(queryError);
   const visibleMessageId =
-    visibleCursor?.petId === petId ? visibleCursor.messageId : null;
+    visibleCursor?.familyId === familyId ? visibleCursor.messageId : null;
 
   useEffect(() => {
-    if (!petId || !user || sessionAccessLost || !isChatAccessError(queryError))
+    if (
+      !familyId ||
+      !user ||
+      sessionAccessLost ||
+      !isChatAccessError(queryError)
+    )
       return;
 
     let active = true;
@@ -116,7 +131,7 @@ export default function ChatScreen() {
     return () => {
       active = false;
     };
-  }, [onAccessLost, petId, queryError, sessionAccessLost, user]);
+  }, [onAccessLost, familyId, queryError, sessionAccessLost, user]);
 
   useEffect(() => {
     if (
@@ -125,10 +140,10 @@ export default function ChatScreen() {
       unreadQuery.data !== undefined &&
       unreadQuery.data > 0 &&
       visibleMessageId &&
-      lastReadRequestRef.current !== `${petId}:${visibleMessageId}` &&
+      lastReadRequestRef.current !== `${familyId}:${visibleMessageId}` &&
       !markReadMutation.isPending
     ) {
-      const requestKey = `${petId}:${visibleMessageId}`;
+      const requestKey = `${familyId}:${visibleMessageId}`;
       lastReadRequestRef.current = requestKey;
       markReadMutation.mutate(visibleMessageId, {
         onError: (error) => {
@@ -146,7 +161,7 @@ export default function ChatScreen() {
     markReadMutation,
     messages.length,
     onAccessLost,
-    petId,
+    familyId,
     unreadQuery.data,
     visibleMessageId,
   ]);
@@ -159,44 +174,42 @@ export default function ChatScreen() {
       );
       return () => clearTimeout(timer);
     }
-  }, [isChatActive, messages.length, petId]);
+  }, [isChatActive, messages.length, familyId]);
 
-  if (petsState.isPending) {
+  if (
+    familyState.capabilityQuery.isPending ||
+    familyState.familiesQuery.isPending
+  ) {
     return <LoadingView label={t('pets.loading.list')} />;
   }
 
-  if (petsState.isError) {
+  if (
+    familyState.capabilityQuery.isError ||
+    familyState.familiesQuery.isError
+  ) {
     return (
       <Screen contentContainerStyle={styles.noPetContent}>
         <AppText tone="error">{t('pets.errors.load')}</AppText>
         <AppButton
           label={t('common.retry')}
-          onPress={() => void petsState.refetch()}
+          onPress={() => void familyState.familiesQuery.refetch()}
           variant="secondary"
         />
       </Screen>
     );
   }
 
-  if (!pet) {
+  if (!familyId) {
     return (
       <Screen contentContainerStyle={styles.noPetContent}>
         <EmptyState
-          actionLabel={t(
-            petsState.currentFamilyId
-              ? 'chat.live.noPet.add'
-              : 'family.create.action',
-          )}
-          body={t('chat.live.noPet.body')}
+          actionLabel={t('family.create.action')}
+          body={t('chat.live.noFamily.body')}
           icon="chatbubble-ellipses-outline"
-          onActionPress={() =>
-            router.push(
-              petsState.currentFamilyId ? '/pets/new' : '/families/new',
-            )
-          }
-          title={t('chat.live.noPet.title')}
+          onActionPress={() => router.push('/families/new')}
+          title={t('chat.live.noFamily.title')}
         />
-        {!petsState.currentFamilyId ? (
+        {!familyState.currentFamilyId ? (
           <AppButton
             label={t('chat.live.noPet.join')}
             onPress={() => router.push('/join-family' as Href)}
@@ -272,47 +285,27 @@ export default function ChatScreen() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Pressable
-          accessibilityHint={t('chat.live.header.switchHint')}
-          accessibilityLabel={t('chat.live.header.switchPet', {
-            name: pet.name,
-          })}
-          accessibilityRole="button"
-          onPress={() => setIsSwitcherOpen(true)}
-          style={({ pressed }) => [
-            styles.petSelector,
-            pressed && styles.pressed,
-          ]}
-        >
-          <PetAvatar
-            accessibilityLabel={t('pets.avatar.accessibility', {
-              name: pet.name,
+        <View style={styles.titleCopy}>
+          <AppText
+            accessibilityLabel={chatTitle}
+            accessibilityRole="header"
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            variant="title3"
+          >
+            {chatTitle}
+          </AppText>
+          <AppText
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            tone="secondary"
+            variant="caption"
+          >
+            {t('chat.live.header.memberCount', {
+              count: members.length,
             })}
-            avatarPath={pet.avatar_path}
-            name={pet.name}
-            size={44}
-          />
-          <View style={styles.titleCopy}>
-            <AppText
-              accessibilityLabel={pet.name}
-              accessibilityRole="header"
-              ellipsizeMode="tail"
-              numberOfLines={1}
-              style={styles.petName}
-              variant="headline"
-            >
-              {pet.name}
-            </AppText>
-            <AppText tone="secondary" variant="caption">
-              {t('chat.live.header.subtitle', { count: members.length })}
-            </AppText>
-          </View>
-          <Ionicons
-            color={lightColors.textSecondary}
-            name="chevron-down"
-            size={17}
-          />
-        </Pressable>
+          </AppText>
+        </View>
 
         <Pressable
           accessibilityLabel={t('chat.live.header.members')}
@@ -367,7 +360,7 @@ export default function ChatScreen() {
               ? {
                   actionLabel: t('chat.live.singleMember.action'),
                   onActionPress: () =>
-                    router.push(`/pets/${pet.id}/members` as Href),
+                    router.push(`/families/${familyId}` as Href),
                 }
               : {})}
             body={
@@ -398,7 +391,7 @@ export default function ChatScreen() {
           onLoadEarlier={() => void messagesQuery.fetchNextPage()}
           onRetry={retry}
           onVisibleMessageChange={(messageId) => {
-            setVisibleCursor({ messageId, petId: pet.id });
+            setVisibleCursor({ messageId, familyId });
           }}
           ref={messageListRef}
         />
@@ -407,35 +400,19 @@ export default function ChatScreen() {
       {!accessLost && isSubscribed ? (
         <ProductionChatComposer
           disabled={realtimeStatus !== 'subscribed'}
-          key={pet.id}
+          key={familyId}
           onSend={send}
         />
       ) : null}
 
-      <PetSwitcherModal
-        currentPetId={petsState.currentPetId}
-        onAddPet={() => {
-          setIsSwitcherOpen(false);
-          router.push('/pets/new');
-        }}
-        onClose={() => setIsSwitcherOpen(false)}
-        onSelectPet={(nextPetId) => {
-          setEditTarget(null);
-          petsState.setCurrentPetId(nextPetId);
-          setIsSwitcherOpen(false);
-        }}
-        pets={petsState.pets}
-        visible={isSwitcherOpen}
-      />
-
       <ChatMembersModal
         members={members}
         onClose={() => setIsMembersOpen(false)}
-        petName={pet.name}
         visible={isMembersOpen}
       />
 
-      {editTarget ? (
+      {editTarget?.family_id === familyId &&
+      editTarget.sender_id === user?.id ? (
         <ChatEditMessageModal
           error={updateMutation.isError}
           isSaving={updateMutation.isPending}
@@ -467,15 +444,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.screenPadding,
     paddingVertical: spacing.sm,
   },
-  petSelector: {
-    minHeight: 52,
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
   titleCopy: { flex: 1, gap: 2 },
-  petName: { flexShrink: 1 },
   membersButton: {
     width: 46,
     height: 46,

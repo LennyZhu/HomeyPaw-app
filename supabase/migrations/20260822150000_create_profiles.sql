@@ -82,7 +82,7 @@ begin
     coalesce(
       metadata_name,
       nullif(split_part(coalesce(new.email, ''), '@', 1), ''),
-      'HomeyPaw user'
+      'Pawday user'
     ),
     80
   );
@@ -122,7 +122,7 @@ select
         ''
       ),
       nullif(split_part(coalesce(users.email, ''), '@', 1), ''),
-      'HomeyPaw user'
+      'Pawday user'
     ),
     80
   ),

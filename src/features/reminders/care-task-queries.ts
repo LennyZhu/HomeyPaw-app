@@ -9,7 +9,10 @@ import { requireSupabase } from '@/lib/supabase/client';
 import { syncCareTaskNotifications } from '@/services/care-task-notifications';
 import type { CareTask } from '@/types/database';
 
-import { localDateTimeToInstant } from './care-task-recurrence';
+import {
+  localDateTimeToInstant,
+  normalizeCareTaskWeekDays,
+} from './care-task-recurrence';
 import type { CareTaskFormValues } from './care-task-schema';
 import type { CareTaskCompletionResult } from './care-task-types';
 import { fetchCareTaskOccurrences } from './care-task-api';
@@ -65,8 +68,11 @@ function valuesToTaskRpc(values: CareTaskFormValues, timeZone: string) {
     task_starts_on: isOnce ? null : values.date,
     task_time_zone: timeZone,
     task_title: values.title.trim(),
-    task_week_day:
-      values.scheduleType === 'weekly' ? Number(values.weekDay) : null,
+    task_week_days:
+      values.scheduleType === 'weekly'
+        ? normalizeCareTaskWeekDays(values.weekDays)
+        : null,
+    task_ends_on: !isOnce && values.endMode === 'date' ? values.endsOn : null,
   };
 }
 
@@ -86,7 +92,7 @@ async function createCareTask(input: {
   timeZone?: string;
   values: CareTaskFormValues;
 }) {
-  const { data, error } = await requireSupabase().rpc('create_care_task', {
+  const { data, error } = await requireSupabase().rpc('create_care_task_v2', {
     target_pet_id: input.petId,
     task_id: input.taskId,
     ...valuesToTaskRpc(input.values, input.timeZone ?? getDeviceTimeZone()),
@@ -100,7 +106,7 @@ async function updateCareTask(input: {
   timeZone: string;
   values: CareTaskFormValues;
 }) {
-  const { data, error } = await requireSupabase().rpc('update_care_task', {
+  const { data, error } = await requireSupabase().rpc('update_care_task_v2', {
     target_task_id: input.taskId,
     ...valuesToTaskRpc(input.values, input.timeZone),
   });
@@ -184,6 +190,9 @@ function useInvalidateCareTasks() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: careTaskKeys.all(user?.id) }),
       queryClient.invalidateQueries({ queryKey: careKeys.all(user?.id) }),
+      // Schedule can cancel associated future items when the recurrence changes.
+      // Its queries already use this prefix; avoid a circular queries import.
+      queryClient.invalidateQueries({ queryKey: ['care-schedule', user?.id] }),
     ]);
     if (user) {
       void syncCareTaskNotifications(user.id).catch(() => undefined);

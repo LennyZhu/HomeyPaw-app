@@ -7,7 +7,8 @@ export type CareTaskSchedule = {
   scheduledAt: string | null;
   startsOn: string | null;
   timeZone: string;
-  weekDay: number | null;
+  weekDays: number[] | null;
+  endsOn: string | null;
 };
 
 type LocalParts = {
@@ -177,7 +178,7 @@ export function expandCareTaskOccurrences(
     const matchesSchedule =
       schedule.scheduleType === 'daily' ||
       (schedule.scheduleType === 'weekly' &&
-        getIsoWeekDay(dateOnly) === schedule.weekDay) ||
+        (schedule.weekDays ?? []).includes(getIsoWeekDay(dateOnly))) ||
       (schedule.scheduleType === 'monthly' &&
         getMonthDay(dateOnly) === schedule.monthDay) ||
       (schedule.scheduleType === 'yearly' &&
@@ -185,7 +186,11 @@ export function expandCareTaskOccurrences(
           Number(dateOnly.slice(0, 4)),
           schedule.startsOn,
         ) === dateOnly);
-    if (isOnOrAfterStart && matchesSchedule) {
+    if (
+      isOnOrAfterStart &&
+      (!schedule.endsOn || dateOnly <= schedule.endsOn) &&
+      matchesSchedule
+    ) {
       const instant = localDateTimeToInstant(
         dateOnly,
         schedule.localTime,
@@ -199,4 +204,21 @@ export function expandCareTaskOccurrences(
   }
 
   return occurrences.sort((left, right) => left.getTime() - right.getTime());
+}
+
+export function isValidCareTaskDate(value: string) {
+  if (!dateOnlyPattern.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year!, month! - 1, day));
+  return date.toISOString().slice(0, 10) === value;
+}
+
+export function normalizeCareTaskWeekDays(days: number[]) {
+  return [...new Set(days)].sort((a, b) => a - b);
+}
+
+export function toggleCareTaskWeekDay(days: number[], day: number) {
+  return normalizeCareTaskWeekDays(
+    days.includes(day) ? days.filter((value) => value !== day) : [...days, day],
+  );
 }
