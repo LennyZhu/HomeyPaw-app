@@ -194,6 +194,19 @@ assert(viewer.includes('if (!currentPhoto || saveInFlight.current) return'));
 assert(viewer.includes('Linking.openSettings()'));
 assert(viewer.includes('useSafeAreaInsets'));
 assert(viewer.includes('insets.top + spacing.md'));
+const saveButton = viewer.match(/<Pressable[\s\S]*?<\/Pressable>/u)?.[0];
+assert(saveButton);
+assert(saveButton.includes("t('posts.photos.saveAccessibility')"));
+assert(saveButton.includes('onPress={() => void handleSavePhoto()}'));
+assert(saveButton.includes('name="download-outline"'));
+assert(saveButton.includes('<ActivityIndicator'));
+assert.doesNotMatch(saveButton, /<AppText|posts\.photos\.save['"]/u);
+const saveButtonStyle = viewer.match(
+  /\n  saveButton: \{([\s\S]*?)\n  \},/u,
+)?.[1];
+assert(saveButtonStyle?.includes('minWidth: layout.minimumTouchTarget'));
+assert(saveButtonStyle?.includes('minHeight: layout.minimumTouchTarget'));
+assert.doesNotMatch(saveButtonStyle, /gap:|paddingHorizontal:|flexDirection:/u);
 console.log(
-  'PASS: Add-only native permission, authorized signed source, viewer UI, and safe web fallback are configured.',
+  'PASS: Add-only native permission, authorized signed source, accessible icon-only save button with minimum touch target, unchanged save action, and safe web fallback are configured.',
 );

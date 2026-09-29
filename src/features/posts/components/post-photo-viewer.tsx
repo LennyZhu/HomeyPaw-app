@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -81,6 +81,7 @@ export function PostPhotoViewer({
   const currentIndexRef = useRef(currentIndex);
   const pageWidthRef = useRef(0);
   const [pagerViewport, setPagerViewport] = useState({ height: 0, width: 0 });
+  const [controlsVisible, setControlsVisible] = useState(true);
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
   const [isCurrentPhotoZoomed, setIsCurrentPhotoZoomed] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{
@@ -92,6 +93,9 @@ export function PostPhotoViewer({
   const [savePhoto] = useState(() =>
     createPostPhotoSaver(postPhotoSaveDependencies),
   );
+  const handleToggleControls = useCallback(() => {
+    setControlsVisible((current) => !current);
+  }, []);
 
   useEffect(() => {
     if (!visible || media.length === 0) return;
@@ -144,21 +148,6 @@ export function PostPhotoViewer({
 
   if (!visible) return null;
 
-  const goToIndex = (index: number) => {
-    const nextIndex = clampPhotoViewerIndex(index, media.length);
-    currentIndexRef.current = nextIndex;
-    setCurrentIndex(nextIndex);
-    setIsCurrentPhotoZoomed(false);
-    setSaveFeedback(null);
-    listRef.current?.scrollToOffset({
-      animated: true,
-      offset: getPhotoViewerPageOffset(
-        nextIndex,
-        pagerViewport.width,
-        media.length,
-      ),
-    });
-  };
   const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const nextIndex = getPhotoViewerIndexFromOffset(
       event.nativeEvent.contentOffset.x,
@@ -235,20 +224,22 @@ export function PostPhotoViewer({
       <SafeAreaProvider>
         <View accessibilityViewIsModal style={styles.viewer}>
           <StatusBar style="light" />
-          <IconButton
-            accessibilityLabel={t('common.close')}
-            color={lightColors.onPrimary}
-            icon="close"
-            onPress={onClose}
-            style={[
-              styles.closeButton,
-              {
-                top: insets.top + spacing.md,
-                right: insets.right + spacing.xl,
-              },
-            ]}
-          />
-          {canSavePostPhotoToLibrary && currentPhoto ? (
+          {controlsVisible ? (
+            <IconButton
+              accessibilityLabel={t('common.close')}
+              color={lightColors.onPrimary}
+              icon="close"
+              onPress={onClose}
+              style={[
+                styles.closeButton,
+                {
+                  top: insets.top + spacing.md,
+                  right: insets.right + spacing.xl,
+                },
+              ]}
+            />
+          ) : null}
+          {controlsVisible && canSavePostPhotoToLibrary && currentPhoto ? (
             <Pressable
               accessibilityLabel={
                 isSavingPhoto
@@ -280,9 +271,6 @@ export function PostPhotoViewer({
                   size={20}
                 />
               )}
-              <AppText tone="onPrimary" variant="subheadline">
-                {t('posts.photos.save')}
-              </AppText>
             </Pressable>
           ) : null}
 
@@ -312,6 +300,7 @@ export function PostPhotoViewer({
                     isLoading={isLoading}
                     item={item}
                     onImageError={onImageError}
+                    onToggleControls={handleToggleControls}
                     onZoomChange={
                       index === currentIndex
                         ? setIsCurrentPhotoZoomed
@@ -330,41 +319,33 @@ export function PostPhotoViewer({
             ) : null}
           </View>
 
-          {media.length > 1 ? (
+          {controlsVisible && media.length > 1 ? (
             <View
+              accessible
+              accessibilityLabel={t('posts.photos.viewerPosition', {
+                position: currentIndex + 1,
+                total: media.length,
+              })}
+              accessibilityRole="text"
+              pointerEvents="none"
               style={[
-                styles.controls,
+                styles.pageIndicator,
                 {
-                  bottom: insets.bottom + spacing.md,
+                  bottom: insets.bottom + spacing.xl,
                   left: insets.left + spacing.xl,
                   right: insets.right + spacing.xl,
                 },
               ]}
             >
-              <ViewerNavigationButton
-                disabled={currentIndex === 0}
-                icon="chevron-back"
-                label={t('posts.photos.previous')}
-                onPress={() => goToIndex(currentIndex - 1)}
-              />
-              <AppText
-                accessibilityLabel={t('posts.photos.viewerPosition', {
-                  position: currentIndex + 1,
-                  total: media.length,
-                })}
-                tone="onPrimary"
-              >
-                {t('posts.photos.viewerPosition', {
-                  position: currentIndex + 1,
-                  total: media.length,
-                })}
-              </AppText>
-              <ViewerNavigationButton
-                disabled={currentIndex >= media.length - 1}
-                icon="chevron-forward"
-                label={t('posts.photos.next')}
-                onPress={() => goToIndex(currentIndex + 1)}
-              />
+              {media.map((item, index) => (
+                <View
+                  key={item.id}
+                  style={[
+                    styles.pageDot,
+                    index === currentIndex && styles.activePageDot,
+                  ]}
+                />
+              ))}
             </View>
           ) : null}
           {saveFeedback ? (
@@ -405,6 +386,7 @@ function ZoomablePostPhoto({
   isLoading,
   item,
   onImageError,
+  onToggleControls,
   onZoomChange,
   total,
   uri,
@@ -416,6 +398,7 @@ function ZoomablePostPhoto({
   isLoading: boolean;
   item: PostMedia;
   onImageError: ((storagePath: string) => void) | undefined;
+  onToggleControls: () => void;
   onZoomChange: ((isZoomed: boolean) => void) | undefined;
   total: number;
   uri: string | undefined;
@@ -497,6 +480,19 @@ function ZoomablePostPhoto({
   const zoomGesture = isZoomed
     ? Gesture.Simultaneous(pinch, zoomedPan, doubleTap)
     : Gesture.Simultaneous(pinch, doubleTap);
+  const singleTap = Gesture.Tap()
+    .numberOfTaps(1)
+    .maxDistance(8)
+    .onTouchesDown((event, manager) => {
+      if (event.numberOfTouches > 1) manager.fail();
+    })
+    .onEnd((_event, success) => {
+      if (success) scheduleOnRN(onToggleControls);
+    });
+  // A tap waits for zoom gestures to fail; double taps never toggle controls.
+  const photoGesture = canShowImage
+    ? Gesture.Exclusive(zoomGesture, singleTap)
+    : singleTap;
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: scale.value },
@@ -506,9 +502,9 @@ function ZoomablePostPhoto({
   }));
 
   return (
-    <View style={[styles.page, { height: viewportHeight, width }]}>
-      {canShowImage ? (
-        <GestureDetector gesture={zoomGesture}>
+    <GestureDetector gesture={photoGesture}>
+      <View style={[styles.page, { height: viewportHeight, width }]}>
+        {canShowImage ? (
           <Animated.View style={[styles.zoomSurface, animatedStyle]}>
             <Image
               accessibilityLabel={t('posts.photos.fullscreen', {
@@ -532,58 +528,29 @@ function ZoomablePostPhoto({
               style={styles.image}
             />
           </Animated.View>
-        </GestureDetector>
-      ) : isLoading && !hasLoadError ? (
-        <ActivityIndicator color={lightColors.onPrimary} size="large" />
-      ) : (
-        <View accessibilityRole="alert" style={styles.errorState}>
-          <Ionicons
+        ) : isLoading && !hasLoadError ? (
+          <ActivityIndicator color={lightColors.onPrimary} size="large" />
+        ) : (
+          <View accessibilityRole="alert" style={styles.errorState}>
+            <Ionicons
+              color={lightColors.onPrimary}
+              name="image-outline"
+              size={40}
+            />
+            <AppText style={styles.errorText} tone="onPrimary">
+              {t('posts.photos.viewerLoadError')}
+            </AppText>
+          </View>
+        )}
+        {imageLoading && canShowImage ? (
+          <ActivityIndicator
             color={lightColors.onPrimary}
-            name="image-outline"
-            size={40}
+            size="large"
+            style={styles.imageLoader}
           />
-          <AppText style={styles.errorText} tone="onPrimary">
-            {t('posts.photos.viewerLoadError')}
-          </AppText>
-        </View>
-      )}
-      {imageLoading && canShowImage ? (
-        <ActivityIndicator
-          color={lightColors.onPrimary}
-          size="large"
-          style={styles.imageLoader}
-        />
-      ) : null}
-    </View>
-  );
-}
-
-function ViewerNavigationButton({
-  disabled,
-  icon,
-  label,
-  onPress,
-}: {
-  disabled: boolean;
-  icon: 'chevron-back' | 'chevron-forward';
-  label: string;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityLabel={label}
-      accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.navigationButton,
-        disabled && styles.disabledButton,
-        pressed && styles.pressedButton,
-      ]}
-    >
-      <Ionicons color={lightColors.onPrimary} name={icon} size={22} />
-    </Pressable>
+        ) : null}
+      </View>
+    </GestureDetector>
   );
 }
 
@@ -602,13 +569,11 @@ const styles = StyleSheet.create({
     zIndex: 3,
     elevation: 3,
     minHeight: layout.minimumTouchTarget,
+    minWidth: layout.minimumTouchTarget,
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.16)',
     borderRadius: radius.full,
-    flexDirection: 'row',
-    gap: spacing.sm,
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
   },
   pages: { ...StyleSheet.absoluteFill },
   page: { alignItems: 'center', justifyContent: 'center' },
@@ -621,17 +586,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
   },
   errorText: { textAlign: 'center' },
-  controls: {
+  pageIndicator: {
     position: 'absolute',
     zIndex: 3,
     elevation: 3,
     right: spacing.xl,
-    bottom: spacing.md,
+    bottom: spacing.xl,
     left: spacing.xl,
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
+  pageDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  activePageDot: { backgroundColor: lightColors.onPrimary },
   saveFeedback: {
     position: 'absolute',
     right: spacing.xl,
@@ -647,14 +620,5 @@ const styles = StyleSheet.create({
   },
   saveFeedbackSuccess: { backgroundColor: lightColors.secondarySoft },
   saveFeedbackError: { backgroundColor: lightColors.error },
-  navigationButton: {
-    width: layout.minimumTouchTarget,
-    height: layout.minimumTouchTarget,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
-    borderRadius: radius.full,
-    justifyContent: 'center',
-  },
-  disabledButton: { opacity: 0.28 },
   pressedButton: { opacity: 0.62 },
 });
