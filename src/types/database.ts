@@ -431,6 +431,32 @@ export type Database = {
           },
         ];
       };
+      post_read_states: {
+        Row: {
+          id: string;
+          post_id: string;
+          user_id: string | null;
+          first_read_at: string;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          user_id?: string | null;
+          first_read_at?: string;
+        };
+        Update: {
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'post_read_states_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'posts';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       post_media: {
         Row: {
           created_at: string;
@@ -707,6 +733,19 @@ export type Database = {
           member_joined_at: string;
           member_role: Database['public']['Enums']['pet_member_role'];
           member_user_id: string;
+        }[];
+      };
+      mark_post_read: {
+        Args: { target_post_id: string };
+        Returns: string;
+      };
+      get_post_readers: {
+        Args: { target_post_id: string };
+        Returns: {
+          reader_user_id: string;
+          reader_display_name: string;
+          reader_avatar_path: string | null;
+          first_read_at: string;
         }[];
       };
       mark_chat_read: {

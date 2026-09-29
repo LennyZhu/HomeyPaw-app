@@ -215,6 +215,15 @@
     }
   },
   "posts": {
+    "readers": {
+      "count_one": "{{count}} 人已查看",
+      "count_other": "{{count}} 人已查看",
+      "empty": "尚未有人查看",
+      "title": "已查看",
+      "openHint": "查看已查看成員",
+      "loading": "正在載入已查看成員…",
+      "error": "暫時無法載入已查看成員。"
+    },
     "authorWithDate": "{{author}} · {{date}} · {{time}}",
     "fields": {
       "media": "媒體",

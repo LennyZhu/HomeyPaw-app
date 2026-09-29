@@ -7,6 +7,8 @@ const petDataQueryRoots = new Set([
   'family',
   'pet',
   'posts',
+  'post-read',
+  'post-readers',
 ]);
 
 function containsPetId(value: unknown, petId: string): boolean {

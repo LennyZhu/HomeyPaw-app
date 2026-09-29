@@ -21,6 +21,7 @@ import { AppText } from '@/components/app-text';
 import { lightColors, spacing } from '@/theme';
 
 import { usePost, usePostVideoUrl } from './post-queries';
+import { usePostReadReceipt } from './post-read-queries';
 import { sanitizeJournalVideoLogText } from './video/post-video-publish-debug';
 
 const sourceLoadTimeoutMs = 20_000;
@@ -62,6 +63,7 @@ export default function PostVideoViewerScreen() {
   const postQuery = usePost(id);
   const post = postQuery.data ?? null;
   const video = post?.post_videos ?? null;
+  usePostReadReceipt(post, postQuery.isSuccess && Boolean(video));
   const videoUrl = usePostVideoUrl(
     video?.storage_path ?? null,
     post?.pet_id ?? null,

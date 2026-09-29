@@ -215,6 +215,15 @@
     }
   },
   "posts": {
+    "readers": {
+      "count_one": "Viewed by {{count}} family member",
+      "count_other": "Viewed by {{count}} family members",
+      "empty": "No one has viewed this yet",
+      "title": "Viewed by",
+      "openHint": "Show viewers",
+      "loading": "Loading readers…",
+      "error": "Unable to load readers right now."
+    },
     "authorWithDate": "{{author}} · {{date}} · {{time}}",
     "fields": {
       "media": "Media",

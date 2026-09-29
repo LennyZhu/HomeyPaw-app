@@ -25,6 +25,12 @@ import { lightColors, radius, spacing } from '@/theme';
 import { PostActionsModal } from './components/post-actions-modal';
 import { PostPhotoViewer } from './components/post-photo-viewer';
 import { PostVideoThumbnail } from './components/post-video-thumbnail';
+import { PostReadersModal } from './components/post-readers-modal';
+import {
+  useMarkPostRead,
+  usePostReadReceipt,
+  usePostReaders,
+} from './post-read-queries';
 import { postMediaBucket } from './post-media';
 import {
   useDeletePost,
@@ -42,6 +48,7 @@ export default function PostDetailScreen() {
   const deletePost = useDeletePost();
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [actionsVisible, setActionsVisible] = useState(false);
+  const [readersVisible, setReadersVisible] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const paths =
     postQuery.data?.post_media.map((item) => item.storage_path) ?? [];
@@ -71,6 +78,23 @@ export default function PostDetailScreen() {
   const post = postQuery.data;
   const membersQuery = usePetMembers(post?.pet_id ?? null);
   const authorsQuery = usePetPostAuthors(post?.pet_id ?? null);
+  const contentReady =
+    postQuery.isSuccess &&
+    Boolean(post) &&
+    !membersQuery.isError &&
+    !authorsQuery.isError;
+  const isViewing = usePostReadReceipt(post, contentReady);
+  const readersQuery = usePostReaders(post, isViewing);
+  const markPostRead = useMarkPostRead();
+  const openPhoto = (index: number) => {
+    setViewerIndex(index);
+    if (post && contentReady) void markPostRead(post);
+  };
+  const openVideo = () => {
+    if (!post) return;
+    if (contentReady) void markPostRead(post);
+    router.push(`/posts/${post.id}/video` as Href);
+  };
   const leaveDetail = () => {
     if (router.canGoBack()) {
       router.back();
@@ -217,9 +241,41 @@ export default function PostDetailScreen() {
           >
             {authorName}
           </AppText>
-          <AppText tone="secondary" variant="footnote">
-            {authorDate} · {authorTime}
-          </AppText>
+          <View style={styles.authorMetadata}>
+            <AppText
+              style={styles.authorDate}
+              tone="secondary"
+              variant="footnote"
+            >
+              {authorDate} · {authorTime}
+            </AppText>
+            {readersQuery.isSuccess && readersQuery.data.length > 0 ? (
+              <View style={styles.readerMetadata}>
+                <AppText accessible={false} tone="secondary" variant="footnote">
+                  ·
+                </AppText>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t('posts.readers.count', {
+                    count: readersQuery.data.length,
+                  })}
+                  accessibilityHint={t('posts.readers.openHint')}
+                  hitSlop={spacing.sm}
+                  onPress={() => {
+                    setReadersVisible(true);
+                    void readersQuery.refetch();
+                  }}
+                  style={styles.readersAction}
+                >
+                  <AppText tone="secondary" variant="footnote">
+                    {t('posts.readers.count', {
+                      count: readersQuery.data.length,
+                    })}
+                  </AppText>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         </View>
         {post.tag ? (
           <View style={styles.tag}>
@@ -237,7 +293,7 @@ export default function PostDetailScreen() {
             total: 1,
           })}
           accessibilityRole="button"
-          onPress={() => setViewerIndex(0)}
+          onPress={() => openPhoto(0)}
           style={({ pressed }) => [
             styles.singlePhotoWrap,
             {
@@ -272,7 +328,7 @@ export default function PostDetailScreen() {
               })}
               accessibilityRole="button"
               key={media.id}
-              onPress={() => setViewerIndex(index)}
+              onPress={() => openPhoto(index)}
               style={styles.photoWrap}
             >
               <Image
@@ -296,7 +352,7 @@ export default function PostDetailScreen() {
       {post.post_videos ? (
         <PostVideoThumbnail
           onImageError={recoverVideoThumbnailUrl}
-          onPress={() => router.push(`/posts/${post.id}/video` as Href)}
+          onPress={openVideo}
           thumbnailUrl={
             videoThumbnailUrlsQuery.data?.[post.post_videos.thumbnail_path] ??
             null
@@ -319,6 +375,16 @@ export default function PostDetailScreen() {
           />
           <AppText tone="secondary">{post.location_name}</AppText>
         </View>
+      ) : null}
+
+      {readersVisible ? (
+        <PostReadersModal
+          readers={readersQuery.isError ? [] : (readersQuery.data ?? [])}
+          loading={readersQuery.isFetching}
+          error={readersQuery.isError}
+          onRetry={() => void readersQuery.refetch()}
+          onClose={() => setReadersVisible(false)}
+        />
       ) : null}
 
       {deleteError ? <AppText tone="error">{deleteError}</AppText> : null}
@@ -355,6 +421,21 @@ export default function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  authorMetadata: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+  },
+  authorDate: { minWidth: 0, flexShrink: 1 },
+  readerMetadata: {
+    maxWidth: '100%',
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: spacing.xs,
+  },
+  readersAction: { minWidth: 0, flexShrink: 1 },
   content: {
     gap: spacing.xl,
     paddingBottom: spacing.huge,
