@@ -153,7 +153,8 @@
     "verify:reminder-recurrence-v2-sql": "node scripts/verify-reminder-recurrence-v2-sql.mjs",
     "verify:care-task-notification-plan": "node --experimental-strip-types scripts/verify-care-task-notification-plan.mjs",
     "verify:post-read-client": "node --experimental-strip-types scripts/verify-post-read-client.mjs",
-    "verify:post-read-sql": "node scripts/verify-post-read-sql.mjs"
+    "verify:post-read-sql": "node scripts/verify-post-read-sql.mjs",
+    "verify:profile-branding": "node scripts/verify-profile-branding.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"
