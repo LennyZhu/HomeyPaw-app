@@ -60,8 +60,10 @@ const [
 check(
   capabilities.includes('journalVideoCreationEnabled') &&
     capabilities.includes('LOCAL_BACKEND') &&
-    capabilities.includes('ServerCapabilities'),
-  'creation gate must be capability-based, local-safe, and server-ready',
+    capabilities.includes('ServerCapabilities') &&
+    capabilities.includes('RELEASE_JOURNAL_VIDEO_CREATION_ENABLED = true') &&
+    capabilities.includes('!__DEV__ && RELEASE_JOURNAL_VIDEO_CREATION_ENABLED'),
+  'creation must use an explicit release capability while retaining DEV/local opt-in',
 );
 check(
   !capabilities.includes('journalVideoCreationEnabled: __DEV__'),

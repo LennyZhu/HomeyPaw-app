@@ -6,9 +6,13 @@ export type AppCapabilities = {
 
 export type ServerCapabilities = Partial<AppCapabilities>;
 
+// Journal Video ships in the 1.3.0 release train. This is binary UX availability,
+// not authorization; Production/TestFlight/preview must not depend on an env flag.
+export const RELEASE_JOURNAL_VIDEO_CREATION_ENABLED = true;
+
 /**
- * Keeps rollout policy separate from the UI. A future authenticated server
- * capability can enable creation after reader-capable clients are deployed.
+ * Non-DEV bundles use the explicit release capability. DEV keeps local opt-in.
+ * ServerCapabilities is a reserved input, not a connected remote kill switch.
  * The local environment override is deliberately rejected for remote backends.
  */
 export function resolveAppCapabilities(
@@ -20,6 +24,7 @@ export function resolveAppCapabilities(
 
   return {
     journalVideoCreationEnabled:
+      (!__DEV__ && RELEASE_JOURNAL_VIDEO_CREATION_ENABLED) ||
       serverCapabilities.journalVideoCreationEnabled === true ||
       localVideoPreview,
   };
