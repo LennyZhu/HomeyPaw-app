@@ -1184,6 +1184,7 @@
     "complete": "Complete",
     "claim": "I'll take care of it",
     "add": "Add schedule",
+    "view": "View schedule",
     "addCareTask": "New Care Reminder",
     "petFamily": "Family care schedule",
     "dayItemCount_one": "{{count}} care item",

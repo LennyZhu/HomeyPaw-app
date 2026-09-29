@@ -38,6 +38,7 @@ import { ScheduleMonthCalendar } from './schedule-month-calendar';
 const homeItemLimit = 4;
 
 type Props = {
+  canAddSchedule: boolean;
   onAccessLoss: () => void;
   petId: string;
   selectedDate: string;
@@ -46,6 +47,7 @@ type Props = {
 };
 
 export function HomeScheduleCard({
+  canAddSchedule,
   onAccessLoss,
   petId,
   selectedDate,
@@ -107,12 +109,200 @@ export function HomeScheduleCard({
 
   const openSchedule = (date = selectedDate) =>
     router.push(`/schedule?date=${encodeURIComponent(date)}` as Href);
+  const openNewSchedule = () =>
+    router.push(
+      `/schedule/new?date=${encodeURIComponent(selectedDate)}` as Href,
+    );
+
+  const summary = (
+    <>
+      <View style={styles.summaryHeading}>
+        <AppText accessibilityRole="header" variant="headline">
+          {formatCalendarDate(selectedDate, i18n.language)}
+        </AppText>
+        {canAddSchedule && !scheduleQuery.isError ? (
+          <View style={styles.overflowLink}>
+            <AppText tone="tertiary" variant="footnote">
+              {t('schedule.view')}
+            </AppText>
+            <Ionicons
+              color={lightColors.textTertiary}
+              name="chevron-forward"
+              size={18}
+            />
+          </View>
+        ) : null}
+      </View>
+
+      {scheduleQuery.isPending ? (
+        <View accessibilityLabel={t('schedule.loading')} style={styles.loading}>
+          <View style={[styles.skeleton, styles.skeletonTitle]} />
+          <View style={[styles.skeleton, styles.skeletonLine]} />
+        </View>
+      ) : scheduleQuery.isError ? (
+        <View style={styles.messageState}>
+          <AppText tone="error">
+            {__DEV__ && isScheduleBackendUnavailable(scheduleQuery.error)
+              ? t('schedule.errors.localBackendRequired')
+              : t('schedule.errors.load')}
+          </AppText>
+          <AppButton
+            label={t('common.retry')}
+            onPress={() => void scheduleQuery.refetch()}
+            variant="secondary"
+          />
+        </View>
+      ) : homeSummary.visibleGroups.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons
+            color={lightColors.textTertiary}
+            name="calendar-clear-outline"
+            size={22}
+          />
+          <AppText tone="secondary">{t('schedule.emptyDate')}</AppText>
+        </View>
+      ) : (
+        <View style={styles.shiftList}>
+          {homeSummary.visibleGroups.map((group) => {
+            const name = !group.assigneeUserId
+              ? t('schedule.unassigned')
+              : (group.assigneeDisplayName ?? t('family.members.formerMember'));
+            return (
+              <View key={group.key} style={styles.shiftSummary}>
+                <View style={styles.shiftHeading}>
+                  {!group.assigneeUserId ? (
+                    <View style={[styles.avatar, styles.unassignedAvatar]}>
+                      <Ionicons
+                        color={lightColors.warning}
+                        name="hand-left-outline"
+                        size={16}
+                      />
+                    </View>
+                  ) : (
+                    <Avatar
+                      accessibilityLabel={name}
+                      name={name}
+                      size={30}
+                      source={createStorageImageSource(
+                        profileAvatarBucket,
+                        group.assigneeAvatarPath ?? '',
+                        group.assigneeAvatarUrl,
+                      )}
+                    />
+                  )}
+                  <AppText style={styles.shiftName} variant="headline">
+                    {name}
+                  </AppText>
+                </View>
+                {group.items.map((item) => {
+                  const completed = isCareScheduleItemCompleted(item);
+                  const canceled =
+                    item.shift_status === 'canceled' ||
+                    item.shift_task_status === 'canceled';
+                  return (
+                    <View key={item.shift_task_id} style={styles.itemRow}>
+                      <AppText style={styles.time} variant="subheadline">
+                        {formatScheduleTime(
+                          item.source_scheduled_for,
+                          item.task_time_zone,
+                          i18n.language,
+                        )}
+                      </AppText>
+                      <View style={styles.taskCopy}>
+                        <AppText
+                          numberOfLines={2}
+                          style={canceled && styles.canceled}
+                          variant="subheadline"
+                        >
+                          {item.task_title}
+                        </AppText>
+                        {completed ? (
+                          <AppText
+                            numberOfLines={1}
+                            tone="tertiary"
+                            variant="caption"
+                          >
+                            {t('schedule.completedBy', {
+                              name: resolveHistoricalActorDisplayName({
+                                actorId: item.completed_by,
+                                displayName: item.completer_display_name,
+                                t,
+                              }),
+                            })}
+                          </AppText>
+                        ) : null}
+                      </View>
+                      <View style={styles.state}>
+                        <Ionicons
+                          color={
+                            canceled
+                              ? lightColors.textTertiary
+                              : completed
+                                ? lightColors.success
+                                : lightColors.warning
+                          }
+                          name={
+                            canceled
+                              ? 'close-circle-outline'
+                              : completed
+                                ? 'checkmark-circle'
+                                : 'time-outline'
+                          }
+                          size={15}
+                        />
+                        <AppText
+                          tone={
+                            completed && !canceled ? 'success' : 'secondary'
+                          }
+                          variant="caption"
+                        >
+                          {t(
+                            `schedule.status.${
+                              canceled
+                                ? 'canceled'
+                                : completed
+                                  ? 'completed'
+                                  : 'pending'
+                            }`,
+                          )}
+                        </AppText>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {homeSummary.hiddenCount > 0 ? (
+        <View style={styles.overflowAction}>
+          <AppText style={styles.overflowCopy} tone="secondary">
+            {t('schedule.overflowCount', {
+              count: homeSummary.hiddenCount,
+            })}
+          </AppText>
+          <View style={styles.overflowLink}>
+            <AppText tone="brand" variant="headline">
+              {t('schedule.seeAll')}
+            </AppText>
+            <Ionicons
+              color={lightColors.primary}
+              name="chevron-forward"
+              size={18}
+            />
+          </View>
+        </View>
+      ) : null}
+    </>
+  );
 
   return (
     <View style={styles.section}>
       <HomeSectionHeader
-        action={t('schedule.seeAll')}
-        onAction={() => openSchedule()}
+        action={canAddSchedule ? t('schedule.add') : undefined}
+        onAction={canAddSchedule ? openNewSchedule : undefined}
         title={t('schedule.title')}
       />
 
@@ -126,185 +316,18 @@ export function HomeScheduleCard({
         />
 
         <View style={styles.summaryDivider} />
-        <AppText accessibilityRole="header" variant="headline">
-          {formatCalendarDate(selectedDate, i18n.language)}
-        </AppText>
-
-        {scheduleQuery.isPending ? (
-          <View
-            accessibilityLabel={t('schedule.loading')}
-            style={styles.loading}
-          >
-            <View style={[styles.skeleton, styles.skeletonTitle]} />
-            <View style={[styles.skeleton, styles.skeletonLine]} />
-          </View>
-        ) : scheduleQuery.isError ? (
-          <View style={styles.messageState}>
-            <AppText tone="error">
-              {__DEV__ && isScheduleBackendUnavailable(scheduleQuery.error)
-                ? t('schedule.errors.localBackendRequired')
-                : t('schedule.errors.load')}
-            </AppText>
-            <AppButton
-              label={t('common.retry')}
-              onPress={() => void scheduleQuery.refetch()}
-              variant="secondary"
-            />
-          </View>
-        ) : homeSummary.visibleGroups.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons
-              color={lightColors.textTertiary}
-              name="calendar-clear-outline"
-              size={22}
-            />
-            <AppText tone="secondary">{t('schedule.emptyDate')}</AppText>
-          </View>
-        ) : (
-          <View style={styles.shiftList}>
-            {homeSummary.visibleGroups.map((group) => {
-              const name = !group.assigneeUserId
-                ? t('schedule.unassigned')
-                : (group.assigneeDisplayName ??
-                  t('family.members.formerMember'));
-              return (
-                <View key={group.key} style={styles.shiftSummary}>
-                  <View style={styles.shiftHeading}>
-                    {!group.assigneeUserId ? (
-                      <View style={[styles.avatar, styles.unassignedAvatar]}>
-                        <Ionicons
-                          color={lightColors.warning}
-                          name="hand-left-outline"
-                          size={16}
-                        />
-                      </View>
-                    ) : (
-                      <Avatar
-                        accessibilityLabel={name}
-                        name={name}
-                        size={30}
-                        source={createStorageImageSource(
-                          profileAvatarBucket,
-                          group.assigneeAvatarPath ?? '',
-                          group.assigneeAvatarUrl,
-                        )}
-                      />
-                    )}
-                    <AppText style={styles.shiftName} variant="headline">
-                      {name}
-                    </AppText>
-                  </View>
-                  {group.items.map((item) => {
-                    const completed = isCareScheduleItemCompleted(item);
-                    const canceled =
-                      item.shift_status === 'canceled' ||
-                      item.shift_task_status === 'canceled';
-                    return (
-                      <View key={item.shift_task_id} style={styles.itemRow}>
-                        <AppText style={styles.time} variant="subheadline">
-                          {formatScheduleTime(
-                            item.source_scheduled_for,
-                            item.task_time_zone,
-                            i18n.language,
-                          )}
-                        </AppText>
-                        <View style={styles.taskCopy}>
-                          <AppText
-                            numberOfLines={2}
-                            style={canceled && styles.canceled}
-                            variant="subheadline"
-                          >
-                            {item.task_title}
-                          </AppText>
-                          {completed ? (
-                            <AppText
-                              numberOfLines={1}
-                              tone="tertiary"
-                              variant="caption"
-                            >
-                              {t('schedule.completedBy', {
-                                name: resolveHistoricalActorDisplayName({
-                                  actorId: item.completed_by,
-                                  displayName: item.completer_display_name,
-                                  t,
-                                }),
-                              })}
-                            </AppText>
-                          ) : null}
-                        </View>
-                        <View style={styles.state}>
-                          <Ionicons
-                            color={
-                              canceled
-                                ? lightColors.textTertiary
-                                : completed
-                                  ? lightColors.success
-                                  : lightColors.warning
-                            }
-                            name={
-                              canceled
-                                ? 'close-circle-outline'
-                                : completed
-                                  ? 'checkmark-circle'
-                                  : 'time-outline'
-                            }
-                            size={15}
-                          />
-                          <AppText
-                            tone={
-                              completed && !canceled ? 'success' : 'secondary'
-                            }
-                            variant="caption"
-                          >
-                            {t(
-                              `schedule.status.${
-                                canceled
-                                  ? 'canceled'
-                                  : completed
-                                    ? 'completed'
-                                    : 'pending'
-                              }`,
-                            )}
-                          </AppText>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {homeSummary.hiddenCount > 0 ? (
+        {canAddSchedule && !scheduleQuery.isError ? (
           <Pressable
-            accessibilityLabel={`${t('schedule.overflowCount', {
-              count: homeSummary.hiddenCount,
-            })}. ${t('schedule.seeAll')}`}
+            accessibilityLabel={t('schedule.view')}
             accessibilityRole="button"
             onPress={() => openSchedule()}
-            style={({ pressed }) => [
-              styles.overflowAction,
-              pressed && styles.pressed,
-            ]}
+            style={({ pressed }) => [styles.summary, pressed && styles.pressed]}
           >
-            <AppText style={styles.overflowCopy} tone="secondary">
-              {t('schedule.overflowCount', {
-                count: homeSummary.hiddenCount,
-              })}
-            </AppText>
-            <View style={styles.overflowLink}>
-              <AppText tone="brand" variant="headline">
-                {t('schedule.seeAll')}
-              </AppText>
-              <Ionicons
-                color={lightColors.primary}
-                name="chevron-forward"
-                size={18}
-              />
-            </View>
+            {summary}
           </Pressable>
-        ) : null}
+        ) : (
+          <View style={styles.summary}>{summary}</View>
+        )}
       </View>
     </View>
   );
@@ -317,6 +340,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     gap: spacing.md,
     padding: spacing.md,
+  },
+  summary: { gap: spacing.md },
+  summaryHeading: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   summaryDivider: {
     backgroundColor: lightColors.border,

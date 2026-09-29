@@ -364,6 +364,10 @@ export default function HomeScreen() {
           </HomeSection>
 
           <HomeScheduleCard
+            canAddSchedule={
+              currentMembership?.role === 'owner' ||
+              currentMembership?.role === 'member'
+            }
             onAccessLoss={petsState.refetch}
             petId={pet.id}
             selectedDate={selectedScheduleDate}

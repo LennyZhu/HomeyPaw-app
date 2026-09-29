@@ -1107,7 +1107,7 @@
     "home": {
       "title": "今日照顧",
       "empty": "今天還沒有照顧記錄。",
-      "add": "記錄照顧",
+      "add": "照顧打卡",
       "meta": "{{name}} · {{time}}"
     },
     "history": {
@@ -1184,6 +1184,7 @@
     "complete": "完成",
     "claim": "我來負責",
     "add": "新增排班",
+    "view": "全部排班",
     "addCareTask": "新增照顧提醒",
     "petFamily": "家庭照顧排班",
     "dayItemCount_one": "{{count}} 項照顧事項",
