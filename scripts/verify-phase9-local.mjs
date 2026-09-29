@@ -23,8 +23,8 @@ const chatRoute = read('src/app/(tabs)/chat.tsx');
 const featureFlags = read('src/config/features.ts');
 
 assert(expo.name === 'HomeyPaw', 'Production name must be HomeyPaw.');
-assert(expo.version === '1.1.0', 'Production version must be 1.1.0.');
-assert(expo.ios?.buildNumber === '4', 'Production build number must be 4.');
+assert(expo.version === '1.3.0', 'Release version must be 1.3.0.');
+assert(expo.ios?.buildNumber === '10', 'Release build number must be 10.');
 assert(
   expo.ios?.bundleIdentifier === 'com.zhushunli.homeypaw',
   'The production Bundle ID must be com.zhushunli.homeypaw.',
@@ -120,7 +120,7 @@ if (fs.existsSync(path.join(root, 'docs/APP_STORE_METADATA.md'))) {
   for (const requiredValue of [
     'HomeyPaw',
     'com.zhushunli.homeypaw',
-    '1.0.0',
+    expo.version,
     'HOMEYPAW-IOS-001',
     'https://homeypaw.vercel.app/privacy',
     'https://homeypaw.vercel.app/support',

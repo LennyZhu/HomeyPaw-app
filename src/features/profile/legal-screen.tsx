@@ -30,7 +30,7 @@ export function LegalScreen({ kind }: LegalScreenProps) {
         </AppText>
       </View>
       <AppText tone="tertiary" variant="footnote">
-        {t('about.updated')}
+        {t(kind === 'privacy' ? 'about.privacyUpdated' : 'about.updated')}
       </AppText>
       <AppText style={styles.body}>{t(`about.${kind}Body`)}</AppText>
     </Screen>
