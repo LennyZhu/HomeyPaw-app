@@ -609,7 +609,17 @@
       "title": "完成照顧提醒",
       "action": "標記完成",
       "note": "完成備註（選填）",
-      "notePlaceholder": "有甚麼需要讓家人知道"
+      "notePlaceholder": "有甚麼需要讓家人知道",
+      "actualTime": {
+        "planned": "原定時間：{{time}}",
+        "question": "實際什麼時候照顧的？",
+        "plannedChoice": "按計劃時間完成",
+        "nowChoice": "剛剛完成",
+        "nowHint": "以確認時的時間記錄",
+        "otherChoice": "其他時間",
+        "futurePlanned": "原定時間尚未到，請選擇實際照顧時間。",
+        "invalid": "請選擇有效且不在未來的照顧時間。"
+      }
     },
     "undo": {
       "action": "復原完成",

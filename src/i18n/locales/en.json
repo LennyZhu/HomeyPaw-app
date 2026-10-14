@@ -609,7 +609,17 @@
       "title": "Complete care reminder",
       "action": "Mark complete",
       "note": "Completion note (optional)",
-      "notePlaceholder": "Anything the family should know"
+      "notePlaceholder": "Anything the family should know",
+      "actualTime": {
+        "planned": "Planned time: {{time}}",
+        "question": "When did you actually provide care?",
+        "plannedChoice": "At the planned time",
+        "nowChoice": "Just now",
+        "nowHint": "Record the time when confirmed",
+        "otherChoice": "Another time",
+        "futurePlanned": "The planned time is still in the future. Choose when care actually happened.",
+        "invalid": "Choose a valid care time that is not in the future."
+      }
     },
     "undo": {
       "action": "Undo completion",

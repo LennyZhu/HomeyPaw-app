@@ -674,6 +674,22 @@ export type Database = {
         Args: { job_limit?: number };
         Returns: Database['public']['Tables']['media_cleanup_jobs']['Row'][];
       };
+      get_today_care_logs: {
+        Args: { target_pet_id: string };
+        Returns: Database['public']['Tables']['care_logs']['Row'][];
+      };
+      complete_care_shift_task_v2: {
+        Args: Database['public']['Functions']['complete_care_shift_task']['Args'] & {
+          care_occurred_at: string | null;
+        };
+        Returns: Database['public']['Functions']['complete_care_shift_task']['Returns'];
+      };
+      complete_care_task_v2: {
+        Args: Database['public']['Functions']['complete_care_task']['Args'] & {
+          care_occurred_at: string | null;
+        };
+        Returns: Database['public']['Functions']['complete_care_task']['Returns'];
+      };
       complete_care_shift_task: {
         Args: {
           care_log_id: string;

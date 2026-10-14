@@ -248,15 +248,12 @@ export function isCareScheduleItemMutable(
   );
 }
 
-export function canCompleteCareScheduleItem(
-  item: CareScheduleItem,
-  now = new Date(),
-) {
+export function canCompleteCareScheduleItem(item: CareScheduleItem) {
   return (
     item.shift_status === 'scheduled' &&
     item.shift_task_status === 'scheduled' &&
     !isCareScheduleItemCompleted(item) &&
-    new Date(item.source_scheduled_for) <= now
+    Number.isFinite(Date.parse(item.source_scheduled_for))
   );
 }
 

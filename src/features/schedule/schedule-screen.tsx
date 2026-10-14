@@ -7,7 +7,7 @@ import {
   useLocalSearchParams,
   useRouter,
 } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
   FlatList,
@@ -61,6 +61,7 @@ import {
   useClaimCareShift,
   useCompleteCareShiftTask,
 } from './care-schedule-queries';
+import { needsCareTimeConfirmation } from './care-completion-time';
 import type { CareScheduleItem } from './care-schedule-types';
 import { ScheduleAssigneeGroup } from './components/schedule-assignee-group';
 import { ScheduleMonthCalendar } from './components/schedule-month-calendar';
@@ -88,6 +89,7 @@ export default function ScheduleScreen() {
   const [month, setMonth] = useState(() => startOfCalendarMonth(selectedDate));
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const completionInFlight = useRef(false);
   const [completionTarget, setCompletionTarget] =
     useState<CareScheduleItem | null>(null);
   const [groupExpansion, setGroupExpansion] = useState<Record<string, boolean>>(
@@ -214,18 +216,24 @@ export default function ScheduleScreen() {
     }
   };
 
-  const complete = async (input: {
-    durationMinutes: number | null;
-    note: string | null;
-  }) => {
-    if (!completionTarget) return;
+  const complete = async (
+    input: {
+      durationMinutes: number | null;
+      note: string | null;
+      occurredAt?: string | null;
+    },
+    target = completionTarget,
+  ) => {
+    if (!target || completionInFlight.current) return;
+    completionInFlight.current = true;
     try {
       await completeTask.mutateAsync({
         careLogId: Crypto.randomUUID(),
+        occurredAt: input.occurredAt ?? null,
         completionDurationMinutes: input.durationMinutes,
         completionId: Crypto.randomUUID(),
         completionNote: input.note,
-        shiftTaskId: completionTarget.shift_task_id,
+        shiftTaskId: target.shift_task_id,
       });
       setCompletionTarget(null);
       showFeedback(t('schedule.feedback.completed'));
@@ -235,6 +243,21 @@ export default function ScheduleScreen() {
       } else {
         showFeedback(t('schedule.errors.complete'), 'error');
       }
+    } finally {
+      completionInFlight.current = false;
+    }
+  };
+
+  const requestCompletion = (item: CareScheduleItem) => {
+    if (completionInFlight.current) return;
+    const now = new Date();
+    if (needsCareTimeConfirmation(item.source_scheduled_for, now)) {
+      setCompletionTarget(item);
+    } else {
+      void complete(
+        { durationMinutes: null, note: null, occurredAt: null },
+        item,
+      );
     }
   };
 
@@ -425,7 +448,7 @@ export default function ScheduleScreen() {
                   : null
               }
               onClaim={(shift) => void claim(shift)}
-              onComplete={setCompletionTarget}
+              onComplete={requestCompletion}
               onEdit={(shift) =>
                 router.push(
                   `/schedule/${encodeURIComponent(shift.shiftId)}/edit?date=${encodeURIComponent(shift.localDate)}` as Href,
@@ -459,6 +482,8 @@ export default function ScheduleScreen() {
       {completionTarget ? (
         <TaskCompletionModal
           careType={completionTarget.task_care_type}
+          scheduledFor={completionTarget.source_scheduled_for}
+          timeZone={completionTarget.task_time_zone}
           isCompleting={completeTask.isPending}
           onClose={() => setCompletionTarget(null)}
           onComplete={complete}

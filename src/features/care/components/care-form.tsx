@@ -16,6 +16,8 @@ import { CareDateTimeField } from './care-date-time-field';
 
 type Props = {
   careType: CareType;
+  timeZone?: string | undefined;
+  allowFutureMinutes?: number | undefined;
   healthSubtype?: HealthObservationType | null;
   initialValues: CareFormValues;
   onSubmit: (values: CareFormValues) => Promise<void>;
@@ -28,6 +30,8 @@ const durationShortcuts = [15, 30, 45, 60];
 
 export function CareForm({
   careType,
+  timeZone,
+  allowFutureMinutes,
   healthSubtype,
   initialValues,
   onSubmit,
@@ -37,8 +41,8 @@ export function CareForm({
 }: Props) {
   const { t } = useTranslation();
   const schema = useMemo(
-    () => createCareFormSchema(t, careType),
-    [careType, t],
+    () => createCareFormSchema(t, careType, allowFutureMinutes),
+    [careType, t, allowFutureMinutes],
   );
   const {
     control,
@@ -84,6 +88,8 @@ export function CareForm({
         name="occurredAt"
         render={({ field, fieldState }) => (
           <CareDateTimeField
+            timeZone={timeZone}
+            allowFutureMinutes={allowFutureMinutes}
             error={fieldState.error?.message}
             label={t('care.fields.occurredAt')}
             onChange={field.onChange}

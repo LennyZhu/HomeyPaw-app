@@ -569,7 +569,8 @@ console.log(
   'PASS: Home integration, full-screen routing, forms, and virtualized day list.',
 );
 
-assert(scheduleApi.includes("'complete_care_shift_task'"));
+assert(scheduleApi.includes("'complete_care_shift_task_v2'"));
+assert(scheduleApi.includes('care_occurred_at: input.occurredAt'));
 assert(featureFlags.includes('PRODUCTION_SCHEDULE_ENABLED = true'));
 assert(
   featureFlags.includes('PRODUCTION_SCHEDULE_ENABLED || LOCAL_FEATURE_PREVIEW'),

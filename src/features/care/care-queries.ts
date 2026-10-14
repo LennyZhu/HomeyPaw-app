@@ -41,27 +41,21 @@ export const careKeys = {
   ) => ['care', userId, 'today', petId, localDate] as const,
 };
 
-function valuesToRpc(values: CareFormValues) {
+function valuesToRpc(values: CareFormValues, timeZone?: string) {
   return {
     care_duration_minutes: values.durationMinutes
       ? Number(values.durationMinutes)
       : null,
     care_note: values.note.trim() || null,
     care_occurred_at: values.occurredAt,
-    care_time_zone: getDeviceTimeZone(),
+    care_time_zone: timeZone ?? getDeviceTimeZone(),
   };
 }
 
-async function fetchTodayCare(petId: string, localDate: string) {
-  const { data, error } = await requireSupabase()
-    .from('care_logs')
-    .select('*')
-    .eq('pet_id', petId)
-    .eq('local_date', localDate)
-    .order('occurred_at', { ascending: false })
-    .order('id', { ascending: false })
-    .limit(20);
-
+async function fetchTodayCare(petId: string) {
+  const { data, error } = await requireSupabase().rpc('get_today_care_logs', {
+    target_pet_id: petId,
+  });
   if (error) throw error;
   return data;
 }
@@ -138,10 +132,14 @@ async function createCareLog(input: {
   return data;
 }
 
-async function updateCareLog(careLogId: string, values: CareFormValues) {
+async function updateCareLog(
+  careLogId: string,
+  values: CareFormValues,
+  timeZone?: string,
+) {
   const { data, error } = await requireSupabase().rpc('update_care_log', {
     target_care_log_id: careLogId,
-    ...valuesToRpc(values),
+    ...valuesToRpc(values, timeZone),
   });
   if (error) throw error;
   return data;
@@ -163,7 +161,7 @@ export function useTodayCare(petId: string | null, localDate: string) {
   const { user } = useAuth();
   return useQuery({
     enabled: Boolean(user && petId),
-    queryFn: () => fetchTodayCare(petId!, localDate),
+    queryFn: () => fetchTodayCare(petId!),
     queryKey: careKeys.today(user?.id, petId, localDate),
   });
 }
@@ -215,12 +213,13 @@ export function useCreateCareLog() {
   return useMutation({ mutationFn: createCareLog, onSuccess: invalidate });
 }
 
-export function useUpdateCareLog(careLogId: string) {
+export function useUpdateCareLog(careLogId: string, timeZone?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const invalidate = useInvalidateCare();
   return useMutation({
-    mutationFn: (values: CareFormValues) => updateCareLog(careLogId, values),
+    mutationFn: (values: CareFormValues) =>
+      updateCareLog(careLogId, values, timeZone),
     onSuccess: (log) => {
       queryClient.setQueryData(careKeys.detail(user?.id, careLogId), log);
       void invalidate();
