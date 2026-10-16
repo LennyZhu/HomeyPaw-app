@@ -17,3 +17,9 @@ verify_jwt = true
 
 [functions.process-media-cleanup]
 verify_jwt = false # Internal bearer secret is verified in the function.
+
+[functions.family-billing-webhook]
+verify_jwt = false # RevenueCat Authorization header verified before inbox access.
+
+[functions.family-billing-reconcile]
+verify_jwt = false # Explicit getUser JWT verification or separate internal secret.

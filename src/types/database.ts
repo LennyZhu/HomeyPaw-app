@@ -636,6 +636,26 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      get_family_plus_summary: {
+        Args: { target_family_id: string };
+        Returns: Json;
+      };
+      get_family_billing_customer: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
+      get_family_billing_state: {
+        Args: { target_family_id: string };
+        Returns: Json;
+      };
+      begin_family_billing_purchase: {
+        Args: { target_family_id: string; request_id: string; period: string };
+        Returns: Json;
+      };
+      update_family_billing_intent: {
+        Args: { target_intent_id: string; next_status: string };
+        Returns: undefined;
+      };
       has_shared_family_for_push: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;

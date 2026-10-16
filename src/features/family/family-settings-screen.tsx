@@ -12,6 +12,9 @@ import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { SettingsRow } from '@/components/settings-row';
 import { useAuth } from '@/features/auth/auth-context';
+import { canUseFamilyPlusPreview } from '@/features/billing/family-plus-preview';
+import { FamilyPlusBadge } from '@/features/billing/components/family-plus-badge';
+import { useFamilyPlus } from '@/features/billing/use-family-plus';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { profileAvatarBucket } from '@/features/profile/profile-avatar';
 import { lightColors, radius, spacing } from '@/theme';
@@ -50,6 +53,13 @@ export default function FamilySettingsScreen() {
   );
   const role = familyAccess?.membership.role;
   const isOwner = role === 'owner';
+  const familyPlan = useFamilyPlus({
+    userId: user?.id ?? null,
+    familyId: familyAccess?.family.id ?? null,
+    role: role ?? null,
+    loading: context.familiesQuery.isPending,
+    error: context.familiesQuery.isError,
+  });
   const pets = familyPetsQuery.data ?? [];
   const members = membersQuery.data ?? [];
   const busy =
@@ -256,7 +266,17 @@ export default function FamilySettingsScreen() {
       <View style={styles.section}>
         <AppText variant="title3">{t('family.lifecycle.infoTitle')}</AppText>
         <View style={[styles.card, styles.infoCard]}>
-          <AppText variant="headline">{name}</AppText>
+          <View style={styles.familyIdentity}>
+            <AppText variant="headline" style={styles.familyName}>
+              {name}
+            </AppText>
+            <FamilyPlusBadge snapshot={familyPlan.snapshot} />
+          </View>
+          {familyPlan.enabled ? (
+            <AppText tone="secondary" variant="footnote">
+              {familyPlan.label}
+            </AppText>
+          ) : null}
           <AppText tone="secondary" variant="footnote">
             {t(`family.roles.${role}`)} ·{' '}
             {t('family.lifecycle.petCount', {
@@ -265,6 +285,21 @@ export default function FamilySettingsScreen() {
           </AppText>
         </View>
       </View>
+
+      {canUseFamilyPlusPreview(
+        __DEV__,
+        process.env.EXPO_PUBLIC_SUPABASE_URL,
+      ) ? (
+        <View style={styles.card}>
+          <SettingsRow
+            icon="heart-outline"
+            label={t('familyPlus.entry')}
+            subtitle={t('familyPlus.entryPreview')}
+            last
+            onPress={() => router.push('/family-plus')}
+          />
+        </View>
+      ) : null}
 
       <View style={styles.section}>
         <AppText variant="title3">{t('family.members.title')}</AppText>
@@ -521,6 +556,13 @@ export default function FamilySettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  familyIdentity: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  familyName: { flexShrink: 1, maxWidth: '100%' },
   content: {
     gap: spacing.xl,
     paddingBottom: spacing.huge,

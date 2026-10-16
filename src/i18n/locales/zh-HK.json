@@ -1344,5 +1344,188 @@
       "body": "我們正在進行維護，請稍後再試。"
     },
     "checkAgain": "重新檢查"
+  },
+  "billingSandbox": {
+    "title": "Family Plus Sandbox",
+    "notice": "僅供開發測試，尚未啟用儲存限制。請使用 Apple Sandbox 測試帳戶；此頁不提供正式購買。",
+    "noFamily": "請先加入或建立家庭。",
+    "free": "免費 · 300 MiB",
+    "transition": "過渡期 · 1 GiB",
+    "plus": "Family Plus · 5 GiB",
+    "loadProducts": "載入訂閱商品",
+    "monthly": "月付",
+    "yearly": "年付",
+    "restore": "恢復購買",
+    "refresh": "驗證訂閱狀態",
+    "manage": "管理 Apple 訂閱",
+    "ownerOnly": "只有目前家庭 Owner 可以發起新的購買。",
+    "alreadySubscribed": "家庭已有訂閱。請管理現有訂閱，避免重複付款。",
+    "ready": "已準備好進行測試。",
+    "confirmed": "驗證完成，請以以上家庭權益狀態為準。",
+    "pending": "正等待商店或服務端確認，請勿再次購買。",
+    "cancelled": "已取消購買。",
+    "failed": "暫時無法確認購買，請先驗證狀態再重試。",
+    "unavailable": "需要完成 Sandbox 設定或使用新的 Development Build。如有待確認購買，請先驗證，勿重複購買。",
+    "checking": "正在確認家庭權益…"
+  },
+  "familyPlus": {
+    "entry": "家庭方案",
+    "entryPreview": "Family Plus · 開發預覽",
+    "previewNotice": "所有會員狀態、用量及價格均為示例，不是真實家庭統計。尚未開放購買，也不會變更任何會員權益。",
+    "showScenes": "切換情境",
+    "hideScenes": "收起情境",
+    "rolePreview": "角色預覽僅改變此頁示例，不會更改實際家庭角色或權限。",
+    "headline": "給家人的回憶，多一點空間。",
+    "loading": "正在讀取家庭會員狀態…",
+    "retry": "重新載入",
+    "previewOnly": "目前為開發預覽，尚未開放購買、恢復或管理訂閱。",
+    "ownerOnly": "家庭會員由擁有者管理。你仍可查看家庭方案與儲存用量。",
+    "disabled": "此預覽僅供本機開發環境使用。",
+    "linkError": "暫時無法開啟連結，請稍後再試。",
+    "compareTitle": "家庭方案比較",
+    "choosePlan": "訂閱週期",
+    "referencePrices": "美元參考價，並非結算金額；正式購買以 Apple 回傳的本地幣種及售價為準。",
+    "storePrices": "價格由 Apple 商店提供。",
+    "priceUnavailable": "商店價格尚未提供",
+    "previewPurchase": "繼續 · 開發預覽",
+    "restore": "恢復購買 · 預覽",
+    "manage": "管理 Apple 訂閱 · 預覽",
+    "yearlySaving": "按美元參考價，較連續 12 個月月付約省 37%。",
+    "videoLimits": "每段影片最長 15 秒，仍受現有單檔大小與家庭空間限制。",
+    "coreFree": "照顧、提醒、排班、家庭聊天及通知等基本協作功能繼續免費。",
+    "renewal": "月付及年付皆自動續訂。年付每年一次性扣款，非按月分期。可在 Apple 訂閱設定取消續訂。",
+    "payer": "家庭擁有權轉讓不會轉移 Apple 付款關係。現有訂閱請由原付款人管理，避免重複購買。",
+    "scenes": {
+      "free": "Free",
+      "active": "Plus 有效",
+      "grace": "付款寬限期",
+      "cancelled": "已取消續訂",
+      "expired": "已到期",
+      "unavailable": "狀態未知",
+      "transition": "過渡期示例",
+      "loading": "載入中",
+      "empty": "尚無家庭",
+      "error": "載入失敗",
+      "offline": "離線",
+      "revoked": "已撤銷"
+    },
+    "status": {
+      "free": "目前方案 · Free",
+      "active": "Family Plus · 有效",
+      "grace": "Family Plus · 付款寬限期",
+      "cancelled": "Family Plus · 已取消續訂",
+      "expired": "Family Plus 已到期 · Free",
+      "unavailable": "暫時無法確認會員狀態",
+      "transition": "過渡期 · 僅供示例",
+      "revoked": "Family Plus · 已撤銷"
+    },
+    "statusBody": {
+      "free": "基本家庭協作完整保留，媒體額度由全家共用。",
+      "active": "家庭所有成員共享 Plus 媒體空間。",
+      "grace": "示例：商店仍授權有效存取，付款狀態有待處理。實際有效期以服務端確認為準。",
+      "cancelled": "不再自動續訂；已確認有效期內仍保留 Plus 權益。",
+      "expired": "歷史資料不會自動刪除，基本家庭照顧功能不受影響。",
+      "unavailable": "未能取得可信狀態；不會將未知狀態視為已開通或已到期。",
+      "transition": "預留 30 天、1 GiB 及影片不限次數的顯示。尚未啟用過渡期，也沒有開始倒數。",
+      "revoked": "會員存取已撤銷，歷史媒體與基本照顧功能仍保留。"
+    },
+    "dataState": {
+      "empty": "加入或建立家庭後，可在這裡查看家庭會員。這裡沒有真實用量可供顯示。",
+      "error": "暫時無法載入家庭資料，請重新載入。",
+      "offline": "目前無法連線，會員狀態及用量暫不可用。連線後請重新載入。"
+    },
+    "storage": {
+      "title": "家庭儲存空間",
+      "used": "已使用",
+      "remaining": "剩餘 {{amount}}",
+      "over": "超出方案空間 {{amount}}",
+      "retained": "歷史媒體仍可查看、下載和刪除。正式啟用配額後，超額只限制新增媒體。",
+      "noData": "暫時未能取得家庭儲存用量。",
+      "unlimited": "每月影片不限段數，仍受空間與單檔限制。",
+      "enforcementOff": "配額限制尚未啟用。",
+      "videosUsed_one": "本月已發布 {{count}} 段影片",
+      "videosUsed_other": "本月已發布 {{count}} 段影片",
+      "videosRemaining_one": "本月尚餘 {{count}} 段免費影片",
+      "videosRemaining_other": "本月尚餘 {{count}} 段免費影片",
+      "videoCounting": "Free 的影片成功發布後計次；刪除不返還當月次數。"
+    },
+    "features": {
+      "space": "家庭媒體空間",
+      "video": "每自然月影片",
+      "care": "家庭協作"
+    },
+    "free": {
+      "space": "300 MiB",
+      "video": "成功發布 3 段",
+      "care": "完整保留"
+    },
+    "plus": {
+      "space": "5 GiB",
+      "video": "不限段數",
+      "care": "完整保留"
+    },
+    "period": {
+      "monthly": "月付",
+      "yearly": "年付"
+    },
+    "unit": {
+      "monthly": "月",
+      "yearly": "年"
+    },
+    "charge": {
+      "monthly": "每月扣款，自動續訂。",
+      "yearly": "每年一次性扣款，自動續訂。"
+    },
+    "previewSummary": "開發預覽 · 資料均為示例",
+    "benefits": {
+      "title": "Family Plus 權益",
+      "upgradeTitle": "升級 Family Plus 可享",
+      "resubscribeTitle": "重新訂閱 Family Plus 可享",
+      "offeredTitle": "Family Plus 提供的權益",
+      "learnTitle": "了解 Family Plus 權益",
+      "space": "5 GiB 家庭媒體空間",
+      "video": "每月影片上傳數量不限",
+      "sharing": "一位家庭擁有者訂閱，全家庭共享"
+    },
+    "legal": {
+      "video": "影片限制",
+      "subscription": "訂閱與取消",
+      "payer": "家庭付款關係",
+      "links": "條款與私隱"
+    },
+    "identity": {
+      "free": "Free · 基本家庭方案",
+      "active": "Family Plus · 已啟用",
+      "grace": "Family Plus · 付款寬限期",
+      "cancelled": "已取消續訂 · Plus 權益仍有效",
+      "expired": "Family Plus · 已到期",
+      "revoked": "Family Plus · 已撤銷",
+      "unavailable": "暫時無法確認家庭方案",
+      "transition": "家庭過渡權益 · 非 Plus 訂閱",
+      "loading": "正在確認家庭方案…",
+      "empty": "尚未加入家庭",
+      "error": "暫時無法載入方案",
+      "offline": "離線 · 暫無方案資料"
+    },
+    "identityPreview": "{{status}} · 預覽",
+    "identityLocal": "{{status}} · 本機資料",
+    "localReadOnly": "本機唯讀資料 · 尚未開放購買",
+    "readLocal": "讀取本機資料（唯讀）",
+    "localReadInfo": "讀取本機服務端確認的方案及用量，不會寫入權益或啟用配額。點選情境可返回開發預覽。",
+    "localNotReady": "本機會員資料暫未就緒，或暫時無法讀取。請確認本機資料庫版本及連線後重試。",
+    "meteringPending": "媒體計量尚未完成確認，暫不顯示已使用空間。",
+    "videoPolicyPending": "本月影片統計尚未就緒，暫不顯示使用次數。",
+    "videoPolicyCandidate": "影片月份與計數方式目前為本機測試設定，尚未鎖定正式規則。",
+    "usage": {
+      "reservedBytes": "上傳預留：{{amount}}（未計入已使用空間）",
+      "unpublishedBytes": "已上傳、待發布或處理：{{amount}}（包含於用量）",
+      "cleanupPendingBytes": "等待清理：{{amount}}（確認清理前仍計入用量）"
+    },
+    "badge": {
+      "text": "PLUS",
+      "previewText": "PLUS · 預覽",
+      "label": "有效的 Family Plus 家庭會員",
+      "previewLabel": "Family Plus 家庭會員開發預覽，並非真實訂閱"
+    }
   }
 }

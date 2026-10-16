@@ -15,6 +15,14 @@
         "simulator": true
       }
     },
+    "billing-sandbox": {
+      "extends": "development",
+      "environment": "development",
+      "env": {
+        "EXPO_PUBLIC_FAMILY_BILLING_SANDBOX_ENABLED": "true",
+        "EXPO_PUBLIC_FAMILY_BILLING_TARGET_MODE": "cloud"
+      }
+    },
     "preview": {
       "distribution": "internal",
       "node": "22.13.0"

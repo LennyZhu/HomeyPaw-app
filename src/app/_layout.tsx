@@ -14,6 +14,7 @@ import { GlobalErrorScreen } from '@/components/global-error-screen';
 import { FeedbackProvider } from '@/components/feedback-provider';
 import { appScreenOrientation } from '@/config/orientation';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
+import { FamilyPlusPreviewLifecycle } from '@/features/billing/use-family-plus-preview';
 import { AppReleaseBlockScreen } from '@/features/app-release/app-release-block-screen';
 import { useAppReleaseGate } from '@/features/app-release/use-app-release-gate';
 import { AuthDeepLinkCoordinator } from '@/features/auth/auth-deep-link-coordinator';
@@ -48,6 +49,7 @@ export default function RootLayout() {
           <NetworkStatusProvider>
             <FeedbackProvider>
               <AuthProvider>
+                <FamilyPlusPreviewLifecycle />
                 <RootNavigator />
               </AuthProvider>
             </FeedbackProvider>
@@ -158,6 +160,8 @@ function RootNavigator() {
           )}
         >
           <Stack.Screen name="chat-preview" />
+          <Stack.Screen name="family-plus" />
+          <Stack.Screen name="family-plus-sandbox" />
         </Stack.Protected>
         <Stack.Protected
           guard={Boolean(

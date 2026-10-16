@@ -11,11 +11,15 @@ import { useFeedback } from '@/components/feedback-provider';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
+import { canUseFamilyPlusPreview } from '@/features/billing/family-plus-preview';
+import { FamilyPlusBadge } from '@/features/billing/components/family-plus-badge';
+import { useFamilyPlus } from '@/features/billing/use-family-plus';
 import { useCurrentFamily } from '@/features/family/use-current-family';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
 import { lightColors, radius, spacing } from '@/theme';
 
 import { useProfile } from './use-profile';
+import { isBillingSandboxEnabled } from '@/features/billing/billing-client';
 import { profileAvatarBucket, useProfileAvatarUrl } from './profile-avatar';
 import { getProfilePresentationState } from './profile-query-state';
 
@@ -43,6 +47,13 @@ export default function ProfileScreen() {
   const { showFeedback } = useFeedback();
   const { signOut, user } = useAuth();
   const familyContext = useCurrentFamily();
+  const familyPlan = useFamilyPlus({
+    userId: user?.id ?? null,
+    familyId: familyContext.currentFamilyId,
+    role: familyContext.currentMembership?.role ?? null,
+    loading: familyContext.familiesQuery.isPending,
+    error: familyContext.familiesQuery.isError,
+  });
   const { error, isLoading, profile, refetch } = useProfile();
   const avatarQuery = useProfileAvatarUrl(profile?.avatar_url ?? null);
   const presentation = getProfilePresentationState({
@@ -53,6 +64,10 @@ export default function ProfileScreen() {
   const profileEmail = user?.email ?? t('profile.emailUnavailable');
   const profileLanguage =
     profile?.locale === 'en' ? t('profile.english') : t('profile.zhHK');
+  const showFamilyPlan = canUseFamilyPlusPreview(
+    __DEV__,
+    process.env.EXPO_PUBLIC_SUPABASE_URL,
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -171,7 +186,43 @@ export default function ProfileScreen() {
             </View>
           </Pressable>
 
-          <View style={styles.menu}>
+          {showFamilyPlan ? (
+            <Pressable
+              accessibilityLabel={`${t('familyPlus.entry')}, ${familyPlan.label}`}
+              accessibilityRole="button"
+              onPress={() => router.push('/family-plus')}
+              style={({ pressed }) => [
+                styles.familyPlanCard,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Ionicons
+                accessible={false}
+                color={lightColors.secondary}
+                name="paw-outline"
+                size={21}
+              />
+              <View style={styles.familyPlanCopy}>
+                <View style={styles.familyPlanHeading}>
+                  <AppText variant="headline" style={styles.familyPlanTitle}>
+                    {t('familyPlus.entry')}
+                  </AppText>
+                  <FamilyPlusBadge snapshot={familyPlan.snapshot} />
+                </View>
+                <AppText tone="secondary" variant="footnote">
+                  {familyPlan.label}
+                </AppText>
+              </View>
+              <Ionicons
+                accessible={false}
+                color={lightColors.textTertiary}
+                name="chevron-forward"
+                size={18}
+              />
+            </Pressable>
+          ) : null}
+
+          <View style={[styles.menu, showFamilyPlan && styles.menuAfterPlan]}>
             {menuItems
               .filter(
                 (item) =>
@@ -211,6 +262,13 @@ export default function ProfileScreen() {
               ))}
           </View>
 
+          {isBillingSandboxEnabled() ? (
+            <AppButton
+              label={t('billingSandbox.title')}
+              onPress={() => router.push('/family-plus-sandbox')}
+              variant="ghost"
+            />
+          ) : null}
           <AppButton
             label={t('profile.signOut')}
             onPress={confirmSignOut}
@@ -238,9 +296,27 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.lg,
   },
   email: { flexShrink: 1 },
+  familyPlanCard: {
+    marginTop: spacing.xxl,
+    padding: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: lightColors.secondarySoft,
+    borderRadius: radius.lg,
+  },
+  familyPlanCopy: { flex: 1, minWidth: 0, gap: spacing.xs },
+  familyPlanTitle: { flexShrink: 1, maxWidth: '100%' },
+  familyPlanHeading: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   menu: {
     marginTop: spacing.huge,
   },
+  menuAfterPlan: { marginTop: spacing.lg },
   menuRow: {
     minHeight: 62,
     alignItems: 'center',

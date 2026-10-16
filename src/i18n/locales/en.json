@@ -1344,5 +1344,188 @@
       "body": "We are completing maintenance. Please try again shortly."
     },
     "checkAgain": "Check again"
+  },
+  "billingSandbox": {
+    "title": "Family Plus Sandbox",
+    "notice": "Development test only. Storage limits remain unenforced. Use an Apple Sandbox tester; no production purchase is available here.",
+    "noFamily": "Join or create a family first.",
+    "free": "Free · 300 MiB",
+    "transition": "Transition · 1 GiB",
+    "plus": "Family Plus · 5 GiB",
+    "loadProducts": "Load subscription products",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "restore": "Restore purchases",
+    "refresh": "Verify subscription status",
+    "manage": "Manage Apple subscriptions",
+    "ownerOnly": "Only the current family owner can start a new purchase.",
+    "alreadySubscribed": "This family already has a subscription. Manage the existing subscription to avoid paying twice.",
+    "ready": "Ready for testing.",
+    "confirmed": "Verification completed. See the family status above.",
+    "pending": "Awaiting store or server confirmation. Do not purchase again.",
+    "cancelled": "Purchase cancelled.",
+    "failed": "Purchase could not be confirmed. Verify the status before trying again.",
+    "unavailable": "Sandbox setup or a new development build is required. If a purchase is pending, verify it before retrying.",
+    "checking": "Checking family status…"
+  },
+  "familyPlus": {
+    "entry": "Family Plan",
+    "entryPreview": "Family Plus · Development preview",
+    "previewNotice": "Membership status, usage and prices shown here are examples, not real Family statistics. Purchases are unavailable and no entitlements will change.",
+    "showScenes": "Scenarios",
+    "hideScenes": "Hide scenarios",
+    "rolePreview": "Preview roles only change this example. Your actual Family role and permissions stay the same.",
+    "headline": "More room for family memories.",
+    "loading": "Loading Family membership…",
+    "retry": "Reload",
+    "previewOnly": "This is a development preview. Purchases, restores and subscription management are not available yet.",
+    "ownerOnly": "Your Family Owner manages membership. You can still view the Family plan and storage usage.",
+    "disabled": "This preview is only available in local development.",
+    "linkError": "Unable to open this link right now. Please try again later.",
+    "compareTitle": "Compare Family plans",
+    "choosePlan": "Billing period",
+    "referencePrices": "USD reference prices, not checkout amounts. Purchasing will use Apple’s localized currency and price.",
+    "storePrices": "Prices are provided by the Apple storefront.",
+    "priceUnavailable": "Store price not available",
+    "previewPurchase": "Continue · development preview",
+    "restore": "Restore purchases · preview",
+    "manage": "Manage Apple subscription · preview",
+    "yearlySaving": "About 37% less than 12 monthly payments at these USD reference prices.",
+    "videoLimits": "Videos remain limited to 15 seconds, existing per-file sizes and available Family storage.",
+    "coreFree": "Care, Reminders, Schedule, Family Chat and notifications remain free.",
+    "renewal": "Plans renew automatically. Yearly billing is one annual charge, not monthly installments. Cancel renewal in Apple subscription settings.",
+    "payer": "Family ownership transfers do not transfer Apple billing. The original payer should manage an existing subscription to avoid duplicate purchases.",
+    "scenes": {
+      "free": "Free",
+      "active": "Plus active",
+      "grace": "Grace period",
+      "cancelled": "Renewal cancelled",
+      "expired": "Expired",
+      "unavailable": "Status unknown",
+      "transition": "Transition example",
+      "loading": "Loading",
+      "empty": "No Family",
+      "error": "Loading error",
+      "offline": "Offline",
+      "revoked": "Revoked"
+    },
+    "status": {
+      "free": "Current plan · Free",
+      "active": "Family Plus · active",
+      "grace": "Family Plus · grace period",
+      "cancelled": "Family Plus · renewal cancelled",
+      "expired": "Family Plus expired · Free",
+      "unavailable": "Membership status unavailable",
+      "transition": "Transition · example only",
+      "revoked": "Family Plus · revoked"
+    },
+    "statusBody": {
+      "free": "Core Family features stay available. Media allowances are shared by everyone.",
+      "active": "Everyone in your Family shares Plus media storage.",
+      "grace": "Example: the store still grants access while payment is being resolved. Verified server status determines actual access.",
+      "cancelled": "Renewal is cancelled. Plus remains available until the verified access period ends.",
+      "expired": "Existing content is retained and core Family care features remain available.",
+      "unavailable": "A verified status is unavailable. Unknown does not mean subscribed or expired.",
+      "transition": "Space for a planned 30-day, 1 GiB transition with unlimited video uploads. No transition has started and no countdown is running.",
+      "revoked": "Membership access was revoked. Existing media and core care features are retained."
+    },
+    "dataState": {
+      "empty": "Join or create a Family to view membership here. There is no real usage to display.",
+      "error": "Unable to load Family information right now. Please reload.",
+      "offline": "You are offline. Membership status and usage are unavailable. Reconnect and reload."
+    },
+    "storage": {
+      "title": "Family storage",
+      "used": "Used",
+      "remaining": "{{amount}} remaining",
+      "over": "{{amount}} over the plan allowance",
+      "retained": "Existing media remains available to view, download and delete. Once quotas are enabled, being over the allowance only restricts new media.",
+      "noData": "Family storage usage is not available right now.",
+      "videosUsed_one": "{{count}} video published this month",
+      "videosUsed_other": "{{count}} videos published this month",
+      "videosRemaining_one": "{{count}} free video remaining this month",
+      "videosRemaining_other": "{{count}} free videos remaining this month",
+      "unlimited": "Unlimited monthly videos, within storage and per-file limits.",
+      "enforcementOff": "Quota enforcement is not enabled.",
+      "videoCounting": "Free videos count when published. Deleting one does not restore a monthly slot."
+    },
+    "features": {
+      "space": "Family media storage",
+      "video": "Videos per calendar month",
+      "care": "Family collaboration"
+    },
+    "free": {
+      "space": "300 MiB",
+      "video": "3 published videos",
+      "care": "All core features"
+    },
+    "plus": {
+      "space": "5 GiB",
+      "video": "Unlimited",
+      "care": "All core features"
+    },
+    "period": {
+      "monthly": "Monthly",
+      "yearly": "Yearly"
+    },
+    "unit": {
+      "monthly": "month",
+      "yearly": "year"
+    },
+    "charge": {
+      "monthly": "Charged monthly. Renews automatically.",
+      "yearly": "Charged in full each year. Renews automatically."
+    },
+    "previewSummary": "Development preview · Sample data",
+    "benefits": {
+      "title": "With Family Plus",
+      "upgradeTitle": "Upgrade to Family Plus for",
+      "resubscribeTitle": "Resubscribe to Family Plus for",
+      "offeredTitle": "What Family Plus offers",
+      "learnTitle": "Explore Family Plus benefits",
+      "space": "5 GiB of Family media storage",
+      "video": "Unlimited monthly video uploads",
+      "sharing": "One Family Owner subscribes. Everyone shares."
+    },
+    "legal": {
+      "video": "Video limits",
+      "subscription": "Subscription and cancellation",
+      "payer": "Family billing",
+      "links": "Terms and privacy"
+    },
+    "identity": {
+      "free": "Free · basic Family plan",
+      "active": "Family Plus · active",
+      "grace": "Family Plus · payment grace period",
+      "cancelled": "Renewal cancelled · Plus still active",
+      "expired": "Family Plus · expired",
+      "revoked": "Family Plus · revoked",
+      "unavailable": "Family plan status unavailable",
+      "transition": "Transition benefits · not a Plus subscription",
+      "loading": "Checking Family plan…",
+      "empty": "No Family yet",
+      "error": "Unable to load Family plan",
+      "offline": "Offline · plan data unavailable"
+    },
+    "identityPreview": "{{status}} · preview",
+    "identityLocal": "{{status}} · local data",
+    "localReadOnly": "Local read-only data · Purchases unavailable",
+    "readLocal": "Read local data (read-only)",
+    "localReadInfo": "Reads server-confirmed local plan and usage without changing entitlements or enabling quotas. Select a scenario to return to development preview.",
+    "localNotReady": "Local membership data is not ready or cannot be read right now. Check the local database version and connection, then retry.",
+    "meteringPending": "Media measurement is not confirmed yet. Used storage is unavailable.",
+    "videoPolicyPending": "Monthly video statistics are not ready. Usage counts are unavailable.",
+    "videoPolicyCandidate": "Video calendar and counting settings are local test candidates, not final release rules.",
+    "usage": {
+      "reservedBytes": "Upload reservations: {{amount}} (separate from used storage)",
+      "unpublishedBytes": "Uploaded, awaiting publication or processing: {{amount}} (included in usage)",
+      "cleanupPendingBytes": "Awaiting cleanup: {{amount}} (counted until cleanup is confirmed)"
+    },
+    "badge": {
+      "text": "PLUS",
+      "previewText": "PLUS · PREVIEW",
+      "label": "Active Family Plus membership",
+      "previewLabel": "Family Plus development preview, not a real subscription"
+    }
   }
 }

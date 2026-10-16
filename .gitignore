@@ -38,6 +38,27 @@ yarn-error.*
 /supabase/.temp/
 /supabase/.branches/
 
+# Filled Billing credentials stay outside the repository (0600); these patterns
+# also prevent accidental local copies. Keep the empty reviewed templates visible.
+/supabase/functions/billing-sandbox*.env
+/supabase/billing-sandbox-target.json
+/supabase/billing-sandbox-target.*.json
+!/supabase/billing-sandbox-target.example.json
+
+# Local backup/diagnostic outputs, never source SQL or formal test fixtures.
+/local-*.dump
+/homeypaw-*.dump
+/local-globals*.sql
+/local-storage*.tar*
+/homeypaw-*.tar*
+/diagnostic*.log
+/homeypaw-*.log
+/family-plus-*.log
+/billing-*.log
+/*.private.json
+/local-diagnostics/
+/local-verification/
+
 # test coverage
 coverage/
 
