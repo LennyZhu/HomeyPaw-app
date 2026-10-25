@@ -22,6 +22,16 @@ const load = (path, deps = {}, globals = {}) => {
     performance: { now: () => elapsed },
     ...globals,
     require: (name) => {
+      if (name === './family-plus-environment')
+        return {
+          isFamilyPlusAvailable: () =>
+            preview.canUseFamilyPlusPreview(
+              globals.__DEV__,
+              globals.process?.env?.EXPO_PUBLIC_SUPABASE_URL,
+            ),
+          isFamilyPlusSandbox: () => false,
+          isFamilyPlusRelease: () => false,
+        };
       assert.ok(name in deps, `Unexpected dependency ${name}`);
       return deps[name];
     },
@@ -87,6 +97,47 @@ assert.equal(
   'exclusive expiry',
 );
 elapsed = 1000;
+const transitionDoc = {
+  ...raw,
+  status: 'transition',
+  gives_plus_access: false,
+  access_until: null,
+  transition: {
+    starts_at: '2020-01-01T00:00:00Z',
+    ends_at: '2020-01-16T00:00:00Z',
+  },
+  limit_bytes: 1073741824,
+};
+const transitionSnapshot = data.familyPlusServerSnapshot(
+  data.parseFamilyPlusSummary(transitionDoc, user, family),
+);
+assert.equal(model.familyPlusTransition(transitionSnapshot).remainingDays, 15);
+assert.equal(
+  model.familyPlusIdentity(transitionSnapshot, false).showBadge,
+  false,
+);
+for (const change of [
+  { status: 'free' },
+  { transition: { ...transitionDoc.transition, ends_at: raw.server_time } },
+  {
+    transition: {
+      ...transitionDoc.transition,
+      starts_at: '2020-01-02T00:00:00Z',
+    },
+  },
+])
+  assert.throws(() =>
+    data.parseFamilyPlusSummary({ ...transitionDoc, ...change }, user, family),
+  );
+assert.equal(
+  data.parseFamilyPlusSummary(
+    { ...transitionDoc, transition: undefined },
+    user,
+    family,
+  ).transition,
+  undefined,
+  'Older Summary servers remain readable without inventing transition dates.',
+);
 for (const role of ['owner', 'member', 'viewer']) {
   const doc = data.parseFamilyPlusSummary({ ...raw, role }, user, family);
   assert.equal(
@@ -176,7 +227,7 @@ for (const globals of [
       deps,
       globals,
     ).readFamilyPlusSummary(user, family, new AbortController().signal),
-    /LOCAL_ONLY/,
+    /TARGET_DENIED/,
   );
 
 let online = true,
@@ -296,5 +347,5 @@ assert.match(
   /\.rpc\('get_family_plus_summary'/,
 );
 console.log(
-  'PASS: strict server contract, server-relative expiry, initialized/unknown counts, canonical roles, wrong environment/scope rejection, local-only read API, aborts, cache/account/Family isolation, offline/error hiding, Preview does not query, no SDK/mutation/persistence.',
+  'PASS: strict server contract, server-relative expiry, initialized/unknown counts, canonical roles, wrong environment/scope rejection, explicit-target read API, aborts, cache/account/Family isolation, offline/error hiding, Preview does not query, no SDK/mutation/persistence.',
 );

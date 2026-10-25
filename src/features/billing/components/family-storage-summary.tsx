@@ -70,25 +70,6 @@ export function FamilyStorageSummary({
           {t('familyPlus.storage.noData')}
         </AppText>
       )}
-      {snapshot.videos ? (
-        <View style={styles.video}>
-          <AppText variant="subheadline">
-            {t('familyPlus.storage.videosUsed', {
-              count: snapshot.videos.uploaded,
-            })}
-          </AppText>
-          <AppText tone="secondary" variant="footnote">
-            {snapshot.videos.limit === null
-              ? t('familyPlus.storage.unlimited')
-              : t('familyPlus.storage.videosRemaining', {
-                  count: Math.max(
-                    0,
-                    snapshot.videos.limit - snapshot.videos.uploaded,
-                  ),
-                })}
-          </AppText>
-        </View>
-      ) : null}
       {snapshot.usageDetails ? (
         <>
           {snapshot.usageDetails.status !== 'ready' ? (
@@ -110,15 +91,6 @@ export function FamilyStorageSummary({
               </AppText>
             ) : null;
           })}
-          {snapshot.usageDetails.videoStatus !== 'ready' ? (
-            <AppText tone="secondary" variant="footnote">
-              {t('familyPlus.videoPolicyPending')}
-            </AppText>
-          ) : (
-            <AppText tone="secondary" variant="footnote">
-              {t('familyPlus.videoPolicyCandidate')}
-            </AppText>
-          )}
         </>
       ) : null}
       {snapshot.source === 'development-preview' ||
@@ -147,10 +119,4 @@ const styles = StyleSheet.create({
   },
   fill: { height: '100%', backgroundColor: lightColors.secondary },
   over: { backgroundColor: lightColors.warning },
-  video: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: lightColors.border,
-    paddingTop: spacing.md,
-    gap: spacing.xs,
-  },
 });

@@ -20,6 +20,7 @@ import {
 } from '@/lib/supabase/client';
 import { cancelCareTaskNotifications } from '@/services/care-task-notifications';
 import { unregisterFamilyPushDevice } from '@/services/family-push-device';
+import { setBillingAuthUser } from '@/features/billing/billing-client';
 import { useCurrentFamilyStore } from '@/stores/current-family-store';
 import { useCurrentPetStore } from '@/stores/current-pet-store';
 
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const stopAutoRefresh = registerSupabaseAutoRefresh();
     const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       const nextUserId = nextSession?.user.id ?? null;
+      setBillingAuthUser(nextUserId);
       const previousUserId = latestUserId.current;
 
       if (previousUserId && previousUserId !== nextUserId) {

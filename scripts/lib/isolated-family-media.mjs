@@ -31,7 +31,12 @@ const fingerprint = `select json_build_object('tables',(
 
 export async function withIsolatedMedia(
   run,
-  { migration, storage = false, tusExpiryMs = 60_000 } = {},
+  {
+    migration,
+    storage = false,
+    tusExpiryMs = 60_000,
+    storageFileSizeLimitBytes,
+  } = {},
 ) {
   // Fixed local targets only. No URL, linked project or Production credential option.
   const database = `homeypaw_media_verify_${process.pid}_${randomUUID().slice(0, 8)}`;
@@ -173,6 +178,13 @@ export async function withIsolatedMedia(
       env.STORAGE_BACKEND = 'file';
       env.FILE_STORAGE_BACKEND_PATH = '/var/lib/storage';
       env.TUS_URL_EXPIRY_MS = String(tusExpiryMs);
+      if (storageFileSizeLimitBytes !== undefined) {
+        assert.ok(
+          Number.isSafeInteger(storageFileSizeLimitBytes) &&
+            storageFileSizeLimitBytes > 0,
+        );
+        env.UPLOAD_FILE_SIZE_LIMIT = String(storageFileSizeLimitBytes);
+      }
       temp = mkdtempSync(join(tmpdir(), 'homeypaw-media-verify-'));
       const envFile = join(temp, 'storage.env');
       assert.ok(

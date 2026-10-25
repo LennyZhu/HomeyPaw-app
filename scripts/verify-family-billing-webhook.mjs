@@ -207,6 +207,11 @@ await withBlankFamilyPlus(async ({ query, auth, id }) => {
     0,
   );
   unavailable = false;
+  // Several authenticated deliveries for one chain must all drain after a
+  // single fresh reconciliation, rather than remaining deferred forever.
+  query(
+    `select public.receive_family_billing_webhook(${quote(JSON.stringify(event('also-deferred', 'RENEWAL')))}::jsonb,repeat('b',64));`,
+  );
   // First binding recovers an already-authenticated deferred inbox anchor,
   // even when the provider event-history response contains no original ID.
   assert.equal(
@@ -220,6 +225,12 @@ await withBlankFamilyPlus(async ({ query, auth, id }) => {
     'processed',
   );
   assert.equal((await send(initial)).status, 200);
+  assert.equal(
+    query(
+      "select status from private.family_billing_webhook_inbox where event_id='also-deferred';",
+    ),
+    'processed',
+  );
   const tier = () =>
     JSON.parse(
       auth(
@@ -384,6 +395,7 @@ await withBlankFamilyPlus(async ({ query, auth, id }) => {
   query('update private.family_billing_customers set next_retry_at=null;');
   const recovery = await runBillingRecovery({ rpc, reader });
   assert.ok(recovery.pending >= 1);
+  assert.equal(recovery.health.billing_enabled, true);
   history = [
     {
       id: 'recovered-event',
@@ -406,6 +418,51 @@ await withBlankFamilyPlus(async ({ query, auth, id }) => {
     Number(query('select count(*) from private.family_store_subscriptions;')),
     2,
   );
+  const automatic = async () => {
+    query('update private.family_billing_customers set next_retry_at=null;');
+    const result = await runBillingRecovery({ rpc, reader });
+    assert.equal(result.failed, 0);
+    assert.equal(result.review, 0);
+    assert.equal(result.completed, 2);
+    assert.equal(
+      Number(query('select count(*) from private.family_store_subscriptions;')),
+      2,
+    );
+    assert.equal(
+      Number(query('select count(*) from private.family_media_entitlements;')),
+      2,
+    );
+  };
+  // No user request or webhook at all: periodic recovery discovers changes on
+  // existing chains. State is read from the provider, never synthesized events.
+  sub.current_period_ends_at = Date.now() + 14400000;
+  sub.effectiveEnd = sub.current_period_ends_at;
+  await automatic();
+  const renewedUntil = query(
+    `select access_until::text from private.family_store_subscriptions where customer_id=${quote(owner)};`,
+  );
+  await automatic();
+  assert.equal(
+    query(
+      `select access_until::text from private.family_store_subscriptions where customer_id=${quote(owner)};`,
+    ),
+    renewedUntil,
+  );
+  sub.auto_renewal_status = 'will_not_renew';
+  await automatic();
+  assert.equal(tier(), 'plus', 'Cancellation keeps paid access');
+  for (const status of ['refunded', 'revoked', 'expired']) {
+    sub.status = status;
+    sub.gives_access = false;
+    await automatic();
+    assert.equal(tier(), 'free');
+  }
+  // A duplicated old delivery must not resurrect a revoked/expired grant.
+  assert.equal(
+    (await send(event('old-after-automatic', 'RENEWAL'))).status,
+    200,
+  );
+  assert.equal(tier(), 'free');
   console.log(
     'PASS (mock RevenueCat HTTP + real isolated SQL): authenticated delivery, stable digest replay protection, event conflict, out-of-order authority, renewal/cancel/grace/retry/refund, provider outage/retry, known-chain reconciliation, first-anchor missing hold/API-history recovery, Sandbox and target isolation. No Apple or RevenueCat network call performed.',
   );

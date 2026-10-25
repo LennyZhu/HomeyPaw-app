@@ -21,6 +21,7 @@ export type FamilyPlusSnapshot = {
   source: 'server' | 'development-preview';
   serverClock?: { serverTime: string; receivedAt: number };
   confirmedAt?: string;
+  transition?: { startsAt: string; endsAt: string } | null;
   quotaEnabled?: boolean;
   usageDetails?: {
     status: 'ready' | 'uninitialized' | 'pending';
@@ -66,6 +67,31 @@ export function familyPlusIdentity(
   return {
     showBadge,
     status: eligible && !showBadge ? ('unavailable' as const) : snapshot.status,
+  };
+}
+
+export function familyPlusTransition(
+  snapshot: FamilyPlusSnapshot,
+  now = snapshot.serverClock
+    ? Date.parse(snapshot.serverClock.serverTime) +
+      Math.max(0, monotonicNow() - snapshot.serverClock.receivedAt)
+    : NaN,
+) {
+  const window = snapshot.transition;
+  if (
+    snapshot.source !== 'server' ||
+    snapshot.status !== 'transition' ||
+    !window ||
+    !Number.isFinite(now) ||
+    !Number.isFinite(Date.parse(window.endsAt)) ||
+    Date.parse(window.startsAt) > now
+  )
+    return null;
+  const remaining = Math.max(0, Date.parse(window.endsAt) - now);
+  return {
+    endsAt: window.endsAt,
+    remainingDays: Math.ceil(remaining / 86_400_000),
+    expired: remaining === 0,
   };
 }
 

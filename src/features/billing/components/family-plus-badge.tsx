@@ -18,7 +18,9 @@ export function FamilyPlusBadge({
   const { t } = useTranslation();
   const previewAllowed = canUseFamilyPlusPreview(
     __DEV__,
-    process.env.EXPO_PUBLIC_SUPABASE_URL,
+    process.env.EXPO_PUBLIC_HOMEYPAW_TARGET === 'sandbox'
+      ? undefined
+      : process.env.EXPO_PUBLIC_SUPABASE_URL,
   );
   if (!snapshot || !familyPlusIdentity(snapshot, previewAllowed).showBadge)
     return null;

@@ -1315,10 +1315,10 @@
     "contact": "Contact support",
     "privacyTitle": "Privacy Policy",
     "termsTitle": "Terms of Service",
-    "updated": "Updated September 11, 2026",
-    "privacyUpdated": "Updated September 29, 2026",
-    "privacyBody": "HomeyPaw uses your account, profile, pet, family, journal, care, reminder, schedule and push-device data to provide private family pet care. Journal photos, short videos and thumbnails are stored in Supabase and shared only with authorized family members according to their roles.\n\nCamera access is requested only when you choose to take a photo. Photo library access is used to select photos or videos and save content to Photos. Videos come from your library and may retain their existing audio; the app does not record video or use the microphone.\n\nWhen you actively open another member's journal entry or its photo/video viewer, we record the Post, your account and first-view time for family collaboration. Passive Feed browsing and preloading do not count. Reopening keeps the first-view time. Authorized family members can see current readers' names, avatars and first-view times. These records support app functionality, not viewing analytics, advertising or cross-app tracking.\n\nNotification permission supports local reminders and family Journal, Care, Health, Reminder and Chat notifications. We store account-linked installation and push-token information and use Expo and platform notification services. Chat notifications may show the sender's display name and carry identifiers for opening the Family Chat, but never include message text, journal content, care/health notes or medication details. Declining notifications does not block core use.\n\nHomeyPaw does not use advertising tracking, contacts or GPS. You can delete your account in Me → Account and security; Owners must first transfer ownership or delete the Family. Shared history may remain without its author account link. Public policy: https://homeypaw.vercel.app/privacy. Support: lenny996@163.com.",
-    "termsBody": "You are responsible for your account credentials and family invite codes, and you may upload only content you have the right to use. Family members can view or manage shared pet data according to their role. Removing a member ends future access, while previously published content follows the data lifecycle described in the product. Reminders are an aid and are not a substitute for veterinary or emergency advice. The service may be temporarily unavailable for maintenance or network interruptions. Account and pet deletion cannot be undone. For support, email lenny996@163.com. A public terms URL will be added before release."
+    "updated": "Updated October 23, 2026",
+    "privacyUpdated": "Updated October 23, 2026",
+    "privacyBody": "HomeyPaw uses your account, profile, pet, family, journal, care, reminder, schedule and push-device data to provide private family pet care. Journal photos, short videos and thumbnails are stored in Supabase and shared only with authorized family members according to their roles.\n\nCamera access is requested only when you choose to take a photo. Photo library access is used to select photos or videos and save content to Photos. Videos come from your library and may retain their existing audio; the app does not record video or use the microphone.\n\nWhen you actively open another member's journal entry or its photo/video viewer, we record the Post, your account and first-view time for family collaboration. Passive Feed browsing and preloading do not count. Reopening keeps the first-view time. Authorized family members can see current readers' names, avatars and first-view times. These records support app functionality, not viewing analytics, advertising or cross-app tracking.\n\nNotification permission supports local reminders and family Journal, Care, Health, Reminder and Chat notifications. We store account-linked installation and push-token information and use Expo and platform notification services. Chat notifications may show the sender's display name and carry identifiers for opening the Family Chat, but never include message text, journal content, care/health notes or medication details. Declining notifications does not block core use.\n\nWhen Family Plus purchases are enabled, Apple processes payment and RevenueCat verifies subscriptions. HomeyPaw and RevenueCat process your account identifier, store transaction identifiers, product, subscription status and renewal/expiry information to provide shared Family access, restore purchases and prevent duplicate claims. HomeyPaw does not receive your card or bank details. Purchase records are used for app functionality, not advertising or cross-app tracking.\n\nHomeyPaw does not use advertising tracking, contacts or GPS. You can delete your account in Me → Account and security; Owners must first transfer ownership or delete the Family. Shared history may remain without its author account link. Public policy: https://homeypaw.vercel.app/privacy. Support: lenny996@163.com.",
+    "termsBody": "You are responsible for your account credentials and family invite codes, and you may upload only content you have the right to use. Family members can view or manage shared pet data according to their role. Removing a member ends future access, while previously published content follows the data lifecycle described in the product. Reminders are an aid and are not a substitute for veterinary or emergency advice. The service may be temporarily unavailable for maintenance or network interruptions. Account and pet deletion cannot be undone. For support, email lenny996@163.com. Public terms: https://homeypaw.vercel.app/terms.\n\nWhen available, Family Plus is an Apple auto-renewable monthly or yearly subscription. The purchase screen shows Apple’s localized price and billing period; yearly plans are charged once per year. Apple handles charges, renewals, cancellation and refund requests under its terms. Manage or cancel in Apple Subscriptions. Cancelling renewal does not immediately end valid access. One Family shares the subscription; transferring Family ownership, leaving the Family or deleting a HomeyPaw account does not transfer or cancel the original payer’s Apple subscription. Expiry or storage overage does not automatically delete historical media. Core family care remains free."
   },
   "accountSecurity": {
     "ownsFamilyTitle": "Resolve family ownership first",
@@ -1366,7 +1366,8 @@
     "cancelled": "Purchase cancelled.",
     "failed": "Purchase could not be confirmed. Verify the status before trying again.",
     "unavailable": "Sandbox setup or a new development build is required. If a purchase is pending, verify it before retrying.",
-    "checking": "Checking family status…"
+    "checking": "Checking family status…",
+    "nothingToRestore": "No active subscription was verified for this account. Use the original HomeyPaw payer account to restore."
   },
   "familyPlus": {
     "entry": "Family Plan",
@@ -1416,7 +1417,7 @@
       "cancelled": "Family Plus · renewal cancelled",
       "expired": "Family Plus expired · Free",
       "unavailable": "Membership status unavailable",
-      "transition": "Transition · example only",
+      "transition": "Family storage transition",
       "revoked": "Family Plus · revoked"
     },
     "statusBody": {
@@ -1426,9 +1427,12 @@
       "cancelled": "Renewal is cancelled. Plus remains available until the verified access period ends.",
       "expired": "Existing content is retained and core Family care features remain available.",
       "unavailable": "A verified status is unavailable. Unknown does not mean subscribed or expired.",
-      "transition": "Space for a planned 30-day, 1 GiB transition with unlimited video uploads. No transition has started and no countdown is running.",
+      "transition": "Eligible Free Families over the allowance receive a one-time 15-day, 1 GiB transition from policy activation. Existing media is retained after expiry; only new media uploads are paused when over the allowance.",
       "revoked": "Membership access was revoked. Existing media and core care features are retained."
     },
+    "transitionDeadline_one": "{{count}} day remaining · Ends {{date}}",
+    "transitionDeadline_other": "{{count}} days remaining · Ends {{date}}",
+    "transitionEnded": "The transition has ended. Refreshing your Family plan; existing media is retained.",
     "dataState": {
       "empty": "Join or create a Family to view membership here. There is no real usage to display.",
       "error": "Unable to load Family information right now. Please reload.",
@@ -1447,21 +1451,21 @@
       "videosRemaining_other": "{{count}} free videos remaining this month",
       "unlimited": "Unlimited monthly videos, within storage and per-file limits.",
       "enforcementOff": "Quota enforcement is not enabled.",
-      "videoCounting": "Free videos count when published. Deleting one does not restore a monthly slot."
+      "videoCounting": "Photos, videos and thumbnails share your Family media storage. Existing per-file and video-duration limits still apply."
     },
     "features": {
       "space": "Family media storage",
-      "video": "Videos per calendar month",
+      "video": "Short videos",
       "care": "Family collaboration"
     },
     "free": {
       "space": "300 MiB",
-      "video": "3 published videos",
+      "video": "Within Family storage",
       "care": "All core features"
     },
     "plus": {
       "space": "5 GiB",
-      "video": "Unlimited",
+      "video": "Within Family storage",
       "care": "All core features"
     },
     "period": {
@@ -1484,7 +1488,7 @@
       "offeredTitle": "What Family Plus offers",
       "learnTitle": "Explore Family Plus benefits",
       "space": "5 GiB of Family media storage",
-      "video": "Unlimited monthly video uploads",
+      "video": "Photos and short videos share Family storage",
       "sharing": "One Family Owner subscribes. Everyone shares."
     },
     "legal": {
@@ -1526,6 +1530,37 @@
       "previewText": "PLUS · PREVIEW",
       "label": "Active Family Plus membership",
       "previewLabel": "Family Plus development preview, not a real subscription"
+    },
+    "identitySandbox": "{{status}} · Sandbox data",
+    "identityServer": "{{status}}",
+    "entrySandbox": "Family Plus · Sandbox",
+    "entryServer": "Shared family membership",
+    "purchase": {
+      "sandboxNotice": "Apple Sandbox testing · Membership and usage are test data, not Production access. Storage enforcement status is shown below.",
+      "restore": "Restore purchases",
+      "manage": "Manage Apple subscription",
+      "restoring": "Restoring purchases with Apple and verifying family membership…",
+      "restored": "Purchases restored and family membership verified by the server.",
+      "buy": "Subscribe with Apple",
+      "notReady": "Subscription actions are currently unavailable. Purchase, restore and subscription management are disabled.",
+      "blocked": "This family already has an active subscription or a pending purchase. Restore or refresh its status before trying again.",
+      "storeNotice": "The price above is supplied by your Apple storefront. Apple confirms the final price and subscription period before purchase.",
+      "reload": "Reload Apple prices",
+      "refresh": "Refresh membership status",
+      "confirmed": "Your family membership has been verified by the server.",
+      "pending": "Apple or membership verification is still pending. Do not purchase again; refresh the status later.",
+      "cancelled": "Purchase cancelled.",
+      "failed": "The operation could not be confirmed. Check Apple subscriptions and refresh the status before purchasing again.",
+      "nothingToRestore": "No active subscription was verified for this account. Use the original HomeyPaw payer account to restore.",
+      "managed": "Return here after managing your Apple subscription.",
+      "refreshed": "Membership status refreshed.",
+      "identityReview": "This purchase identity needs review. Restore using the original HomeyPaw payer account; do not purchase again to move a subscription.",
+      "summaryUnavailable": "Family plan data is temporarily unavailable. No subscription status or usage is assumed."
     }
+  },
+  "billingTestAccount": {
+    "title": "Test account sign-in",
+    "body": "For server-approved test accounts only. Purchases and Family data on this page use the separate Sandbox. Your Production account is not signed in here.",
+    "denied": "This test account is unavailable or its access has expired. Contact the app provider."
   }
 }

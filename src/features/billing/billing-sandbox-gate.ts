@@ -1,5 +1,6 @@
 export function canUseBillingSandbox(input: {
   development: boolean;
+  buildTarget?: string | undefined;
   platform: string;
   enabled: string | undefined;
   supabaseUrl: string | undefined;
@@ -8,11 +9,18 @@ export function canUseBillingSandbox(input: {
   projectRef: string | undefined;
 }) {
   if (
-    !input.development ||
+    (!input.development && input.buildTarget !== 'billing-rc-sandbox') ||
     input.platform !== 'ios' ||
     input.enabled !== 'true' ||
     !input.supabaseUrl
   )
+    return false;
+  if (
+    input.buildTarget === 'billing-rc-sandbox' &&
+    (input.development || input.targetMode !== 'cloud')
+  )
+    return false;
+  if (input.buildTarget && input.buildTarget !== 'billing-rc-sandbox')
     return false;
   try {
     const url = new URL(input.supabaseUrl);
@@ -28,7 +36,7 @@ export function canUseBillingSandbox(input: {
         url.protocol === 'http:' &&
         ['localhost', '127.0.0.1'].includes(url.hostname)) ||
         (input.targetMode === 'cloud' &&
-          /^[a-z]{20}$/.test(input.projectRef ?? '') &&
+          input.projectRef === 'yhxxsawcaffxonpconaq' &&
           url.protocol === 'https:' &&
           !url.port &&
           url.hostname === `${input.projectRef}.supabase.co` &&
@@ -43,8 +51,10 @@ export function canUseBillingSigning(
   development: boolean,
   devLauncher: boolean,
   releaseType: number,
+  signedSandbox = false,
 ) {
-  // __DEV__ and native Dev Launcher are required in addition to provisioning.
-  // Ordinary App Store/TestFlight, enterprise and simulator builds stay denied.
+  // A dedicated Store RC/test-account context is explicit; it does not depend
+  // on Metro or Dev Launcher. Backend identity/transaction checks still apply.
+  if (signedSandbox) return !development && releaseType === 5;
   return development && devLauncher && [3, 4].includes(releaseType);
 }

@@ -636,6 +636,14 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      get_family_billing_test_access: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      is_pre_cutover_release_locked: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
       get_family_plus_summary: {
         Args: { target_family_id: string };
         Returns: Json;

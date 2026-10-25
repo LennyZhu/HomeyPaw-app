@@ -101,6 +101,12 @@ await withBlankFamilyPlus(async ({ query, api, anonKey, jwtSecret }) => {
     './family-plus-presentation': model,
   });
   const preview = load('src/features/billing/family-plus-preview.ts', {});
+  const environment = load('src/features/billing/family-plus-environment.ts', {
+    '@/lib/supabase/environment': {
+      supabaseEnvironment: { url: api, sandbox: false },
+    },
+    './family-plus-preview': preview,
+  });
   for (const who of ['owner', 'member', 'viewer']) {
     const client = createClient(api, anonKey, {
       auth: { persistSession: false, autoRefreshToken: false },
@@ -109,7 +115,7 @@ await withBlankFamilyPlus(async ({ query, api, anonKey, jwtSecret }) => {
     const reader = load('src/features/billing/family-plus-api.ts', {
       '@/lib/supabase/client': { requireSupabase: () => client },
       './family-plus-data': dataAdapter,
-      './family-plus-preview': preview,
+      './family-plus-environment': environment,
       './family-plus-presentation': model,
     });
     const result = await reader.readFamilyPlusSummary(

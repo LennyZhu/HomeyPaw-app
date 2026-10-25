@@ -79,7 +79,9 @@ update private.family_store_subscriptions set status='in_billing_retry',access_u
 select public.rv2_assert(public.get_family_plus_summary(public.rv2_id('family'))->>'status'='expired','retry without grace access is not a revocation or active Plus');
 update private.family_media_quota_policy set video_calendar_time_zone='Asia/Hong_Kong',video_counting_scope='all_successful',metering_started_at='2020-01-01';
 insert into private.family_video_publications select public.rv2_id('video-'||n),public.rv2_id('family'),public.rv2_id('historical-post-'||n),now(),'free',false from generate_series(1,4) n;
-select public.rv2_assert(public.get_family_plus_summary(public.rv2_id('family'))#>>'{videos,published}'='4','retained successful-publication ledger, not surviving videos');
+select public.rv2_assert(case when (select video_limit from private.family_media_limits(public.rv2_id('family'),now())) is null
+ then public.get_family_plus_summary(public.rv2_id('family'))#>>'{videos,published}' is null
+ else public.get_family_plus_summary(public.rv2_id('family'))#>>'{videos,published}'='4' end,'capacity-only release hides monthly count; candidate policy retains publication ledger');
 update private.family_media_quota_policy set metering_started_at=now();
 select public.rv2_assert(public.get_family_plus_summary(public.rv2_id('family'))#>>'{videos,published}' is null,'partial coverage cannot claim full monthly count');
 insert into storage.objects(id,bucket_id,name,owner_id,version,metadata)

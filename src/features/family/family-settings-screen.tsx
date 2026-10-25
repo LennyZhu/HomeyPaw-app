@@ -12,7 +12,11 @@ import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { SettingsRow } from '@/components/settings-row';
 import { useAuth } from '@/features/auth/auth-context';
-import { canUseFamilyPlusPreview } from '@/features/billing/family-plus-preview';
+import {
+  isFamilyPlusAvailable,
+  isFamilyPlusRelease,
+  isFamilyPlusSandbox,
+} from '@/features/billing/family-plus-environment';
 import { FamilyPlusBadge } from '@/features/billing/components/family-plus-badge';
 import { useFamilyPlus } from '@/features/billing/use-family-plus';
 import { createStorageImageSource } from '@/features/media/storage-signed-url';
@@ -286,15 +290,18 @@ export default function FamilySettingsScreen() {
         </View>
       </View>
 
-      {canUseFamilyPlusPreview(
-        __DEV__,
-        process.env.EXPO_PUBLIC_SUPABASE_URL,
-      ) ? (
+      {isFamilyPlusAvailable() ? (
         <View style={styles.card}>
           <SettingsRow
             icon="heart-outline"
             label={t('familyPlus.entry')}
-            subtitle={t('familyPlus.entryPreview')}
+            subtitle={t(
+              isFamilyPlusRelease()
+                ? 'familyPlus.entryServer'
+                : isFamilyPlusSandbox()
+                  ? 'familyPlus.entrySandbox'
+                  : 'familyPlus.entryPreview',
+            )}
             last
             onPress={() => router.push('/family-plus')}
           />

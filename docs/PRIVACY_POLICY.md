@@ -1,5 +1,13 @@
 # HomeyPaw Privacy Policy / HomeyPaw 私隱政策
 
+## Family Plus 1.4 development addendum — 2026-10-23 (not published)
+
+When Family Plus purchases are enabled, Apple processes payment and RevenueCat verifies subscriptions. HomeyPaw and RevenueCat process account identifiers, store transaction identifiers, products, subscription status and renewal/expiry information to provide Family access, restore purchases and prevent duplicate claims. HomeyPaw does not receive card or bank details. Purchase records are used for app functionality, not advertising or cross-app tracking. Billing identity is independent of Family ownership; account deletion does not cancel an Apple subscription. Subscription records needed to maintain the Family's access and prevent duplicate claims can retain the store transaction identity with the deleted account link removed. Manage or cancel through Apple Subscriptions.
+
+啟用 Family Plus 購買時，Apple 處理付款，RevenueCat 核驗訂閱。HomeyPaw 與 RevenueCat 處理帳戶識別資料、商店交易識別資料、商品、訂閱狀態及續訂／到期資料，用於家庭共享權益、恢復購買及防止重複認領。HomeyPaw 不接收信用卡或銀行資料，購買記錄不用於廣告或跨 App 追蹤。付款身份獨立於家庭擁有權；刪除帳戶不會取消 Apple 訂閱。維持家庭權益及防止重複認領所需的訂閱記錄，可在移除帳戶連結後保留商店交易識別資料。請於 Apple「訂閱」管理或取消。
+
+Publish reviewed bilingual copy at the existing URL before enabling billing. The following 1.3.0 policy remains a historical baseline, not evidence of publication.
+
 Updated / 更新日期：2026-09-29
 
 Repository draft for HomeyPaw 1.3.0. Public policy URL: `https://homeypaw.vercel.app/privacy`. The bundled bilingual privacy summary was aligned on 2026-09-29. These edits do not publish the website or update App Store Connect.

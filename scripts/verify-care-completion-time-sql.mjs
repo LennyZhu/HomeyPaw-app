@@ -122,6 +122,13 @@ try {
     historyBefore,
     'Migration must not rewrite historical facts.',
   );
+  const compatibility = read(
+    'supabase/migrations/20261025051859_care_log_legacy_time_compatibility.sql',
+  );
+  const v2Before = query(wrapperDefinition);
+  query(compatibility);
+  query(compatibility); // Repeat application must preserve behavior and identity.
+  assert.equal(query(wrapperDefinition), v2Before);
   query(read('scripts/sql/care-completion-actual-time.sql'));
   console.log(
     'PASS: actual/audit/planned separation, server-now NULL, planned/custom/early/midnight, today filtering/sorting, author-only correction, future/infinity rejection, legacy compatibility, canceled state, canonical roles and exactly-one Care Push event.',

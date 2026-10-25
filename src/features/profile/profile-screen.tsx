@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, type ComponentProps } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -11,7 +12,7 @@ import { useFeedback } from '@/components/feedback-provider';
 import { LoadingView } from '@/components/loading-view';
 import { Screen } from '@/components/screen';
 import { useAuth } from '@/features/auth/auth-context';
-import { canUseFamilyPlusPreview } from '@/features/billing/family-plus-preview';
+import { isFamilyPlusAvailable } from '@/features/billing/family-plus-environment';
 import { FamilyPlusBadge } from '@/features/billing/components/family-plus-badge';
 import { useFamilyPlus } from '@/features/billing/use-family-plus';
 import { useCurrentFamily } from '@/features/family/use-current-family';
@@ -64,10 +65,7 @@ export default function ProfileScreen() {
   const profileEmail = user?.email ?? t('profile.emailUnavailable');
   const profileLanguage =
     profile?.locale === 'en' ? t('profile.english') : t('profile.zhHK');
-  const showFamilyPlan = canUseFamilyPlusPreview(
-    __DEV__,
-    process.env.EXPO_PUBLIC_SUPABASE_URL,
-  );
+  const showFamilyPlan = isFamilyPlusAvailable();
 
   useFocusEffect(
     useCallback(() => {
@@ -196,10 +194,10 @@ export default function ProfileScreen() {
                 pressed && styles.pressed,
               ]}
             >
-              <Ionicons
+              <MaterialCommunityIcons
                 accessible={false}
                 color={lightColors.secondary}
-                name="paw-outline"
+                name="crown-outline"
                 size={21}
               />
               <View style={styles.familyPlanCopy}>

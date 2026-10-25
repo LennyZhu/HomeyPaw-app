@@ -15,6 +15,8 @@ import { FeedbackProvider } from '@/components/feedback-provider';
 import { appScreenOrientation } from '@/config/orientation';
 import { AuthProvider, useAuth } from '@/features/auth/auth-context';
 import { FamilyPlusPreviewLifecycle } from '@/features/billing/use-family-plus-preview';
+import { isFamilyPlusAvailable } from '@/features/billing/family-plus-environment';
+import { canUseBillingTestAccount } from '@/features/billing/billing-test-account';
 import { AppReleaseBlockScreen } from '@/features/app-release/app-release-block-screen';
 import { useAppReleaseGate } from '@/features/app-release/use-app-release-gate';
 import { AuthDeepLinkCoordinator } from '@/features/auth/auth-deep-link-coordinator';
@@ -160,8 +162,18 @@ function RootNavigator() {
           )}
         >
           <Stack.Screen name="chat-preview" />
-          <Stack.Screen name="family-plus" />
           <Stack.Screen name="family-plus-sandbox" />
+        </Stack.Protected>
+        <Stack.Protected
+          guard={Boolean(
+            isFamilyPlusAvailable() &&
+            session &&
+            !isProcessingAuthCallback &&
+            !isPasswordRecovery &&
+            !isProfileSetupPending,
+          )}
+        >
+          <Stack.Screen name="family-plus" />
         </Stack.Protected>
         <Stack.Protected
           guard={Boolean(
@@ -172,6 +184,17 @@ function RootNavigator() {
           )}
         >
           <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        <Stack.Protected
+          guard={Boolean(
+            canUseBillingTestAccount() &&
+            !session &&
+            !hasPasswordRecoveryError &&
+            !isPasswordRecovery &&
+            !isProcessingAuthCallback,
+          )}
+        >
+          <Stack.Screen name="billing-test-account" />
         </Stack.Protected>
       </Stack>
       <AuthDeepLinkCoordinator />

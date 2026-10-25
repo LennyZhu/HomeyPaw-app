@@ -67,7 +67,18 @@ select * from public.update_care_log(public.ct_id('log-custom'),((current_date-2
 select public.ct_assert((select local_date=current_date-2 from public.care_logs where id=public.ct_id('log-custom')),'author corrects actual date');
 select public.ct_assert((select count(*)=1 from public.care_task_completions where task_id=public.ct_id('custom')),'edit keeps completed occurrence');
 select public.ct_assert((select completed_at>(((current_date-1)+time '14:15') at time zone 'Asia/Hong_Kong') from public.care_task_completions where task_id=public.ct_id('custom')),'audit timestamp not replaced by edit');
-select public.ct_error($q$select public.update_care_log(public.ct_id('log-custom'),clock_timestamp()+interval '1 minute','Asia/Hong_Kong',null,null)$q$,'22023');
+-- Legacy edit accepts the client's complete five-minute range, without changing
+-- the scheduled occurrence or completion audit timestamp.
+do $$ declare delta integer; expected timestamptz; actual timestamptz; begin
+ foreach delta in array array[0,1,60,299,300] loop
+  expected := clock_timestamp() + make_interval(secs => delta);
+  select occurred_at into actual from public.update_care_log(public.ct_id('log-custom'),expected,'Asia/Hong_Kong',null,null);
+  perform public.ct_assert(actual=expected,'legacy edit preserves accepted timestamp');
+ end loop;
+end $$;
+select public.ct_error($q$select public.update_care_log(public.ct_id('log-custom'),clock_timestamp()+interval '301 seconds','Asia/Hong_Kong',null,null)$q$,'22023');
+select public.ct_error($q$select public.update_care_log(public.ct_id('log-custom'),'infinity','Asia/Hong_Kong',null,null)$q$,'22023');
+select public.ct_error($q$select public.update_care_log(public.ct_id('log-custom'),'-infinity','Asia/Hong_Kong',null,null)$q$,'22023');
 select set_config('request.jwt.claim.sub',public.rv2_id('member')::text,true);
 -- Force a zone on the opposite side of midnight from UTC to exercise server-now local_date.
 reset role;
@@ -79,6 +90,7 @@ select public.ct_error($q$select public.update_care_log(public.ct_id('log-custom
 do $$ declare actor text; begin
  foreach actor in array array['viewer','removed','former','stranger'] loop
   perform set_config('request.jwt.claim.sub',public.rv2_id(actor)::text,true);
+  perform public.ct_error($q$select public.update_care_log(public.ct_id('log-custom'),clock_timestamp(),'Asia/Hong_Kong',null,null)$q$,'42501');
   perform public.ct_error($q$select public.complete_care_shift_task_v2(gen_random_uuid(),gen_random_uuid(),public.ct_id('item-denied'),null)$q$,'42501');
   perform public.ct_error($q$select public.complete_care_task_v2(gen_random_uuid(),gen_random_uuid(),public.ct_id('denied'),((current_date-1)+time '13:00') at time zone 'Asia/Hong_Kong',null)$q$,'42501');
   perform public.ct_assert((select count(*)=0 from public.get_today_care_logs(public.rv2_id('pet'))),'existing Viewer/nonmember Care read denial preserved');

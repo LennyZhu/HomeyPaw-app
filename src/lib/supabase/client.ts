@@ -9,6 +9,7 @@ import { AppState, Platform } from 'react-native';
 import type { Database } from '@/types/database';
 
 import { fetchWithTimeout } from '../network-fetch';
+import { supabaseEnvironment } from './environment';
 
 const sessionStorage = {
   getItem(key: string) {
@@ -30,9 +31,8 @@ const sessionStorage = {
   },
 };
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.trim();
-const supabaseClientKey =
-  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
+const supabaseUrl = supabaseEnvironment.url;
+const supabaseClientKey = supabaseEnvironment.key;
 
 function isAllowedSupabaseUrl(value: string | undefined) {
   if (!value) {

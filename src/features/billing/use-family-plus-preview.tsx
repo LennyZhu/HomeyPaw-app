@@ -27,7 +27,9 @@ const noSubscribe = () => () => undefined;
 export function FamilyPlusPreviewLifecycle() {
   const enabled = canUseFamilyPlusPreview(
     __DEV__,
-    process.env.EXPO_PUBLIC_SUPABASE_URL,
+    process.env.EXPO_PUBLIC_HOMEYPAW_TARGET === 'sandbox'
+      ? undefined
+      : process.env.EXPO_PUBLIC_SUPABASE_URL,
   );
   useLayoutEffect(() => {
     if (!enabled) {
@@ -62,7 +64,9 @@ export function useFamilyPlusPreview(input: {
   const { t } = useTranslation();
   const enabled = canUseFamilyPlusPreview(
     __DEV__,
-    process.env.EXPO_PUBLIC_SUPABASE_URL,
+    process.env.EXPO_PUBLIC_HOMEYPAW_TARGET === 'sandbox'
+      ? undefined
+      : process.env.EXPO_PUBLIC_SUPABASE_URL,
   );
   const state = useSyncExternalStore(
     enabled ? familyPlusPreviewMemory.subscribe : noSubscribe,

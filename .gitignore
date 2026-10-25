@@ -71,3 +71,6 @@ coverage/
 # generated native folders
 /ios
 /android
+# Filled client connection configuration; keep the empty reviewed template.
+family-plus-client.json
+!supabase/family-plus-client.example.json

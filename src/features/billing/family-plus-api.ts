@@ -1,6 +1,9 @@
 import { requireSupabase } from '@/lib/supabase/client';
 import { parseFamilyPlusSummary } from './family-plus-data';
-import { canUseFamilyPlusPreview } from './family-plus-preview';
+import {
+  isFamilyPlusAvailable,
+  isFamilyPlusRelease,
+} from './family-plus-environment';
 import { monotonicNow } from './family-plus-presentation';
 
 export async function readFamilyPlusSummary(
@@ -8,9 +11,7 @@ export async function readFamilyPlusSummary(
   familyId: string,
   signal: AbortSignal,
 ) {
-  // Local read-only milestone. No URL/credential fallback and no cloud requests.
-  if (!canUseFamilyPlusPreview(__DEV__, process.env.EXPO_PUBLIC_SUPABASE_URL))
-    throw new Error('FAMILY_PLUS_LOCAL_ONLY');
+  if (!isFamilyPlusAvailable()) throw new Error('FAMILY_PLUS_TARGET_DENIED');
   const { data, error } = await requireSupabase()
     .rpc('get_family_plus_summary', {
       target_family_id: familyId,
@@ -19,7 +20,12 @@ export async function readFamilyPlusSummary(
   if (error) throw error;
   if (signal.aborted) throw new Error('FAMILY_PLUS_SCOPE_CHANGED');
   return {
-    summary: parseFamilyPlusSummary(data, userId, familyId),
+    summary: parseFamilyPlusSummary(
+      data,
+      userId,
+      familyId,
+      isFamilyPlusRelease() ? 'PRODUCTION' : 'SANDBOX',
+    ),
     receivedAt: monotonicNow(),
   };
 }

@@ -46,18 +46,24 @@ const iso = (ms) => {
 export function createRevenueCatReader({
   secret,
   projectId,
+  environment = 'SANDBOX',
   fetchImpl = fetch,
+  deadlineAt = Infinity,
+  now = Date.now,
 }) {
-  if (!secret || !projectId) throw new Error('BILLING_PROVIDER_NOT_CONFIGURED');
+  if (!secret || !projectId || !['SANDBOX', 'PRODUCTION'].includes(environment))
+    throw new Error('BILLING_PROVIDER_NOT_CONFIGURED');
   const root = `/v2/projects/${encodeURIComponent(projectId)}`;
   const get = async (path) => {
     // Do not follow provider pagination/redirects to another host with a secret.
     if (!path.startsWith(root + '/') || path.includes('..'))
       throw new Error('BILLING_INVALID_PROVIDER_PATH');
+    const remaining = deadlineAt - now();
+    if (remaining <= 0) throw new Error('BILLING_RECOVERY_TIME_BUDGET');
     const response = await fetchImpl(`https://api.revenuecat.com${path}`, {
       headers: { Authorization: `Bearer ${secret}` },
       redirect: 'error',
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(Math.min(10_000, remaining)),
     });
     if (!response.ok)
       throw new Error(`BILLING_PROVIDER_HTTP_${response.status}`);
@@ -76,17 +82,32 @@ export function createRevenueCatReader({
     return items;
   };
   return {
+    withDeadline(until) {
+      return createRevenueCatReader({
+        secret,
+        projectId,
+        environment,
+        fetchImpl,
+        deadlineAt: Math.min(deadlineAt, until),
+        now,
+      });
+    },
     async hasSubscriptions(customerId) {
       const items = await list(
-        `${root}/customers/${encodeURIComponent(customerId)}/subscriptions?environment=sandbox`,
+        `${root}/customers/${encodeURIComponent(customerId)}/subscriptions?environment=${environment.toLowerCase()}`,
       );
       return items.some(
-        (s) => s.store === 'app_store' && s.environment === 'sandbox',
+        (s) =>
+          s.store === 'app_store' &&
+          s.environment === environment.toLowerCase(),
       );
     },
     // Known-chain reconciliation never relies on a client transaction ID.
     async snapshot(customerId, originalId, cfg) {
-      if (cfg.rc_project_id !== projectId)
+      if (
+        cfg.rc_project_id !== projectId ||
+        (cfg.environment ?? 'SANDBOX') !== environment
+      )
         throw new Error('BILLING_PROVIDER_PROJECT_DENIED');
       const candidates = await list(
         `${root}/subscriptions?store_subscription_identifier=${encodeURIComponent(originalId)}`,
@@ -95,7 +116,7 @@ export function createRevenueCatReader({
         throw new Error('BILLING_CHAIN_LOOKUP_AMBIGUOUS');
       const sub = candidates[0];
       if (
-        sub.environment !== 'sandbox' ||
+        sub.environment !== environment.toLowerCase() ||
         sub.store !== 'app_store' ||
         sub.ownership !== 'purchased' ||
         sub.customer_id !== customerId ||
@@ -115,7 +136,14 @@ export function createRevenueCatReader({
       const entitlements = await list(
         `${root}/subscriptions/${encodeURIComponent(sub.id)}/entitlements`,
       );
-      const mapped = entitlements.some((e) => e.id === cfg.rc_entitlement_id);
+      // Dashboard identifier (family_plus) is lookup_key; API id can instead be
+      // an entl... identifier. Both are provider facts from this verified chain.
+      const mapped = entitlements.some(
+        (e) =>
+          (e.id === cfg.rc_entitlement_id ||
+            e.lookup_key === cfg.rc_entitlement_id) &&
+          (e.state === undefined || e.state === 'active'),
+      );
       // This endpoint belongs to the already verified subscription, unlike
       // customer active_entitlements, which can aggregate chains/environments.
       const transactions = sub.gives_access
@@ -130,7 +158,7 @@ export function createRevenueCatReader({
         mapped,
       );
       return {
-        environment: 'SANDBOX',
+        environment,
         store: 'APP_STORE',
         original_transaction_id: originalId,
         rc_subscription_id: sub.id,
@@ -148,10 +176,13 @@ export function createRevenueCatReader({
       };
     },
     async anchors(customerId, cfg) {
-      if (cfg.rc_project_id !== projectId)
+      if (
+        cfg.rc_project_id !== projectId ||
+        (cfg.environment ?? 'SANDBOX') !== environment
+      )
         throw new Error('BILLING_PROVIDER_PROJECT_DENIED');
       const events = await list(
-        `${root}/customers/${encodeURIComponent(customerId)}/events?environment=sandbox`,
+        `${root}/customers/${encodeURIComponent(customerId)}/events?environment=${environment.toLowerCase()}`,
       );
       // Event history may not expose a chain identifier. Never invent one from
       // store_subscription_identifier (which can change with renewals).
@@ -159,7 +190,7 @@ export function createRevenueCatReader({
         const b = item.body;
         if (
           !b ||
-          b.environment !== 'SANDBOX' ||
+          b.environment !== environment ||
           b.store !== 'APP_STORE' ||
           item.app_id !== cfg.rc_app_id ||
           b.app_user_id !== customerId ||
@@ -246,7 +277,6 @@ export async function reconcileCustomer(
       error_code,
     });
   try {
-    const anchors = event ? [event] : await reader.anchors(customerId, cfg);
     const work = new Map(chains.map((c) => [c.original_transaction_id, null]));
     // Minimal anchors already admitted through authenticated webhook ingestion.
     // Do not recreate/re-hash a partial event or trust a client-supplied chain ID.
@@ -255,6 +285,23 @@ export async function reconcileCustomer(
     });
     for (const anchor of stored)
       work.set(anchor.original_transaction_id, anchor.event_id);
+    // A verified empty payer needs no event-history anchor to begin a first
+    // purchase. Conversely pending intents never become "empty" just because
+    // provider ingestion is delayed. Known chains recover without event history.
+    if (
+      !event &&
+      !work.size &&
+      !pendingIntent &&
+      !(await reader.hasSubscriptions(customerId))
+    ) {
+      await finish('empty');
+      return { status: 'empty', updated: 0 };
+    }
+    const anchors = event
+      ? [event]
+      : work.size && !pendingIntent
+        ? []
+        : await reader.anchors(customerId, cfg);
     for (const anchor of anchors) {
       await rpc('receive_family_billing_webhook', {
         event: anchor,
@@ -309,26 +356,65 @@ export const isBillingManualReview = (code) =>
     'BILLING_PROVIDER_PRODUCT_DENIED',
     'BILLING_PROVIDER_PROJECT_DENIED',
     'BILLING_CHAIN_LOOKUP_AMBIGUOUS',
+    'BILLING_PROVIDER_HTTP_401',
+    'BILLING_PROVIDER_HTTP_403',
   ].includes(code);
 
-export async function runBillingRecovery(runtime) {
+export async function runBillingRecovery(runtime, { now = Date.now } = {}) {
+  const deadline = now() + 45_000;
+  const { config } = await runtime.rpc('get_family_billing_server_context');
+  if (!config?.enabled) throw new Error('BILLING_SANDBOX_NOT_CONFIGURED');
   const customers = await runtime.rpc(
     'get_family_billing_reconciliation_work',
     { job_limit: 5 },
   );
-  const counts = { completed: 0, pending: 0, failed: 0, review: 0 };
+  const counts = {
+    completed: 0,
+    pending: 0,
+    failed: 0,
+    review: 0,
+    remaining: 0,
+  };
   // Bounded sequential work avoids 25 simultaneous provider query chains.
   for (const id of customers) {
+    if (now() >= deadline) break;
+    const customerDeadline = Math.min(deadline, now() + 20_000);
     try {
-      const result = await reconcileCustomer(runtime, id);
+      const result = await reconcileCustomer(
+        {
+          ...runtime,
+          rpc: (name, args) => {
+            if (
+              name !== 'finish_family_billing_recovery' &&
+              now() >= customerDeadline
+            )
+              throw new Error('BILLING_RECOVERY_TIME_BUDGET');
+            return runtime.rpc(name, args);
+          },
+          reader:
+            runtime.reader.withDeadline?.(customerDeadline) ?? runtime.reader,
+        },
+        id,
+      );
       if (result.status === 'pending_chain_anchor') counts.pending++;
       else counts.completed++;
     } catch (error) {
-      if (isBillingManualReview(billingFailureCode(error))) counts.review++;
+      const code = billingFailureCode(error);
+      if (isBillingManualReview(code)) counts.review++;
       else counts.failed++;
+      // Provider credentials are shared. Do not quarantine every payer or burn
+      // the whole batch when operator action on the credentials is required.
+      if (/^BILLING_PROVIDER_HTTP_40[13]$/.test(code)) break;
     }
   }
-  return counts;
+  counts.remaining =
+    customers.length -
+    counts.completed -
+    counts.pending -
+    counts.failed -
+    counts.review;
+  const health = await runtime.rpc('get_family_billing_recovery_health');
+  return { ...counts, health };
 }
 export async function preflightFamilyPurchase(runtime, userId) {
   const { family_id: familyId, customers } = await runtime.rpc(
@@ -370,7 +456,10 @@ export function createBillingWebhookHandler({ rpc, reader, webhookSecret }) {
       )
         return json({ error: 'INVALID_EVENT' }, 400);
       const { config: cfg } = await rpc('get_family_billing_server_context');
-      if (event.environment !== 'SANDBOX' || event.app_id !== cfg?.rc_app_id)
+      if (
+        event.environment !== (cfg?.environment ?? 'SANDBOX') ||
+        event.app_id !== cfg?.rc_app_id
+      )
         return json({ error: 'ENVIRONMENT_DENIED' }, 403);
       // Canonical event digest is shared with reconciliation, not raw transport
       // formatting; retries keep their event id and fields. No event TTL cutoff.

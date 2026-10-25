@@ -25,8 +25,13 @@ export const familyPlusSummarySchema = z.object({
   ]),
   gives_plus_access: z.boolean(),
   access_until: instant.nullable(),
+  // Optional while an older server still returns the version-1 Summary shape.
+  transition: z
+    .object({ starts_at: instant, ends_at: instant })
+    .nullable()
+    .optional(),
   entitlement_checked_at: instant.nullable(),
-  billing_environment: z.literal('SANDBOX'),
+  billing_environment: z.enum(['SANDBOX', 'PRODUCTION']),
   limit_bytes: bytes.nullable(),
   storage_enforcement_enabled: z.boolean(),
   usage: z.object({
@@ -60,8 +65,11 @@ export function parseFamilyPlusSummary(
   raw: unknown,
   userId: string,
   familyId: string,
+  expectedEnvironment: 'SANDBOX' | 'PRODUCTION' = 'SANDBOX',
 ) {
   const result = familyPlusSummarySchema.parse(raw);
+  if (result.billing_environment !== expectedEnvironment)
+    throw new Error('FAMILY_PLUS_ENVIRONMENT_MISMATCH');
   if (result.family_id !== familyId || result.viewer_user_id !== userId)
     throw new Error('FAMILY_PLUS_SCOPE_CHANGED');
   if (
@@ -76,6 +84,16 @@ export function parseFamilyPlusSummary(
     !result.gives_plus_access
   )
     throw new Error('FAMILY_PLUS_UNCONFIRMED_ACCESS');
+  if (
+    result.transition &&
+    (result.status !== 'transition' ||
+      Date.parse(result.transition.starts_at) >
+        Date.parse(result.server_time) ||
+      Date.parse(result.transition.ends_at) <= Date.parse(result.server_time) ||
+      Date.parse(result.transition.ends_at) <=
+        Date.parse(result.transition.starts_at))
+  )
+    throw new Error('FAMILY_PLUS_INVALID_TRANSITION');
   return result;
 }
 
@@ -88,6 +106,12 @@ export function familyPlusServerSnapshot(
     serverClock: { serverTime: data.server_time, receivedAt },
     // Last successful read confirmation, separate from provider/grant history.
     confirmedAt: data.server_time,
+    transition: data.transition
+      ? {
+          startsAt: data.transition.starts_at,
+          endsAt: data.transition.ends_at,
+        }
+      : null,
     status: data.status,
     plusAccess: {
       source: 'server-verified',

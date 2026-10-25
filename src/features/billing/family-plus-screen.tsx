@@ -24,9 +24,19 @@ import { FamilyPlusBadge } from './components/family-plus-badge';
 import { useFamilyPlus } from './use-family-plus';
 import { emptyFamilyPlusServerSnapshot } from './family-plus-data';
 import {
+  isFamilyPlusAvailable,
+  isFamilyPlusSandbox,
+  isFamilyPlusRelease,
+} from './family-plus-environment';
+import {
+  useFamilyPlusPurchases,
+  type FamilyPlusPurchases,
+} from './use-family-plus-purchases';
+import {
   canSelectFamilyPlusPlan,
   familyPlusPrice,
   familyPlusIdentity,
+  familyPlusTransition,
   familyPlusBenefitsTitle,
   type FamilyPlusAction,
   type FamilyPlusPeriod,
@@ -48,8 +58,7 @@ export const familyPlusLegalLinks = {
 } as const;
 
 export default function FamilyPlusScreen() {
-  if (!canUseFamilyPlusPreview(__DEV__, process.env.EXPO_PUBLIC_SUPABASE_URL))
-    return null;
+  if (!isFamilyPlusAvailable()) return null;
   return <FamilyPlusDevelopmentScreen />;
 }
 
@@ -78,6 +87,10 @@ function FamilyPlusDevelopmentScreen() {
       onServerMode={preview.setServerMode}
       onServerRetry={preview.retry}
       serverRole={preview.role}
+      billingContext={{
+        userId: user?.id ?? null,
+        familyId: context.currentFamilyId,
+      }}
     />
   );
 }
@@ -95,6 +108,9 @@ export function FamilyPlusPreview({
   onServerMode,
   onServerRetry,
   serverRole,
+  billing: suppliedBilling,
+  billingContext,
+  isolatedTest = false,
 }: {
   initialRole: FamilyPlusRole;
   hasFamily: boolean;
@@ -108,10 +124,27 @@ export function FamilyPlusPreview({
   onServerMode?: () => void;
   onServerRetry?: () => void;
   serverRole?: FamilyPlusRole;
+  billing?: FamilyPlusPurchases | undefined;
+  billingContext?: { userId: string | null; familyId: string | null };
+  isolatedTest?: boolean;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { showFeedback } = useFeedback();
+  // This component is keyed by real user/Family/canonical role by its parent.
+  // Purchase feedback, packages and pending UI cannot survive a scope change.
+  const ownedBilling = useFamilyPlusPurchases({
+    userId: billingContext?.userId ?? null,
+    familyId: billingContext?.familyId ?? null,
+    role: mode === 'server' ? (serverRole ?? null) : null,
+    server:
+      !suppliedBilling &&
+      (isFamilyPlusSandbox() || isFamilyPlusRelease()) &&
+      mode === 'server',
+  });
+  const billing =
+    suppliedBilling ??
+    (isFamilyPlusSandbox() || isFamilyPlusRelease() ? ownedBilling : undefined);
   const [role, setRole] = useState(initialRole);
   const [period, setPeriod] = useState<FamilyPlusPeriod>('yearly');
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -130,9 +163,16 @@ export function FamilyPlusPreview({
           : scene;
   const snapshot =
     mode === 'server'
-      ? (serverSnapshot ?? emptyFamilyPlusServerSnapshot)
+      ? {
+          ...(serverSnapshot ?? emptyFamilyPlusServerSnapshot),
+          prices: billing?.prices ?? [],
+        }
       : familyPlusPreviewSnapshot(__DEV__, effectiveScene);
   const onAction = (action: FamilyPlusAction) => {
+    if (mode === 'server' && billing) {
+      void billing.action(action, period);
+      return;
+    }
     if (mode !== 'preview') return;
     const outcome = familyPlusPreviewAction(
       __DEV__,
@@ -167,83 +207,97 @@ export function FamilyPlusPreview({
         <AppText tone="secondary">{t('familyPlus.headline')}</AppText>
       </View>
 
-      <View style={styles.previewNotice}>
-        <View
-          style={[
-            styles.previewSummary,
-            fontScale > 1.3 && styles.stackedSummary,
-          ]}
-        >
-          <AppText
-            tone="secondary"
-            variant="footnote"
-            style={fontScale > 1.3 ? undefined : styles.grow}
-          >
-            {t(
-              mode === 'preview'
-                ? 'familyPlus.previewSummary'
-                : 'familyPlus.localReadOnly',
-            )}
+      {isolatedTest || isFamilyPlusSandbox() ? (
+        <View style={styles.previewNotice}>
+          <AppText tone="secondary" variant="footnote">
+            {t('familyPlus.purchase.sandboxNotice')}
           </AppText>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: toolsOpen }}
-            onPress={() => setToolsOpen(!toolsOpen)}
-            style={styles.textAction}
-          >
-            <AppText tone="primary" variant="footnote" style={styles.link}>
-              {t(toolsOpen ? 'familyPlus.hideScenes' : 'familyPlus.showScenes')}
-            </AppText>
-          </Pressable>
         </View>
-        {toolsOpen ? (
-          <>
-            <Pressable
-              accessibilityRole="button"
-              onPress={onServerMode}
-              style={styles.textAction}
+      ) : isFamilyPlusRelease() ? null : (
+        <View style={styles.previewNotice}>
+          <View
+            style={[
+              styles.previewSummary,
+              fontScale > 1.3 && styles.stackedSummary,
+            ]}
+          >
+            <AppText
+              tone="secondary"
+              variant="footnote"
+              style={fontScale > 1.3 ? undefined : styles.grow}
             >
-              <AppText tone="secondary" variant="footnote" style={styles.link}>
-                {t('familyPlus.readLocal')}
-              </AppText>
-            </Pressable>
-            <AppText tone="secondary" variant="footnote">
               {t(
                 mode === 'preview'
-                  ? 'familyPlus.previewNotice'
-                  : 'familyPlus.localReadInfo',
+                  ? 'familyPlus.previewSummary'
+                  : 'familyPlus.localReadOnly',
               )}
             </AppText>
-            <View style={styles.options}>
-              {familyPlusPreviewScenes.map((item) => (
-                <PreviewOption
-                  key={item}
-                  selected={scene === item}
-                  label={t(`familyPlus.scenes.${item}`)}
-                  onPress={() => onSceneChange(item)}
-                />
-              ))}
-            </View>
-            {mode === 'preview' && initialRole === 'owner' && familyReady ? (
-              <>
-                <AppText tone="secondary" variant="footnote">
-                  {t('familyPlus.rolePreview')}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: toolsOpen }}
+              onPress={() => setToolsOpen(!toolsOpen)}
+              style={styles.textAction}
+            >
+              <AppText tone="primary" variant="footnote" style={styles.link}>
+                {t(
+                  toolsOpen ? 'familyPlus.hideScenes' : 'familyPlus.showScenes',
+                )}
+              </AppText>
+            </Pressable>
+          </View>
+          {toolsOpen ? (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                onPress={onServerMode}
+                style={styles.textAction}
+              >
+                <AppText
+                  tone="secondary"
+                  variant="footnote"
+                  style={styles.link}
+                >
+                  {t('familyPlus.readLocal')}
                 </AppText>
-                <View style={styles.options}>
-                  {(['owner', 'member', 'viewer'] as const).map((item) => (
-                    <PreviewOption
-                      key={item}
-                      selected={role === item}
-                      label={t(`family.roles.${item}`)}
-                      onPress={() => setRole(item)}
-                    />
-                  ))}
-                </View>
-              </>
-            ) : null}
-          </>
-        ) : null}
-      </View>
+              </Pressable>
+              <AppText tone="secondary" variant="footnote">
+                {t(
+                  mode === 'preview'
+                    ? 'familyPlus.previewNotice'
+                    : 'familyPlus.localReadInfo',
+                )}
+              </AppText>
+              <View style={styles.options}>
+                {familyPlusPreviewScenes.map((item) => (
+                  <PreviewOption
+                    key={item}
+                    selected={scene === item}
+                    label={t(`familyPlus.scenes.${item}`)}
+                    onPress={() => onSceneChange(item)}
+                  />
+                ))}
+              </View>
+              {mode === 'preview' && initialRole === 'owner' && familyReady ? (
+                <>
+                  <AppText tone="secondary" variant="footnote">
+                    {t('familyPlus.rolePreview')}
+                  </AppText>
+                  <View style={styles.options}>
+                    {(['owner', 'member', 'viewer'] as const).map((item) => (
+                      <PreviewOption
+                        key={item}
+                        selected={role === item}
+                        label={t(`family.roles.${item}`)}
+                        onPress={() => setRole(item)}
+                      />
+                    ))}
+                  </View>
+                </>
+              ) : null}
+            </>
+          ) : null}
+        </View>
+      )}
 
       {effectiveScene === 'loading' ? (
         <View accessibilityRole="progressbar" style={styles.stateNotice}>
@@ -258,7 +312,9 @@ export function FamilyPlusPreview({
           <AppText tone="secondary">
             {t(
               mode === 'server' && effectiveScene === 'error'
-                ? 'familyPlus.localNotReady'
+                ? billing
+                  ? 'familyPlus.purchase.summaryUnavailable'
+                  : 'familyPlus.localNotReady'
                 : `familyPlus.dataState.${effectiveScene}`,
             )}
           </AppText>
@@ -288,6 +344,7 @@ export function FamilyPlusPreview({
           period={period}
           onSelectPeriod={setPeriod}
           onAction={onAction}
+          billing={billing}
         />
       )}
 
@@ -413,6 +470,7 @@ export function FamilyPlusDetails({
   onSelectPeriod,
   onAction,
   previewActions = true,
+  billing,
 }: {
   snapshot: FamilyPlusSnapshot;
   role: FamilyPlusRole;
@@ -420,19 +478,22 @@ export function FamilyPlusDetails({
   onSelectPeriod: (period: FamilyPlusPeriod) => void;
   onAction: (action: FamilyPlusAction) => void;
   previewActions?: boolean;
+  billing?: FamilyPlusPurchases | undefined;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { isWide, fontScale } = useContentLayout();
   const identity = familyPlusIdentity(
     snapshot,
     canUseFamilyPlusPreview(__DEV__, process.env.EXPO_PUBLIC_SUPABASE_URL),
   );
   const canSelect =
-    previewActions && canSelectFamilyPlusPlan(role, identity.status);
+    (previewActions || Boolean(billing)) &&
+    canSelectFamilyPlusPlan(role, identity.status);
   const wide = isWide && fontScale < 1.4;
   const referencePrices = snapshot.prices.some(
     (price) => price.source === 'development-reference',
   );
+  const transition = familyPlusTransition(snapshot);
   return (
     <>
       <View style={styles.status}>
@@ -449,6 +510,19 @@ export function FamilyPlusDetails({
         <AppText tone="secondary" variant="subheadline">
           {t(`familyPlus.statusBody.${identity.status}`)}
         </AppText>
+        {transition ? (
+          <AppText tone="secondary" variant="footnote">
+            {transition.expired
+              ? t('familyPlus.transitionEnded')
+              : t('familyPlus.transitionDeadline', {
+                  count: transition.remainingDays,
+                  date: new Intl.DateTimeFormat(
+                    i18n.resolvedLanguage ?? 'zh-HK',
+                    { dateStyle: 'medium', timeStyle: 'short' },
+                  ).format(new Date(transition.endsAt)),
+                })}
+          </AppText>
+        ) : null}
       </View>
       <FamilyStorageSummary snapshot={snapshot} />
       <FamilyPlusBenefits title={familyPlusBenefitsTitle(role, identity)} />
@@ -516,17 +590,70 @@ export function FamilyPlusDetails({
           </View>
           <AppButton
             variant="secondary"
-            label={t('familyPlus.previewPurchase')}
+            label={t(
+              previewActions
+                ? 'familyPlus.previewPurchase'
+                : 'familyPlus.purchase.buy',
+            )}
+            loading={billing?.busy ?? false}
+            disabled={
+              !previewActions &&
+              (!billing?.ready ||
+                billing.blocked ||
+                !familyPlusPrice(snapshot.prices, period))
+            }
             onPress={() => onAction('purchase')}
           />
         </View>
       ) : null}
-      {role === 'owner' && previewActions ? (
+      {billing ? (
+        <View style={styles.section}>
+          <AppText tone="secondary" variant="footnote">
+            {t(
+              !billing.ready
+                ? 'familyPlus.purchase.notReady'
+                : billing.blocked
+                  ? 'familyPlus.purchase.blocked'
+                  : 'familyPlus.purchase.storeNotice',
+            )}
+          </AppText>
+          {role === 'owner' && !billing.blocked ? (
+            <AppButton
+              variant="ghost"
+              disabled={billing.busy || billing.productsLoading}
+              label={t('familyPlus.purchase.reload')}
+              onPress={billing.reload}
+            />
+          ) : null}
+          {billing.message ? (
+            <AppText accessibilityLiveRegion="polite" tone="secondary">
+              {t(`familyPlus.purchase.${billing.message}`)}
+            </AppText>
+          ) : null}
+          {role === 'owner' ? (
+            <AppButton
+              variant="ghost"
+              disabled={billing.busy || !billing.managementReady}
+              label={t('familyPlus.purchase.refresh')}
+              onPress={() => void billing.action('refresh', period)}
+            />
+          ) : null}
+        </View>
+      ) : null}
+      {role === 'owner' && (previewActions || billing) ? (
         <View style={styles.management}>
           {(['restore', 'manage'] as const).map((action) => (
             <Pressable
               key={action}
               accessibilityRole="button"
+              disabled={
+                billing ? billing.busy || !billing.managementReady : false
+              }
+              accessibilityState={{
+                disabled: billing
+                  ? billing.busy || !billing.managementReady
+                  : false,
+              }}
               onPress={() => onAction(action)}
               style={styles.textAction}
             >
@@ -535,7 +662,11 @@ export function FamilyPlusDetails({
                 variant="subheadline"
                 style={styles.link}
               >
-                {t(`familyPlus.${action}`)}
+                {t(
+                  previewActions
+                    ? `familyPlus.${action}`
+                    : `familyPlus.purchase.${action}`,
+                )}
               </AppText>
             </Pressable>
           ))}

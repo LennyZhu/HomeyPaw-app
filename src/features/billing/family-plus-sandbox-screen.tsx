@@ -111,7 +111,10 @@ function SandboxContent({
                 label={t('billingSandbox.loadProducts')}
                 onPress={() =>
                   void action(async () => {
-                    const items = await loadSandboxPackages(userId!);
+                    const items = await loadSandboxPackages(
+                      userId!,
+                      currentFamilyId,
+                    );
                     if (mounted.current) setPackages(items);
                     if (!items.length) throw new Error('NO_PRODUCTS');
                   })
@@ -141,13 +144,15 @@ function SandboxContent({
           )}
         </>
       )}
-      {userId ? (
+      {userId && currentFamilyId && role === 'owner' ? (
         <>
           <AppButton
             variant="secondary"
             disabled={busy}
             label={t('billingSandbox.restore')}
-            onPress={() => void action(() => restoreFamilyPlus(userId!))}
+            onPress={() =>
+              void action(() => restoreFamilyPlus(userId!, currentFamilyId!))
+            }
           />
           <AppButton
             variant="ghost"
@@ -159,7 +164,11 @@ function SandboxContent({
             variant="ghost"
             disabled={busy}
             label={t('billingSandbox.manage')}
-            onPress={() => void action(() => manageAppleSubscription(userId!))}
+            onPress={() =>
+              void action(() =>
+                manageAppleSubscription(userId!, currentFamilyId!),
+              )
+            }
           />
         </>
       ) : null}

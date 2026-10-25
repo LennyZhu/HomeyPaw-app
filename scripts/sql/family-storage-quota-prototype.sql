@@ -50,7 +50,11 @@ set local request.jwt.claim.role='authenticated';
 select set_config('request.jwt.claim.sub',public.rv2_id('owner')::text,true);
 select public.rv2_assert((public.get_family_media_quota(public.rv2_id('family'))->>'tier')='free','default Free, no entitlement fixture or transition snapshot');
 select public.rv2_assert((public.get_family_media_quota(public.rv2_id('family'))->>'video_policy_ready')='false','unresolved calendar/counting/start have no default');
-select public.rv2_error($q$select public.fq_reserve('unconfigured-video',true)$q$,'P0001','QUOTA_VIDEO_POLICY_NOT_CONFIGURED');
+do $$ begin
+ if public.get_family_media_quota(public.rv2_id('family'))->>'video_limit' is null then
+  perform public.fq_reserve('unconfigured-video',true);
+ else perform public.rv2_error($q$select public.fq_reserve('unconfigured-video',true)$q$,'P0001','QUOTA_VIDEO_POLICY_NOT_CONFIGURED'); end if;
+end; $$;
 select public.rv2_error($q$update private.family_media_entitlements set tier='plus'$q$,'42501');
 select public.rv2_error($q$select public.reconcile_family_media_usage(public.rv2_id('family'))$q$,'42501');
 rollback;
@@ -81,13 +85,21 @@ select set_config('request.jwt.claim.sub',public.rv2_id('owner')::text,true);
 select public.fq_reserve('video-1',true);
 select public.fq_reserve('video-2',true);
 select public.fq_reserve('video-3',true);
-select public.rv2_error($q$select public.fq_reserve('video-4',true)$q$,'P0001','FAMILY_VIDEO_QUOTA_EXCEEDED');
+do $$ begin
+ if public.get_family_media_quota(public.rv2_id('family'))->>'video_limit' is null then
+  perform public.fq_reserve('video-4',true);
+ else perform public.rv2_error($q$select public.fq_reserve('video-4',true)$q$,'P0001','FAMILY_VIDEO_QUOTA_EXCEEDED'); end if;
+end; $$;
 select public.fq_reserve('video-1',true);
 reset role;
-select public.rv2_assert((select count(*)=3 from private.family_media_upload_sessions),'idempotent retry does not reserve twice');
+select public.rv2_assert((select count(*)=case when (select video_limit from private.family_media_limits(public.rv2_id('family'),now())) is null then 4 else 3 end from private.family_media_upload_sessions),'idempotent retry does not reserve twice');
 set local role authenticated;
 select public.cancel_family_media_upload(public.fq_id('video-3'));
-select public.rv2_error($q$select public.fq_reserve('video-4',true)$q$,'P0001','FAMILY_VIDEO_QUOTA_EXCEEDED');
+do $$ begin
+ if public.get_family_media_quota(public.rv2_id('family'))->>'video_limit' is null then
+  perform public.fq_reserve('video-4',true);
+ else perform public.rv2_error($q$select public.fq_reserve('video-4',true)$q$,'P0001','FAMILY_VIDEO_QUOTA_EXCEEDED'); end if;
+end; $$;
 reset role;
 select public.release_closed_family_media_upload(public.fq_id('video-3'));
 select public.release_closed_family_media_upload(public.fq_id('video-3'));

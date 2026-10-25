@@ -10,8 +10,8 @@ const eas = JSON.parse(read('eas.json'));
 const pkg = JSON.parse(read('package.json'));
 const lock = JSON.parse(read('package-lock.json'));
 const production = eas.build.production;
-assert.equal(expo.version, '1.3.0');
-assert.equal(expo.ios.buildNumber, '10');
+assert.equal(expo.version, '1.4.0');
+assert.equal(expo.ios.buildNumber, '11');
 assert.equal(expo.ios.version ?? expo.version, expo.version);
 assert.equal(pkg.version, expo.version);
 assert.equal(lock.version, pkg.version);
@@ -19,8 +19,14 @@ assert.equal(lock.packages[''].version, pkg.version);
 assert.equal(expo.ios.bundleIdentifier, 'com.zhushunli.homeypaw');
 assert.equal(expo.scheme, 'pawday');
 assert.equal(eas.cli.appVersionSource, 'local');
+assert.equal(
+  eas.build['billing-rc-sandbox'].env.HOMEYPAW_IOS_BUILD_NUMBER,
+  expo.ios.buildNumber,
+);
+assert.equal(production.env.HOMEYPAW_IOS_BUILD_NUMBER, '12');
 assert.equal(production.autoIncrement, false);
 assert.equal(production.environment, 'production');
+assert.equal(production.env.EXPO_PUBLIC_FAMILY_PLUS_RELEASE_ENABLED, 'true');
 assert.equal(production.distribution, 'store');
 assert.equal(production.extends, undefined);
 assert.notEqual(production.developmentClient, true);
@@ -41,8 +47,16 @@ assert.doesNotMatch(
   /localhost|127\.0\.0\.1/u,
 );
 const client = read('src/lib/supabase/client.ts');
-assert.match(client, /process\.env\.EXPO_PUBLIC_SUPABASE_URL/u);
-assert.match(client, /process\.env\.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/u);
+assert.match(client, /supabaseEnvironment\.url/u);
+assert.match(
+  read('src/lib/supabase/environment.ts'),
+  /process\.env\.EXPO_PUBLIC_SUPABASE_URL/u,
+);
+assert.match(client, /supabaseEnvironment\.key/u);
+assert.match(
+  read('src/lib/supabase/environment.ts'),
+  /process\.env\.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/u,
+);
 assert.match(client, /!isPrivilegedKey\(supabaseClientKey\)/u);
 
 // Execute SDK 57's actual config plugins in read-only introspection mode.
@@ -61,6 +75,33 @@ const config = JSON.parse(
 const ios = config._internal.modResults.ios;
 assert.equal(ios.infoPlist.CFBundleShortVersionString, expo.version);
 assert.equal(ios.infoPlist.CFBundleVersion, expo.ios.buildNumber);
+// Resolve each Store profile through Expo itself, including CNG metadata. The
+// final Production binary must not reuse the TestFlight Sandbox RC number.
+for (const name of ['billing-rc-sandbox', 'production']) {
+  const profile = eas.build[name];
+  const resolved = JSON.parse(
+    execFileSync(
+      process.execPath,
+      ['node_modules/expo/bin/cli', 'config', '--type', 'introspect', '--json'],
+      {
+        encoding: 'utf8',
+        env: {
+          ...process.env,
+          ...profile.env,
+          EXPO_NO_DOTENV: '1',
+          EXPO_NO_TELEMETRY: '1',
+        },
+        timeout: 30_000,
+      },
+    ),
+  );
+  assert.equal(resolved.version, expo.version);
+  assert.equal(resolved.ios.bundleIdentifier, expo.ios.bundleIdentifier);
+  assert.equal(
+    resolved._internal.modResults.ios.infoPlist.CFBundleVersion,
+    profile.env.HOMEYPAW_IOS_BUILD_NUMBER,
+  );
+}
 assert.equal(ios.infoPlist.ITSAppUsesNonExemptEncryption, false);
 assert.ok(
   ios.infoPlist.CFBundleURLTypes.some((entry) =>
@@ -87,7 +128,7 @@ for (const key of [
 assert.equal(ios.entitlements['aps-environment'], 'development');
 assert.ok(!ios.infoPlist.UIBackgroundModes?.includes('remote-notification'));
 console.log(
-  'PASS: 1.3.0 (10), package/lock alignment, local EAS store profile, CNG version/permissions/APNs generation and pawday scheme. ASC build availability and signed archive remain manual checks.',
+  'PASS: 1.4.0 (11 RC / 12 Production), package/lock alignment, local EAS store profile, CNG version/permissions/APNs generation and pawday scheme. ASC build availability and signed archive remain manual checks.',
 );
 
 function load(path, dependencies = {}, globals = {}) {

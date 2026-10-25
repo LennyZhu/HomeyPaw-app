@@ -1,5 +1,13 @@
 # HomeyPaw Terms of Service / HomeyPaw 服務條款
 
+## Family Plus 1.4 development addendum — 2026-10-23 (not published)
+
+When available, Family Plus is an Apple auto-renewable monthly or yearly subscription. The purchase screen must show Apple's localized price and billing period; yearly plans are charged once per year, not monthly instalments. Apple handles charges, renewals, cancellation and refund requests under its terms. Manage or cancel through Apple Subscriptions. Cancelling renewal does not immediately end valid access. One Family shares access. Transferring Family ownership, leaving a Family or deleting a HomeyPaw account does not transfer or cancel the original payer's Apple subscription. Expiry or storage overage does not automatically delete historical media. Core family care remains free. No trial or unlimited single-file size/duration is promised.
+
+開放購買後，Family Plus 為 Apple 按月或按年自動續訂的訂閱。購買頁須顯示 Apple 本地價格及扣款週期；年付為每年一次扣款，不是每月分期。付款、續訂、取消及退款申請按 Apple 條款處理，可於 Apple「訂閱」管理或取消。取消續訂不會立即終止仍有效的權益。一個家庭共享權益；轉移家庭擁有權、離開家庭或刪除 HomeyPaw 帳戶，不會轉移或取消原付款人的 Apple 訂閱。到期或超額不會自動刪除歷史媒體，核心家庭照顧繼續免費。不承諾免費試用或不受單檔大小／時長限制。
+
+Review and publish this addition at the existing terms URL before enabling purchases. The dated policy below is preserved as historical evidence; this edit does not publish the website.
+
 Updated / 更新日期：2026-08-27
 
 Published at `https://homeypaw.vercel.app/terms`.

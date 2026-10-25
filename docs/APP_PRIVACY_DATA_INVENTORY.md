@@ -1,6 +1,10 @@
 # App Privacy Data Inventory
 
-Updated on 2026-09-29 for the HomeyPaw 1.3.0 (10) release candidate. App Store Production remains 1.2.0 (9). This is a repository review inventory; the live App Store Connect questionnaire has not been updated or verified by this change.
+Updated 2026-10-23 for the Family Plus development branch. Production remains 1.3.0 (10). This is a repository inventory; App Store Connect and the public website have NOT been changed.
+
+## Family Plus release addition (not activated)
+
+RevenueCat is used only when the guarded billing flow is enabled. Declare Purchases → Purchase History, linked to identity, for App Functionality, not Tracking. Account UUIDs are RevenueCat App User IDs (Identifiers → User ID). Subscription/product/transaction identifiers, access status and expiry/renewal facts are processed by RevenueCat and HomeyPaw to verify Family access, restore purchases and prevent duplicate claims. Apple handles payment details; HomeyPaw does not collect card or bank details. Review RevenueCat's current App Privacy guidance and actual SDK configuration before submitting. No advertising, cross-app tracking or general product analytics has been added. The questionnaire and published policy must be updated before enabling purchases.
 
 ## Overall Answers
 
@@ -27,7 +31,7 @@ Updated on 2026-09-29 for the HomeyPaw 1.3.0 (10) release candidate. App Store P
 ## Data Types Not Collected by the App
 
 - Precise or coarse device location. A journal location is manually entered text.
-- Contacts, microphone capture, human health/fitness data, sensitive information, purchases, financial information, browsing/search history, advertising data, or general interaction analytics. Pet health records are user-authored pet content, not HealthKit or human medical data. Camera capture is user-triggered and produces journal photos already declared as User Content. Selected videos can retain their existing audio; there is no in-app audio/video recording or microphone permission.
+- Contacts, microphone capture, human health/fitness data, sensitive information, card/bank details, browsing/search history, advertising data, or general interaction analytics. Purchases are covered by the Family Plus addition above. Pet health records are user-authored pet content, not HealthKit or human medical data. Camera capture is user-triggered and produces journal photos already declared as User Content. Selected videos can retain their existing audio; there is no in-app audio/video recording or microphone permission.
 - Developer-operated diagnostics or crash analytics. Apple may provide platform diagnostics under Apple's own terms, but HomeyPaw has no diagnostics SDK.
 
 ## Processing and Sharing

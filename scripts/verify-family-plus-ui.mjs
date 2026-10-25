@@ -7,6 +7,7 @@ import { z } from 'zod';
 
 const read = (path) =>
   readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+let sandboxMode = false;
 const load = (path, dependencies = {}, globals = {}) => {
   const module = { exports: {} };
   new Script(
@@ -26,6 +27,18 @@ const load = (path, dependencies = {}, globals = {}) => {
     Error,
     ...globals,
     require: (name) => {
+      if (name.endsWith('family-plus-environment'))
+        return {
+          isFamilyPlusAvailable: () =>
+            preview.canUseFamilyPlusPreview(
+              globals.__DEV__,
+              globals.process?.env?.EXPO_PUBLIC_SUPABASE_URL,
+            ),
+          isFamilyPlusSandbox: () => sandboxMode,
+          isFamilyPlusRelease: () => false,
+        };
+      if (name === './use-family-plus-purchases')
+        return { useFamilyPlusPurchases: () => undefined };
       assert.ok(
         name in dependencies,
         `Unexpected dependency: ${name}. No SDK/network fallback is allowed.`,
@@ -560,8 +573,10 @@ for (const lang of ['zh-HK', 'en']) {
           0,
         );
       }
-      if (['active', 'grace', 'cancelled', 'transition'].includes(status))
-        assert.ok(text(tree).includes(t('familyPlus.storage.unlimited')));
+      assert.ok(
+        !text(tree).includes(t('familyPlus.storage.unlimited')),
+        'capacity-only launch does not advertise unlimited monthly videos',
+      );
       if (status === 'expired')
         assert.ok(text(tree).includes(t('familyPlus.storage.retained')));
     }
@@ -812,6 +827,10 @@ const profileDeps = {
     useFocusEffect: () => undefined,
   },
   '@expo/vector-icons/Ionicons': { __esModule: true, default: 'Icon' },
+  '@expo/vector-icons/MaterialCommunityIcons': {
+    __esModule: true,
+    default: 'Icon',
+  },
   '@/components/app-button': { AppButton: 'AppButton' },
   '@/components/avatar': { Avatar: 'Avatar' },
   '@/components/loading-view': { LoadingView: 'LoadingView' },
@@ -879,7 +898,9 @@ for (const lang of ['zh-HK', 'en']) {
   assert.equal(cardStyle.minHeight, undefined);
   assert.equal(cardStyle.padding, 16);
   assert.equal(nodes(card).filter((node) => node.type === 'AppText').length, 2);
-  assert.ok(nodes(card).some((node) => node.props.name === 'paw-outline'));
+  assert.ok(nodes(card).some((node) => node.props.name === 'crown-outline'));
+  assert.ok(!nodes(card).some((node) => node.props.name === 'paw-outline'));
+  assert.ok(nodes(tree).some((node) => node.props.name === 'paw-outline'));
   assert.equal(
     nodes(card).filter((node) => node.type === 'Pressable').length,
     1,
@@ -1479,12 +1500,9 @@ findEntry(settingsAst);
 assert.ok(entryGuard && ts.isCallExpression(entryGuard));
 assert.equal(
   entryGuard.expression.getText(settingsAst),
-  'canUseFamilyPlusPreview',
+  'isFamilyPlusAvailable',
 );
-assert.deepEqual(
-  entryGuard.arguments.map((arg) => arg.getText(settingsAst)),
-  ['__DEV__', 'process.env.EXPO_PUBLIC_SUPABASE_URL'],
-);
+assert.equal(entryGuard.arguments.length, 0);
 assert.match(settings, /label=\{t\('familyPlus.entry'\)\}/u);
 assert.match(settings, /router\.push\('\/family-plus'\)/u);
 assert.match(settings, /isOwner \? \(\s*pets\[0\] \?/u);
@@ -1495,7 +1513,7 @@ const protectedGroup = layout.slice(
     layout.indexOf('<Stack.Screen name="family-plus"'),
   ),
 );
-assert.ok(protectedGroup.includes('__DEV__'));
+assert.ok(protectedGroup.includes('isFamilyPlusAvailable()'));
 assert.ok(
   protectedGroup.indexOf('family-plus') <
     protectedGroup.indexOf('</Stack.Protected>'),
@@ -1542,7 +1560,7 @@ assert.match(
   /https:\/\/homeypaw\.vercel\.app\/privacy/u,
 );
 console.log(
-  'PASS: Family-only navigation, Owner invite visibility retained, protected DEV stack, safe-area/scroll/font-scaling structure and existing policy URLs.',
+  'PASS: Family-only navigation, Owner invite visibility retained, protected explicit-target stack, safe-area/scroll/font-scaling structure and existing policy URLs.',
 );
 assert.match(
   read('src/app/_layout.tsx'),
@@ -1558,3 +1576,166 @@ assert.doesNotMatch(
 );
 for (const cleanup of lifecycleCleanups) cleanup?.();
 assert.equal(lifecycleListeners.size, 0);
+
+// Real screen integration uses the same layout, with Store Product prices and
+// canonical server role. Development scene controls cannot trigger payments.
+sandboxMode = true;
+await translator.changeLanguage('en');
+const purchaseActions = [];
+const connected = {
+  ready: true,
+  managementReady: true,
+  blocked: false,
+  busy: false,
+  message: null,
+  productsLoading: false,
+  prices: [
+    { period: 'monthly', priceString: 'HK$28.00', source: 'apple' },
+    { period: 'yearly', priceString: 'HK$228.00', source: 'apple' },
+  ],
+  action: (action, period) => {
+    purchaseActions.push({ action, period });
+  },
+  reload: () => {},
+};
+const freeServer = {
+  ...serverData.emptyFamilyPlusServerSnapshot,
+  status: 'free',
+  prices: [],
+  quotaEnabled: false,
+};
+let connectedView = mount({
+  mode: 'server',
+  serverSnapshot: freeServer,
+  serverRole: 'owner',
+  billing: connected,
+});
+assert.ok(text(connectedView.tree).includes('Apple Sandbox testing'));
+assert.ok(
+  !text(connectedView.tree).includes(translator.t('familyPlus.previewSummary')),
+);
+assert.ok(text(connectedView.tree).includes('HK$228.00'));
+assert.ok(!text(connectedView.tree).includes('US$29.99'));
+connectedView.click(translator.t('familyPlus.purchase.buy'));
+assert.deepEqual(purchaseActions, [{ action: 'purchase', period: 'yearly' }]);
+connectedView.click(translator.t('familyPlus.purchase.restore'));
+connectedView.click(translator.t('familyPlus.purchase.manage'));
+assert.deepEqual(
+  purchaseActions.map((x) => x.action),
+  ['purchase', 'restore', 'manage'],
+);
+for (const role of ['member', 'viewer', null]) {
+  const page = mount({
+    mode: 'server',
+    initialRole: role,
+    serverRole: role,
+    serverSnapshot: freeServer,
+    billing: connected,
+  });
+  for (const key of [
+    'familyPlus.purchase.buy',
+    'familyPlus.purchase.restore',
+    'familyPlus.purchase.manage',
+  ])
+    assert.ok(!buttons(page.tree).some((b) => label(b) === translator.t(key)));
+}
+for (const state of [{ ready: false }, { blocked: true }, { prices: [] }]) {
+  const page = mount({
+    mode: 'server',
+    serverRole: 'owner',
+    serverSnapshot: freeServer,
+    billing: { ...connected, ...state },
+  });
+  const buy = buttons(page.tree).find(
+    (b) => label(b) === translator.t('familyPlus.purchase.buy'),
+  );
+  assert.equal(
+    buy.props.disabled,
+    true,
+    'unknown backend/lock/pending/price never opens StoreKit',
+  );
+}
+for (const lang of ['zh-HK', 'en']) {
+  await translator.changeLanguage(lang);
+  const t = translator.t.bind(translator);
+  for (const managementReady of [false, true]) {
+    const actions = [];
+    const active = mount({
+      mode: 'server',
+      scene: 'active',
+      serverRole: 'owner',
+      serverSnapshot: {
+        ...preview.familyPlusPreviewSnapshot(true, 'active'),
+        source: 'server',
+        plusAccess: {
+          source: 'server-verified',
+          givesAccess: true,
+          validUntil: new Date(Date.now() + 3600000).toISOString(),
+        },
+      },
+      billing: {
+        ...connected,
+        blocked: true,
+        ready: managementReady,
+        managementReady,
+        action: (action) => actions.push(action),
+      },
+    });
+    assert.ok(!text(active.tree).includes(t('familyPlus.restore')));
+    assert.ok(!text(active.tree).includes(t('familyPlus.manage')));
+    for (const action of ['restore', 'manage']) {
+      const button = buttons(active.tree).find(
+        (b) => label(b) === t(`familyPlus.purchase.${action}`),
+      );
+      assert.ok(button);
+      assert.equal(button.props.disabled, !managementReady);
+      if (managementReady) active.click(t(`familyPlus.purchase.${action}`));
+    }
+    assert.deepEqual(actions, managementReady ? ['restore', 'manage'] : []);
+  }
+}
+sandboxMode = false;
+console.log(
+  'PASS: connected Sandbox page uses localized Apple prices; purchase/restore/manage wiring; no preview toolbox; Member/Viewer/unknown role hidden; readiness, pending and missing-product guards. Mock actions only.',
+);
+
+const transitionNow = new Date().toISOString();
+const transitionEnd = new Date(
+  Date.parse(transitionNow) + 15 * 86_400_000,
+).toISOString();
+for (const lang of ['zh-HK', 'en']) {
+  await translator.changeLanguage(lang);
+  const date = new Intl.DateTimeFormat(lang, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(transitionEnd));
+  for (const role of ['owner', 'member', 'viewer']) {
+    const page = render(
+      screen.FamilyPlusDetails({
+        snapshot: {
+          ...freeServer,
+          status: 'transition',
+          serverClock: {
+            serverTime: transitionNow,
+            receivedAt: model.monotonicNow(),
+          },
+          transition: { startsAt: transitionNow, endsAt: transitionEnd },
+        },
+        role,
+        period: 'monthly',
+        previewActions: false,
+        onSelectPeriod: () => assert.fail('Read-only state'),
+        onAction: () => assert.fail('No purchase'),
+      }),
+    );
+    assert.ok(
+      text(page).includes(
+        translator.t('familyPlus.transitionDeadline', { count: 15, date }),
+      ),
+    );
+    assert.ok(!text(page).includes('30 天') && !text(page).includes('30-day'));
+  }
+}
+console.log(
+  'PASS: zh-HK/en Transition shows the server-backed 15-day deadline for all Family roles without a paid Plus badge.',
+);

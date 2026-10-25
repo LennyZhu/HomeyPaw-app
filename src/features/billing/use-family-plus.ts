@@ -14,6 +14,10 @@ import {
 } from './family-plus-presentation';
 import { useFamilyPlusPreview } from './use-family-plus-preview';
 import type { FamilyPlusPreviewScene } from './family-plus-preview';
+import {
+  isFamilyPlusSandbox,
+  isFamilyPlusRelease,
+} from './family-plus-environment';
 
 export const familyPlusKeys = (userId: string | undefined, familyId: string) =>
   [...familyKeys.detail(userId, familyId), 'plus-summary'] as const;
@@ -26,6 +30,9 @@ export function useFamilyPlus(input: {
   error: boolean;
 }) {
   const preview = useFamilyPlusPreview(input);
+  const sandbox = isFamilyPlusSandbox();
+  const live = sandbox || isFamilyPlusRelease();
+  const serverMode = live || preview.mode === 'server';
   const { t } = useTranslation();
   const online = useSyncExternalStore(
     onlineManager.subscribe,
@@ -33,8 +40,8 @@ export function useFamilyPlus(input: {
     () => false,
   );
   const ready =
-    preview.enabled &&
-    preview.mode === 'server' &&
+    (live || preview.enabled) &&
+    serverMode &&
     Boolean(input.userId && input.familyId && input.role) &&
     !input.loading &&
     !input.error;
@@ -49,7 +56,7 @@ export function useFamilyPlus(input: {
     refetchOnMount: 'always',
     refetchInterval: 15_000,
   });
-  if (preview.mode !== 'server')
+  if (!serverMode)
     return { ...preview, role: input.role, retry: () => undefined };
   const matching =
     query.data?.summary.family_id === input.familyId &&
@@ -79,15 +86,24 @@ export function useFamilyPlus(input: {
               : identity.status;
   return {
     ...preview,
+    enabled: live || preview.enabled,
+    mode: 'server' as const,
     snapshot,
     scene,
     role:
       query.data && matching && ready && online && !query.isError
         ? query.data.summary.role
         : null,
-    label: t('familyPlus.identityLocal', {
-      status: t(`familyPlus.identity.${scene}`),
-    }),
+    label: t(
+      isFamilyPlusRelease()
+        ? 'familyPlus.identityServer'
+        : sandbox
+          ? 'familyPlus.identitySandbox'
+          : 'familyPlus.identityLocal',
+      {
+        status: t(`familyPlus.identity.${scene}`),
+      },
+    ),
     retry: () => {
       if (ready && online) void query.refetch();
     },

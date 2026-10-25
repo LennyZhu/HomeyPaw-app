@@ -24,7 +24,7 @@ const fail = () => {
 // Configuration validation is NOT JWT authentication. Supabase still verifies
 // these credentials on every request. Opaque keys cannot be attributed offline,
 // so this prototype requires project-attributable legacy keys in cloud mode.
-function credential(key, role, ref, local) {
+function credential(key, role, ref, local, production = false) {
   try {
     const encoded = key.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const claims = JSON.parse(
@@ -32,7 +32,7 @@ function credential(key, role, ref, local) {
     );
     if (
       claims.role !== role ||
-      claims.ref === productionRef ||
+      (!production && claims.ref === productionRef) ||
       (!local && claims.ref !== ref) ||
       (local &&
         claims.ref &&
@@ -42,6 +42,35 @@ function credential(key, role, ref, local) {
   } catch {
     fail();
   }
+}
+
+// Separate opt-in release path. Sandbox deployment validation never admits it.
+// These checks bind platform/project/credentials; DB readiness and verified
+// provider state remain mandatory and cannot be replaced by client build flags.
+export function assertProductionBillingTarget(input) {
+  let target;
+  try {
+    target = new URL(input.url);
+  } catch {
+    return fail();
+  }
+  if (
+    input.mode !== 'production' ||
+    input.projectRef !== productionRef ||
+    target.origin !== `https://${productionRef}.supabase.co` ||
+    target.pathname !== '/' ||
+    target.username ||
+    target.password ||
+    target.search ||
+    target.hash ||
+    !new RegExp(
+      `^${productionRef}_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_[0-9]+$`,
+    ).test(input.deploymentId ?? '')
+  )
+    fail();
+  credential(input.serviceKey, 'service_role', productionRef, false, true);
+  credential(input.anonKey, 'anon', productionRef, false, true);
+  return target.origin;
 }
 
 export function assertSandboxTarget({

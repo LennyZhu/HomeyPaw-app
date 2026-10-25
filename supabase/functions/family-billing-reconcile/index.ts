@@ -6,6 +6,7 @@ import {
   reconcileCustomer,
   preflightFamilyPurchase,
   runBillingRecovery,
+  billingFailureCode,
 } from '../_shared/family-billing-sandbox.mjs';
 
 Deno.serve(async (request) => {
@@ -13,8 +14,7 @@ Deno.serve(async (request) => {
     return json({ error: 'METHOD_NOT_ALLOWED' }, 405);
   try {
     const runtime = createBillingRuntime();
-    // Optional future recovery scheduler uses a separate internal secret. No
-    // scheduler is created/deployed by this prototype.
+    // Scheduler uses a dedicated internal secret, never a client/user key.
     if (
       await authorizationMatches(
         request.headers.get('Authorization'),
@@ -22,7 +22,14 @@ Deno.serve(async (request) => {
       )
     ) {
       const result = await runBillingRecovery(runtime);
-      return json(result, result.failed || result.review ? 503 : 200);
+      // Aggregate counts only: no payer, Family, transaction IDs or payloads.
+      console.log(JSON.stringify({ event: 'billing_recovery', ...result }));
+      return json(
+        result,
+        result.failed || result.review || result.health.attention_required
+          ? 503
+          : 200,
+      );
     }
     const authorization = request.headers.get('Authorization');
     if (!authorization?.startsWith('Bearer '))
@@ -54,7 +61,13 @@ Deno.serve(async (request) => {
     if (body?.operation === 'purchase_preflight')
       return json(await preflightFamilyPurchase(runtime, user.user.id));
     return json(await reconcileCustomer(runtime, customerId));
-  } catch {
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'billing_reconcile_failed',
+        code: billingFailureCode(error),
+      }),
+    );
     return json({ error: 'BILLING_VERIFICATION_PENDING' }, 503);
   }
 });

@@ -6,6 +6,8 @@ await withBlankFamilyPlus(async ({ query }) => {
   assert.ok(output.endsWith('FAMILY_BILLING_SQL_COMPLETE'));
   query(read('scripts/sql/family-billing-recovery.sql'));
   query(read('scripts/sql/family-storage-quota-prototype.sql'));
+  const release = query(read('scripts/sql/family-billing-release.sql'));
+  assert.ok(release.endsWith('FAMILY_BILLING_RELEASE_COMPLETE'));
   console.log(
     'PASS: existing Phase 2 quota SQL assertions also execute under the combined Phase 2 + Phase 3 schema.',
   );
