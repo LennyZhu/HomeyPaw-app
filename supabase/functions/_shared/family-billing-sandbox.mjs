@@ -416,6 +416,22 @@ export async function runBillingRecovery(runtime, { now = Date.now } = {}) {
   const health = await runtime.rpc('get_family_billing_recovery_health');
   return { ...counts, health };
 }
+// Only the verified user branch uses this scope. Provider Webhook and internal
+// Recovery keep their existing service-only runtime and trusted transaction path.
+export function scopeBillingTestUserRuntime(runtime, actorUserId) {
+  if (runtime.url !== 'https://yhxxsawcaffxonpconaq.supabase.co')
+    return runtime;
+  return {
+    ...runtime,
+    rpc: (operation, args = {}) =>
+      runtime.rpc('execute_family_billing_test_user_operation', {
+        actor_user_id: actorUserId,
+        operation,
+        arguments: args,
+      }),
+  };
+}
+
 export async function preflightFamilyPurchase(runtime, userId) {
   const { family_id: familyId, customers } = await runtime.rpc(
     'get_family_billing_purchase_preflight_context',

@@ -7,6 +7,7 @@ import {
   preflightFamilyPurchase,
   runBillingRecovery,
   billingFailureCode,
+  scopeBillingTestUserRuntime,
 } from '../_shared/family-billing-sandbox.mjs';
 
 Deno.serve(async (request) => {
@@ -58,9 +59,10 @@ Deno.serve(async (request) => {
     );
     if (error) return json({ error: 'BILLING_CUSTOMER_UNAVAILABLE' }, 403);
     const body = await request.json().catch(() => ({}));
+    const userRuntime = scopeBillingTestUserRuntime(runtime, user.user.id);
     if (body?.operation === 'purchase_preflight')
-      return json(await preflightFamilyPurchase(runtime, user.user.id));
-    return json(await reconcileCustomer(runtime, customerId));
+      return json(await preflightFamilyPurchase(userRuntime, user.user.id));
+    return json(await reconcileCustomer(userRuntime, customerId));
   } catch (error) {
     console.error(
       JSON.stringify({
