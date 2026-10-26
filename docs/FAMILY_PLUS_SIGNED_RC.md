@@ -1,6 +1,25 @@
 # Family Plus: signed Sandbox RC and final App Review binary
 
-## Current release sequence — 2026-10-25
+## Submitted review status — 2026-10-26
+
+iOS 1.4.0 Build 12 (source commit
+`899ca06a434bbce35284699c4360ea817c83f7dc`), Monthly, Yearly and the subscription
+group are all submitted and Waiting for Review. Keep that binary unchanged.
+The existing Owner A / Family A uses the activated 14-day Sandbox admission
+through **2026-11-09 17:14:06 HKT**. Its old Monthly request is `abandoned`, with
+Apple's outcome still `unknown`, and no longer blocks checkout. All three
+Sandbox forwards are deployed/verified and isolated in `supabase/sandbox-migrations`.
+
+During review: Sandbox Database Billing / Functions Billing **ON**, Quota **OFF**,
+Release Lock **OFF**; generation-bound **Cron #7 is enabled**. The real short close
+rehearsal passed. See the
+[Sandbox deployment record](../supabase/sandbox-migrations/README.md) for exact
+timing, unchanged SQL hashes and closure/Functions Secret handling. This records
+accepted results without a fresh cloud check. Never commit review credentials,
+real user identifiers, Tokens or cloud Secrets. Production is not authorized
+to run the three Sandbox forwards or enable charging by this review record.
+
+## Release sequence — 2026-10-25 historical plan
 
 Follow [the 1.4.0 execution plan](FAMILY_PLUS_LAUNCH.md) for the current release
 decision: monthly and annual billing on public release day, manual Apple release,
@@ -14,8 +33,9 @@ build environment; server `release_ready=false` keeps ordinary checkout closed
 during review. Only the admitted synthetic-account Sandbox route is opened for
 review, with an explicit expiry and availability covering the review period.
 
-Sandbox is now 56/56 per accepted deployment evidence, Recovery acceptance PASS,
-and the testing window/Cron closed. No new cloud check is claimed here. The
+At that time Sandbox was 56/56 per accepted deployment evidence, Recovery
+acceptance passed and the testing window/Cron was closed. This precedes the
+formal review activation above. No new cloud check is claimed here. The
 55/55 and empty preview-environment observations below are dated historical
 snapshots, not current missing-deployment findings. Production migration state,
 EAS/ASC build-number availability and final build environment require separately
