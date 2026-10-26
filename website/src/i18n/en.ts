@@ -10,12 +10,12 @@ export const en: SiteCopy = {
     privacy: {
       title: 'HomeyPaw Privacy Policy',
       description:
-        'Learn how HomeyPaw handles account, pet, family, journal, photo, and care data.',
+        'How HomeyPaw handles family data, photos, videos, Chat, push notifications, and Family Plus subscriptions.',
     },
     terms: {
       title: 'HomeyPaw Terms of Service',
       description:
-        'Plain-language terms for using HomeyPaw as a private family pet space.',
+        'Terms for HomeyPaw family sharing, media storage, Family Plus renewal, cancellation, and restoring purchases.',
     },
     support: {
       title: 'HomeyPaw Support',
@@ -71,170 +71,211 @@ export const en: SiteCopy = {
     eyebrow: 'Privacy and data',
     title: 'Privacy Policy',
     intro:
-      'This policy explains the information HomeyPaw handles to provide a private family pet journal, care log, and reminder service.',
+      'This policy explains how HomeyPaw handles private family pet records, media, care coordination, notifications, and Family Plus subscriptions. Subscription processing applies when purchasing is available and you use those features.',
     sections: [
       {
         title: '1. Information we handle',
         paragraphs: [
-          'HomeyPaw handles information you choose to provide when you create an account, use a feature, or share with family members.',
+          'We process content you provide and service data needed for sign-in, family collaboration, media storage, and subscriptions.',
         ],
         bullets: [
-          'Account and Profile: email address, display name, and language preference.',
-          'Pet data: name, species, breed, gender, birthday, adoption date, and avatar.',
-          'Family sharing: pet membership, Owner or Member role, and private invite data.',
-          'Journal: text, photos, tags, dates, and a location name only when you enter it manually.',
-          'Care logs: care type, time, notes, and the person who recorded the care.',
-          'Care tasks and reminders: task title, schedule, recurrence, and completion data.',
+          'Account and Profile: email, account identifier, display name, avatar, language preference, authentication and sign-in session data.',
+          'Family and pets: Family, membership, Owner/Member/Viewer roles, invites, and pet names, species, breeds, gender, birthdays, adoption dates, and avatars.',
+          'Journals and media: text, photos, videos, video thumbnails, tags, dates, manually entered location names, and necessary file-size, upload, and cleanup information.',
+          'Care and health: pet care and health records, notes, tasks, reminders, schedules, completions, actual completion times, and associated time zones. These concern pets, not human HealthKit or medical data.',
+          'Family interaction: private Chat text, sender and edit/deletion state, Chat read positions, and first-view receipts for journals.',
+          'Notification devices: account-linked app installation identifiers, push tokens, platform, app version, and Chat push capability.',
+          'Subscriptions: account and Family associations, products and store, purchase and original transaction identifiers, RevenueCat subscription identifiers, purchase/renewal/cancellation/expiry/refund status, access dates, and verification and recovery records.',
+          'Support: the email and issue description you choose to send us. Do not send passwords, verification codes, or complete payment details.',
         ],
       },
       {
-        title: '2. How we use information',
+        title: '2. Purposes and necessary subscription analytics',
         paragraphs: [
-          'We use this information to authenticate accounts; show pet and family content; store journals and photos; coordinate care logs; schedule local reminders you enable; respond to support requests; and keep the service secure and functioning.',
-          'HomeyPaw does not use private family content for advertising or cross-app tracking, and does not sell personal information.',
+          'We use data for authentication, family permissions, content and media delivery, care coordination, notifications, storage metering, support, and security. Purchase data also verifies family membership benefits, restores purchases, prevents duplicate claims, and processes renewals, refunds, and expiry.',
+          'RevenueCat Customer History, subscription reports, and charts use purchase records for necessary subscription analytics, such as understanding purchases, renewals, expiry, and revenue. Purchase history can be linked to your HomeyPaw account through a stable account identifier. This is separate from general journal-browsing analytics.',
+          'We do not sell personal data, use private family content for advertising, use advertising identifiers, or combine data with other companies’ apps or websites for advertising tracking.',
         ],
       },
       {
-        title: '3. Supabase and data storage',
+        title: '3. Family sharing and access',
         paragraphs: [
-          'HomeyPaw uses Supabase for authentication, database services, private file storage, and selected server functions. Account and app content is stored on Supabase infrastructure and is not kept only on your device.',
-          'Data is transmitted over HTTPS. Authentication, data access rules, and private Storage restrict unauthorized reading and modification.',
+          'One HomeyPaw Family can contain multiple pets. The Owner manages the Family, members, and invites; Members and Viewers receive role-based access. Journals, media, and care data are available only to currently authorized family members. Private Chat is limited to active Owners and Members and does not change when switching pets.',
+          'Members can see the Family plan and storage usage. Sharing Family Plus does not give members access to the payer’s Apple sign-in or bank details. Private invite codes are stored as hashes and are subject to expiry and joining rules.',
+          'Removing a member revokes future access, but cannot recall copies someone has already downloaded, exported, or saved elsewhere. Device caches and previously issued links may also take time to expire. Invite only people you trust.',
         ],
       },
       {
-        title: '4. Photos and Photo Library access',
+        title: '4. Photos, videos, and device permissions',
         paragraphs: [
-          'HomeyPaw requests Photo Library access only when you choose a pet avatar or journal photo. Photos you choose to upload are processed by the app, stored in private Storage, and displayed through time-limited, permission-protected links.',
-          'Only family members who still have access to the relevant pet can obtain those photos. The website and app do not publicly display private family photos.',
+          'The app requests the relevant photo-library, camera, or save permission when you choose a photo or video, take a photo, or select Save to Photos. Selected media may be processed in the app before uploading to private Supabase Storage and displayed through permission-protected, time-limited links.',
+          'Selected videos may retain their existing sound. The app does not offer video or audio recording or request microphone-recording permission. We do not access contacts or GPS location; journal locations are text you enter manually.',
         ],
       },
       {
-        title: '5. Family sharing',
+        title: '5. Local reminders and remote push',
         paragraphs: [
-          'A pet Owner can invite trusted people through a private invite. Active family members can view or manage shared journals, photos, care information, and reminders for that pet according to their role.',
-          'A removed member loses new access. Content they previously created follows the product’s current data lifecycle. Invite only people you trust and protect invite codes.',
+          'Care reminders you enable can be scheduled locally on your device. Remote family-activity and Chat notifications use account-linked installation identifiers and push tokens, delivered through Expo Push Service and platform notification services, including Apple Push Notification service on iOS.',
+          'Push notifications may contain notification text and identifiers that route to relevant content. Chat notifications may include the sender’s display name but not the message body. Recipients are checked against current family access and device capability. You can decline or change notification permission in system settings; core record-keeping does not require accepting push notifications.',
         ],
       },
       {
-        title: '6. Local notifications',
+        title: '6. Read and unread state',
         paragraphs: [
-          'Care reminders are primarily scheduled locally by HomeyPaw on your device. You may decline notification permission or change it in iOS Settings. HomeyPaw does not currently obtain a remote push token or use remote push notifications.',
+          'When you intentionally open another member’s Journal Post Detail, photo viewer, or video viewer, HomeyPaw records the Post, your account, and first-view time for authorized family members. Passive Feed visibility, thumbnails, preloading, and swiping between photos within the same Post do not add receipts. Reopening preserves the first-view time, and authors are not recorded as their own readers.',
+          'Chat stores read positions for unread state. These interactions support app functionality, not dwell-time or per-media browsing analytics, and journal read receipts do not generate notifications.',
         ],
       },
       {
-        title: '7. Information we do not currently collect',
+        title: '7. Apple payments and RevenueCat',
         paragraphs: [
-          'HomeyPaw does not currently request or collect precise GPS location, contacts, microphone data, camera data, advertising identifiers, or cross-app tracking data. A journal location name is stored only when you type it, and photos are selected by you through the system photo picker.',
+          'Apple App Store processes Family Plus in-app purchases and payments. HomeyPaw does not directly collect card numbers, bank accounts, or payment-authentication details.',
+          'RevenueCat receives your stable HomeyPaw account UUID and Apple transaction, product, and subscription information for verification. Its SDK also processes technical details needed for the service, such as app/platform versions, locale, and currency. HomeyPaw’s backend synchronizes Family access from trusted store information; a client’s claim of a successful purchase does not itself grant access.',
+          'RevenueCat does not need your private journals, photos, videos, or Chat content to verify subscriptions. Membership benefits, payer identity, and Family ownership are handled separately. Deleting a HomeyPaw account or Family does not cancel an Apple subscription.',
         ],
       },
       {
-        title: '8. Account deletion and retention',
+        title: '8. Providers, storage, and the website',
         paragraphs: [
-          'You can permanently delete your account in “Me → Account and security.” Deletion removes the sign-in account and Profile, along with shared journal entries, photos, care logs, and task completions you created.',
-          'If you are a pet Owner, deletion also removes pets you own and their related memberships, journals, media, care records, and tasks. If a Member deletes an account, some family care tasks they created may remain so important care plans do not suddenly disappear, but the creator identity is removed.',
-          'A deletion request removes applicable data from HomeyPaw’s active systems. Infrastructure providers may retain technical backups for a limited period under their backup and security processes.',
+          'Supabase provides authentication, database services, private file storage, Realtime, and server functions. Apple, RevenueCat, and Expo process information needed for the payment, verification, and notification purposes described above. Providers may process data on infrastructure outside your location and their services are also subject to their own privacy policies and terms.',
+          'Vercel hosts the public website. Website requests generate technical information needed to deliver pages and maintain security, such as IP addresses, browser information, and access logs. The site stores only your selected language in localStorage; visiting legal pages does not access your private family content in the app.',
         ],
       },
       {
-        title: '9. Security',
+        title: '9. Retention, deletion, and subscription records',
         paragraphs: [
-          'We use reasonable technical and organizational measures — including authenticated access, row-level data permissions, private file storage, and HTTPS transport — to reduce the risk of unauthorized access, alteration, or disclosure. No online service can guarantee absolute security.',
+          'You can request permanent account deletion in Me → Account and security. A Family Owner must first transfer ownership or delete the Family. Account deletion removes the sign-in account, personal Profile, membership, and associated push-device records. Shared family history may remain with the author/sender account link removed.',
+          'Deleting a Post deletes its read receipts. Deleting a reader account removes its receipt account link, and removed or deleted accounts no longer appear in the visible reader list. Family deletion removes Family and pet-related business data through the confirmation workflow and schedules media cleanup.',
+          'Physical media files may be handled through cleanup queues. Technical backups, security records, and necessary support information may remain for a period under provider or operational processes; deletion from every copy cannot be immediate. Save content you need before deleting it. We do not promise permanent retention.',
+          'Subscription and transaction records needed to maintain valid Family access, prevent duplicate claims, handle refunds, or investigate disputes may remain. Deleting the payer’s account removes its account link and does not automatically transfer transactions to another Family. Storage overage or membership expiry alone does not automatically delete historical media.',
         ],
       },
       {
-        title: '10. Children',
+        title: '10. Security and your choices',
         paragraphs: [
-          'HomeyPaw is a family pet record tool and is not directed primarily at children. A parent or guardian who believes a child provided personal information without appropriate consent should contact us.',
+          'We use HTTPS, authentication, row-level permissions, restricted server interfaces, and private file-access rules to reduce unauthorized access. No online service can guarantee absolute security. Protect your sign-in details and family invite codes.',
+          'You can view, update, or delete content through available app features, adjust device permissions, or contact the email below to request access, correction, or deletion. We handle requests under applicable law and reasonable identity-verification procedures.',
         ],
       },
       {
-        title: '11. Updates and contact',
+        title: '11. Children',
         paragraphs: [
-          'We may update this policy when features or data handling practices materially change. The current update date will appear on this page.',
+          'HomeyPaw is a family pet record tool and is not directed primarily at children. A parent or guardian who believes a child provided personal data without appropriate consent should contact us.',
+        ],
+      },
+      {
+        title: '12. Updates and contact',
+        paragraphs: [
+          'We update this page and its date when features or data handling change materially. Updating this page does not itself enable subscriptions or new storage restrictions.',
           'For privacy, data, or deletion questions, email lenny996@163.com.',
         ],
       },
     ],
-    lastUpdated: 'Last updated: August 26, 2026',
+    lastUpdated: 'Last updated: October 26, 2026',
   },
   terms: {
     eyebrow: 'Using HomeyPaw',
     title: 'Terms of Service',
     intro:
-      'These plain-language terms describe your responsibilities and reasonable expectations when using HomeyPaw as a private family pet space.',
+      'These terms apply to HomeyPaw’s private family pet space and Family Plus. Purchase availability, Family benefits, and storage policies depend on what the app displays and the backend confirms.',
     sections: [
       {
-        title: '1. Eligibility and lawful use',
+        title: '1. Eligibility and accounts',
         paragraphs: [
-          'By using HomeyPaw, you agree to use it lawfully for private family pet records and care coordination, and confirm that you can agree to these terms. If you use the service for someone else, you must have authority to make the relevant decisions.',
+          'By using HomeyPaw, you agree to use its private family records and care-coordination service lawfully and confirm you can agree to these terms. Provide accurate information, protect sign-in credentials, and change your password and contact us promptly if you discover unauthorized activity.',
         ],
       },
       {
-        title: '2. Accounts',
+        title: '2. Families, roles, and sharing',
         paragraphs: [
-          'You are responsible for providing accurate information, protecting your sign-in credentials, and activity under your account. If you discover unauthorized access, change your password and contact us as soon as practical.',
+          'A HomeyPaw Family can contain multiple pets. The Owner manages the Family, pets, invites, and members. Members and Viewers access content under the role rules shown in the app and enforced by the backend. Private Chat is limited to active Owners and Members. Removed members lose future access.',
+          'Family Plus belongs to the Family, not to an individual member or pet. One Family Owner pays and that Family’s active members share verified benefits. Only an Owner who meets backend eligibility can initiate in-app purchase or restore operations. Members and Viewers view shared benefits, without purchasing again for the Family or restoring someone else’s subscription. HomeyPaw family sharing is not Apple Family Sharing; membership in an Apple family group does not automatically grant HomeyPaw Family access.',
         ],
       },
       {
-        title: '3. Family sharing',
+        title: '3. Content and acceptable use',
         paragraphs: [
-          'HomeyPaw Family Spaces are private and invite-only. Invite only people you trust and keep invite codes secure. An Owner can manage the pet, invites, members, and family content; a Member’s access follows the role rules shown in the app.',
-          'A removed member loses new access. Family members should coordinate important care plans with each other and should not depend on a single device or reminder.',
+          'You retain rights to text, photos, videos, and other content you upload and must have permission to use and share it. You allow HomeyPaw to store, process, copy, and display it to authorized family members as needed to provide the service. Uploading does not transfer ownership to us.',
+          'Do not upload unlawful, infringing, fraudulent, threatening, or abusive content; access other people’s data without permission; bypass security, storage, or payment restrictions; distribute malware; or consume upload and storage resources unreasonably.',
         ],
       },
       {
-        title: '4. Your content',
+        title: '4. Free and Family Plus storage',
         paragraphs: [
-          'You retain your rights in the text and photos you upload and confirm that you have the right to use and share them. You allow HomeyPaw to store, process, copy, and display that content to authorized family members only as needed to provide the service.',
-          'HomeyPaw does not take ownership of your content because you upload it.',
+          'The 1.4.0 family media plans are Free: 300 MiB per Family; Family Plus: 5 GiB shared per Family. Basic family records and care features remain free. The new storage policy applies only after formal activation and notice to users. Updating this page does not itself enable quota enforcement or start a transition period.',
+          'The backend meters family media, including journal photos, videos, and thumbnails. Media awaiting cleanup and unreleased upload reservations can temporarily occupy space. Deleting content in the interface may not immediately release physical storage. Unconfirmed usage does not mean zero usage.',
+          'Videos on both plans remain subject to individual file-size, duration, format, and total Family storage limits. Family Plus does not promise unlimited videos, uploads, or individual file sizes.',
         ],
       },
       {
-        title: '5. Prohibited use',
-        paragraphs: ['You must not use HomeyPaw to:'],
-        bullets: [
-          'Upload unlawful, infringing, fraudulent, threatening, or abusive material.',
-          'Access another account, family, or data without authorization.',
-          'Bypass, interfere with, or probe security or access restrictions.',
-          'Distribute malware, disrupt the service, or consume system resources unreasonably.',
+        title: '5. Prices and automatic renewal',
+        paragraphs: [
+          'Current Hong Kong prices are HK$32 per month or HK$228 per year. The monthly plan is billed monthly. The yearly plan is charged once per year, not in monthly instalments. Prices, currency, taxes, and the final charge in any storefront are those shown at Apple checkout.',
+          'Apple charges your Apple Account when you confirm a purchase. Subscriptions renew automatically until cancelled; Apple may charge within 24 hours before the next period begins. Cancel through Apple Subscriptions before renewal, preferably allowing at least 24 hours, and follow the renewal and expiry times Apple displays. Price changes follow Apple’s notices, consent requirements, and applicable rules.',
+          'We do not promise a free trial or offer that Apple does not explicitly present. A purchase confirmation sheet alone does not verify Family benefits: use the backend-confirmed membership status in the app, and do not purchase again while verification is pending.',
         ],
       },
       {
-        title: '6. Pet health and reminders',
+        title: '6. Management, cancellation, and refunds',
         paragraphs: [
-          'HomeyPaw is not a veterinary, medical, or emergency service. Care records and reminders are family coordination tools and do not replace veterinary advice, diagnosis, treatment, or reliable emergency arrangements.',
-          'For important medication or care, use appropriate professional services and backup reminders. Do not rely on app notifications alone.',
+          'Use Manage Apple Subscription in the app, or iPhone Settings → your Apple Account → Subscriptions, to manage or cancel. Cancelling automatic renewal normally does not immediately end paid, valid access or automatically refund previous charges.',
+          'Request refunds through Apple’s Report a Problem service at reportaproblem.apple.com. Eligibility and refunds are governed by Apple and applicable law. Refunds, revocations, or confirmed invalidation can end Family Plus benefits. These terms do not limit statutory consumer rights.',
         ],
       },
       {
-        title: '7. Service availability',
+        title: '7. Restore purchases and payer identity',
         paragraphs: [
-          'We work to keep HomeyPaw available, but network conditions, device permissions, providers, maintenance, or technical issues may temporarily interrupt, delay, or prevent features. Features may change to improve security, reliability, or the product.',
+          'The original payer should use the original HomeyPaw account, corresponding Family, and the same Apple purchasing account, meet current Owner eligibility, then choose Family plan → Restore purchases to verify an existing purchase. Restoring does not place a new order or make an expired or revoked subscription valid again. Contact support if changed Family ownership or payer identity prevents restoration; the original payer can still manage their subscription directly through Apple.',
+          'Changing HomeyPaw sign-in does not change the Apple purchasing account. Ownership is verified from trusted Apple/RevenueCat transactions and backend Family bindings; switching accounts, pets, or Families does not automatically transfer it. If an Apple purchase identity is already bound to another HomeyPaw account, use the original payer account or contact support rather than purchasing repeatedly to attempt a transfer.',
+          'Transferring Family ownership, leaving a Family, or creating another Family does not transfer the original payer’s Apple subscription or grant the same transaction to a different Family.',
         ],
       },
       {
-        title: '8. Account deletion and stopping use',
+        title: '8. Billing grace and membership expiry',
         paragraphs: [
-          'You may stop using HomeyPaw at any time and permanently delete your account in the app. Deleting an account, pet, journal entry, or photo cannot be undone. Data is handled according to the Privacy Policy and the confirmation shown in the app.',
-          'If an account is used for illegal activity, abuse, unauthorized access, or serious disruption, we may take reasonable steps to restrict use to protect other users and the service.',
+          'Cancelling renewal differs from immediate expiry. If payment fails, Family Plus continues only while Apple/RevenueCat verifies grace access and the backend confirms its deadline. Billing retry alone does not guarantee extra access, and the app does not independently extend a fixed grace period.',
+          'After actual expiry without valid grace, a refund, or revocation, the Family returns to Free as confirmed by the backend. Once the storage policy is active, usage above the currently available allowance pauses new media uploads. Historical media is not automatically deleted merely because of downgrade or overage; authorized members can still view, download, and actively clean it up.',
         ],
       },
       {
-        title: '9. Reasonable limits of responsibility',
+        title:
+          '9. Fifteen-day transition for existing over-limit Free Families',
         paragraphs: [
-          'To the extent permitted by applicable law, HomeyPaw is provided as available and does not promise uninterrupted or error-free service. We are not responsible for losses caused by treating HomeyPaw as a veterinary, medical, emergency, or sole reminder service.',
-          'Nothing in these terms excludes or limits any right or responsibility that applicable law does not allow to be excluded or limited.',
+          'This mechanism starts only when Production first formally activates the new storage policy; updating this page does not start it. Families that already exist at activation, are Free, and have backend-confirmed usage above 300 MiB qualify for a one-time 15-day transition, meaning 360 consecutive hours from the common server-recorded activation time. New Families do not automatically qualify.',
+          'A temporary 1 GiB Family allowance applies during transition, not unlimited uploading. A Family already above 1 GiB must clean up or upgrade before adding media. At the deadline, Free Families use the 300 MiB allowance and overage pauses new uploads without automatically deleting historical content.',
+          'Eligibility and the deadline are confirmed by the backend and cannot restart through sign-in, pet switching, or member actions. Valid Family Plus access takes priority at 5 GiB and is not revoked because an old transition ends. This mechanism is separate from Apple subscription billing grace.',
         ],
       },
       {
-        title: '10. Updates and contact',
+        title: '10. Account, Family, and content deletion',
         paragraphs: [
-          'We may update these terms when the service materially changes and will show the current update date on this page. Review the latest version before continuing to use the service.',
-          'For questions about these terms or the service, email lenny996@163.com.',
+          'You can permanently delete your account in Me → Account and security. Owners must first transfer Family ownership or delete the Family. Shared family history may remain with personal account links removed. Family deletion removes its pets and related Family business records; physical media may be processed through cleanup queues. See this site’s Privacy Policy for details.',
+          'Deleting the app, HomeyPaw account, Family, or pet does not automatically cancel an Apple subscription or issue a refund. The original payer should manage it through Apple Subscriptions first. Deletion does not attach the subscription to a new Family. Necessary transaction and verification records may remain under the Privacy Policy. Deletion cannot be undone; save content you need beforehand.',
+        ],
+      },
+      {
+        title: '11. Health, reminders, and availability',
+        paragraphs: [
+          'HomeyPaw is not a veterinary, medical, or emergency service. Records, schedules, and notifications are coordination tools affected by permissions, networks, devices, time zones, providers, and technical limits. Follow professional advice and use backup reminders for important care or medication.',
+          'We work to maintain the service but do not promise uninterrupted availability, immediate synchronization, or permanent retention. Maintenance, security, or technical issues may temporarily limit features. Keep personal copies of important content.',
+        ],
+      },
+      {
+        title: '12. Liability and applicable rights',
+        paragraphs: [
+          'To the extent permitted by applicable law, the service is provided as is and is not guaranteed to be error-free. HomeyPaw is not responsible for losses from treating it as veterinary, medical, emergency, or your only reminder service. Rights and responsibilities that law does not allow to be excluded or limited remain unaffected.',
+          'Downloads and purchases through Apple are also subject to its store terms and applicable app licence terms. These service terms do not replace Apple’s payment, renewal, or refund rules.',
+        ],
+      },
+      {
+        title: '13. Updates and contact',
+        paragraphs: [
+          'We update this page’s date when the service materially changes. Activation arrangements for new charges or storage policies will be communicated through the app when applicable; terms text does not itself open purchases or apply restrictions.',
+          'For terms, subscription, or family-data questions, email lenny996@163.com.',
         ],
       },
     ],
-    lastUpdated: 'Last updated: August 26, 2026',
+    lastUpdated: 'Last updated: October 26, 2026',
   },
   support: {
     eyebrow: 'We are here to help',

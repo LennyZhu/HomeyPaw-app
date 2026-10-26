@@ -1,10 +1,10 @@
 # App Privacy Data Inventory
 
-Updated 2026-10-23 for the Family Plus development branch. Production remains 1.3.0 (10). This is a repository inventory; App Store Connect and the public website have NOT been changed.
+Updated 2026-10-26 for the Family Plus legal-content review. The public app remains 1.3.0 (10); 1.4.0 (12) is in review preparation. This is a repository inventory. Website policy sources were updated locally on 2026-10-26, but publication and App Store Connect changes have NOT been performed.
 
 ## Family Plus release addition (not activated)
 
-RevenueCat is used only when the guarded billing flow is enabled. Declare Purchases → Purchase History, linked to identity, for App Functionality, not Tracking. Account UUIDs are RevenueCat App User IDs (Identifiers → User ID). Subscription/product/transaction identifiers, access status and expiry/renewal facts are processed by RevenueCat and HomeyPaw to verify Family access, restore purchases and prevent duplicate claims. Apple handles payment details; HomeyPaw does not collect card or bank details. Review RevenueCat's current App Privacy guidance and actual SDK configuration before submitting. No advertising, cross-app tracking or general product analytics has been added. The questionnaire and published policy must be updated before enabling purchases.
+RevenueCat is used only when the guarded billing flow is enabled. Declare Purchases → Purchase History, linked to identity, for **App Functionality and Analytics**, not Tracking. RevenueCat's Customer History, subscription charts and reports require the Analytics purpose even though no general behavioral analytics SDK was added. Account UUIDs are RevenueCat App User IDs (Identifiers → User ID); reflect their use in subscription verification and reporting without implying Profile names or emails are sent as RevenueCat customer attributes. Subscription/product/transaction identifiers, access status and expiry/renewal facts verify Family access, restore purchases, prevent duplicate claims and support subscription reporting. Apple handles payment details; HomeyPaw does not collect card or bank details. This corrects the earlier functionality-only purchase disclosure using [RevenueCat's current App Privacy guidance](https://www.revenuecat.com/docs/platform-resources/apple-platform-resources/apple-app-privacy). No advertising or cross-app tracking has been added. Manually reconcile the live questionnaire and publish the website policies before submission.
 
 ## Overall Answers
 
@@ -12,21 +12,22 @@ RevenueCat is used only when the guarded billing flow is enabled. Declare Purcha
 - Data used to track users: No
 - Tracking domains: None
 - Third-party advertising: None
-- Third-party analytics SDK: None
+- Third-party analytics: RevenueCat purchase/subscription reporting; no general behavioral or advertising analytics SDK
 - Data broker sharing: None
 
 ## Data Types to Declare
 
-| App Store category                     | HomeyPaw data                                                                                                                                                           | Linked to identity | Tracking | Purpose                                    |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------- | ------------------------------------------ |
-| Contact Info → Email Address           | Supabase account email                                                                                                                                                  | Yes                | No       | App Functionality                          |
-| Identifiers → User ID                  | Supabase user ID and profile display name                                                                                                                               | Yes                | No       | App Functionality                          |
-| Identifiers → Device ID                | App installation ID and Expo push token linked to the signed-in account, platform/app version and Chat Push capability, used for family activity and Chat notifications | Yes                | No       | App Functionality                          |
-| User Content → Photos or Videos        | Profile/Pet avatars, journal photos, selected journal videos (including their existing audio), and video thumbnails                                                     | Yes                | No       | App Functionality                          |
-| User Content → Emails or Text Messages | Private Family Chat messages                                                                                                                                            | Yes                | No       | App Functionality                          |
-| User Content → Other User Content      | Pet profiles, journal text, manually entered location name, family membership/invites, care/health records, care tasks, schedules, and completions                      | Yes                | No       | App Functionality                          |
-| Usage Data → Product Interaction       | Post ID, reader user ID and first-view timestamp for post-level Journal read receipts; Chat read cursors used for unread state                                          | Yes                | No       | App Functionality                          |
-| Other Data → Other Data Types          | Profile locale and IANA time-zone values stored with care records and tasks                                                                                             | Yes                | No       | App Functionality; Product Personalization |
+| App Store category                     | HomeyPaw data                                                                                                                                                           | Linked to identity | Tracking | Purpose                                                                        |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | -------- | ------------------------------------------------------------------------------ |
+| Contact Info → Email Address           | Supabase account email                                                                                                                                                  | Yes                | No       | App Functionality                                                              |
+| Identifiers → User ID                  | Supabase account UUID (also the RevenueCat App User ID); profile display name is used within HomeyPaw, not sent as a RevenueCat customer attribute                      | Yes                | No       | App Functionality; Analytics for the UUID in RevenueCat subscription reporting |
+| Purchases → Purchase History           | Products, store transaction/subscription identifiers, purchase/renewal/expiry/refund status and verified Family access                                                  | Yes                | No       | App Functionality; Analytics (RevenueCat subscription reporting)               |
+| Identifiers → Device ID                | App installation ID and Expo push token linked to the signed-in account, platform/app version and Chat Push capability, used for family activity and Chat notifications | Yes                | No       | App Functionality                                                              |
+| User Content → Photos or Videos        | Profile/Pet avatars, journal photos, selected journal videos (including their existing audio), and video thumbnails                                                     | Yes                | No       | App Functionality                                                              |
+| User Content → Emails or Text Messages | Private Family Chat messages                                                                                                                                            | Yes                | No       | App Functionality                                                              |
+| User Content → Other User Content      | Pet profiles, journal text, manually entered location name, family membership/invites, care/health records, care tasks, schedules, and completions                      | Yes                | No       | App Functionality                                                              |
+| Usage Data → Product Interaction       | Post ID, reader user ID and first-view timestamp for post-level Journal read receipts; Chat read cursors used for unread state                                          | Yes                | No       | App Functionality                                                              |
+| Other Data → Other Data Types          | Profile locale and IANA time-zone values stored with care records and tasks                                                                                             | Yes                | No       | App Functionality; Product Personalization                                     |
 
 ## Data Types Not Collected by the App
 
@@ -37,6 +38,7 @@ RevenueCat is used only when the guarded billing flow is enabled. Declare Purcha
 ## Processing and Sharing
 
 - Supabase provides authentication, database, private object storage, and server functions as a service processor.
+- RevenueCat processes stable account UUIDs and store purchase facts for verification and purchase/subscription analysis. Its SDK is not given private Journal, Photo, Video or Chat content. This purchase analysis does not change the functionality-only purpose of Journal read receipts or Chat unread state.
 - Data is linked to the signed-in account because identity is required to provide private family access.
 - Family content is shared only with currently authorized members, according to canonical `family_members` roles. Journal access can include Owner, Member and Viewer; Chat and Chat Push are limited to Owner and Member. Pets and their Journal content belong to a Family; Chat belongs directly to the Family and does not change when switching Pets.
 - Invite codes expire, are capacity limited, and are stored by hash rather than plaintext.
@@ -60,4 +62,4 @@ The app opens the user's external mail composer only after the user taps Support
 - Recheck production permissions and network destinations against this inventory.
 - Confirm in the live questionnaire whether Apple expects locale and time-zone values under `Other Data Types`; keep the conservative declaration unless Apple Support provides a narrower classification.
 - Apple/TestFlight diagnostics collected only by Apple are not developer-collected by code. Reconfirm whether the release operator separately exports or retains crash reports before answering the live Diagnostics questions.
-- Publish/reconcile the updated policy at `https://homeypaw.vercel.app/privacy` before submission. The bundled `about.privacyBody`/`about.privacyUpdated` summaries were aligned on 2026-09-29 for Video, photo-only Camera, first-view receipts and Chat Push. The Terms date/copy is unchanged. These repository edits do not update the website or ASC.
+- Publish the 2026-10-26 bilingual sources in `website/src/i18n/zh-HK.ts` and `website/src/i18n/en.ts` at the existing `/privacy` and `/terms` URLs before submission. The app's bundled legal summaries, older policy drafts and historical acceptance records are separate sources; this task does not modify Build 12. Reconcile the live ASC questionnaire, including Purchase History purposes and linked account UUIDs. Local source edits do not publish the website or update ASC.
