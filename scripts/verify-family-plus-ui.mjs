@@ -1590,7 +1590,7 @@ const connected = {
   message: null,
   productsLoading: false,
   prices: [
-    { period: 'monthly', priceString: 'HK$28.00', source: 'apple' },
+    { period: 'monthly', priceString: 'HK$32.00', source: 'apple' },
     { period: 'yearly', priceString: 'HK$228.00', source: 'apple' },
   ],
   action: (action, period) => {
@@ -1616,7 +1616,10 @@ assert.ok(
 );
 assert.ok(text(connectedView.tree).includes('HK$228.00'));
 assert.ok(!text(connectedView.tree).includes('US$29.99'));
-connectedView.click(translator.t('familyPlus.purchase.buy'));
+const annualBuyLabel = translator.t('familyPlus.purchase.subscribe.yearly', {
+  price: 'HK$228.00',
+});
+connectedView.click(annualBuyLabel);
 assert.deepEqual(purchaseActions, [{ action: 'purchase', period: 'yearly' }]);
 connectedView.click(translator.t('familyPlus.purchase.restore'));
 connectedView.click(translator.t('familyPlus.purchase.manage'));
@@ -1637,17 +1640,24 @@ for (const role of ['member', 'viewer', null]) {
     'familyPlus.purchase.restore',
     'familyPlus.purchase.manage',
   ])
-    assert.ok(!buttons(page.tree).some((b) => label(b) === translator.t(key)));
+    assert.ok(
+      !buttons(page.tree).some((b) => label(b).startsWith(translator.t(key))),
+    );
 }
-for (const state of [{ ready: false }, { blocked: true }, { prices: [] }]) {
+for (const state of [
+  { ready: false },
+  { blocked: true },
+  { prices: [] },
+  { productsError: true },
+]) {
   const page = mount({
     mode: 'server',
     serverRole: 'owner',
     serverSnapshot: freeServer,
     billing: { ...connected, ...state },
   });
-  const buy = buttons(page.tree).find(
-    (b) => label(b) === translator.t('familyPlus.purchase.buy'),
+  const buy = buttons(page.tree).find((b) =>
+    label(b).startsWith(translator.t('familyPlus.purchase.buy')),
   );
   assert.equal(
     buy.props.disabled,
@@ -1697,6 +1707,68 @@ for (const lang of ['zh-HK', 'en']) {
 sandboxMode = false;
 console.log(
   'PASS: connected Sandbox page uses localized Apple prices; purchase/restore/manage wiring; no preview toolbox; Member/Viewer/unknown role hidden; readiness, pending and missing-product guards. Mock actions only.',
+);
+
+// Review-targeted static rendering: phone/iPad widths, both languages, selected
+// billing total and the actual storefront string (including a non-HKD locale).
+sandboxMode = true;
+for (const lang of ['en', 'zh-HK']) {
+  await translator.changeLanguage(lang);
+  for (const dimensions of [
+    { wide: false, scale: 1 },
+    { wide: true, scale: 1 },
+    { wide: true, scale: 1.6 },
+  ]) {
+    wide = dimensions.wide;
+    fontScale = dimensions.scale;
+    for (const period of ['monthly', 'yearly']) {
+      const actions = [];
+      const prices = connected.prices.map((p) => ({
+        ...p,
+        priceString: p.period === 'monthly' ? '€4,99' : '€39,99',
+      }));
+      const price = prices.find((p) => p.period === period).priceString;
+      const tree = render(
+        screen.FamilyPlusDetails({
+          snapshot: { ...freeServer, prices },
+          role: 'owner',
+          period,
+          onSelectPeriod: () => {},
+          onAction: (a) => actions.push(a),
+          previewActions: false,
+          billing: { ...connected, prices },
+        }),
+      );
+      const prominent = nodes(tree).filter(
+        (n) => n.type === 'AppText' && n.props.variant === 'largeTitle',
+      );
+      assert.equal(prominent.length, 2);
+      assert.ok(prominent.some((n) => text(n).includes(price)));
+      assert.ok(
+        text(tree).includes(
+          translator.t(`familyPlus.purchase.total.${period}`, { price }),
+        ),
+      );
+      assert.ok(
+        text(tree).includes(translator.t(`familyPlus.charge.${period}`)),
+      );
+      const buy = buttons(tree).find(
+        (b) =>
+          label(b) ===
+          translator.t(`familyPlus.purchase.subscribe.${period}`, { price }),
+      );
+      assert.ok(buy);
+      assert.equal(buy.props.variant, 'primary');
+      buy.props.onPress();
+      assert.deepEqual(actions, ['purchase']);
+    }
+  }
+}
+wide = false;
+fontScale = 1;
+sandboxMode = false;
+console.log(
+  'PASS: actual localized per-period amounts are primary, yearly total is repeated before checkout, selection/CTA work for phone/iPad/large text and English/zh-HK (static render).',
 );
 
 const transitionNow = new Date().toISOString();

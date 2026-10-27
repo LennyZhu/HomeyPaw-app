@@ -494,6 +494,14 @@ export function FamilyPlusDetails({
     (price) => price.source === 'development-reference',
   );
   const transition = familyPlusTransition(snapshot);
+  const selectedPrice = familyPlusPrice(snapshot.prices, period);
+  const purchaseLabel = previewActions
+    ? t('familyPlus.previewPurchase')
+    : selectedPrice
+      ? t(`familyPlus.purchase.subscribe.${period}`, {
+          price: selectedPrice.priceString,
+        })
+      : t('familyPlus.purchase.buy');
   return (
     <>
       <View style={styles.status}>
@@ -546,7 +554,11 @@ export function FamilyPlusDetails({
                 <Pressable
                   key={item}
                   accessibilityRole="radio"
-                  accessibilityState={{ checked: selected }}
+                  accessibilityState={{
+                    checked: selected,
+                    disabled: billing?.busy ?? false,
+                  }}
+                  disabled={billing?.busy ?? false}
                   onPress={() => onSelectPeriod(item)}
                   style={[
                     styles.plan,
@@ -569,7 +581,7 @@ export function FamilyPlusDetails({
                       size={22}
                     />
                   </View>
-                  <AppText variant="title3">
+                  <AppText variant="largeTitle">
                     {price
                       ? price.priceString
                       : t('familyPlus.priceUnavailable')}
@@ -588,22 +600,50 @@ export function FamilyPlusDetails({
               );
             })}
           </View>
+          {selectedPrice ? (
+            <View style={styles.chargeSummary}>
+              <AppText variant="title2">
+                {t(`familyPlus.purchase.total.${period}`, {
+                  price: selectedPrice.priceString,
+                })}
+              </AppText>
+              <AppText tone="secondary" variant="subheadline">
+                {t(`familyPlus.charge.${period}`)}
+              </AppText>
+            </View>
+          ) : null}
           <AppButton
-            variant="secondary"
-            label={t(
-              previewActions
-                ? 'familyPlus.previewPurchase'
-                : 'familyPlus.purchase.buy',
-            )}
+            variant="primary"
+            style={styles.purchaseButton}
+            label={purchaseLabel}
             loading={billing?.busy ?? false}
             disabled={
               !previewActions &&
               (!billing?.ready ||
                 billing.blocked ||
-                !familyPlusPrice(snapshot.prices, period))
+                billing.productsError ||
+                !selectedPrice)
             }
             onPress={() => onAction('purchase')}
           />
+          {billing ? (
+            <View accessibilityLiveRegion="polite" style={styles.legalGroup}>
+              {billing.productsLoading ? (
+                <AppText tone="secondary">
+                  {t('familyPlus.purchase.loadingPrices')}
+                </AppText>
+              ) : billing.productsError || (billing.ready && !selectedPrice) ? (
+                <AppText tone="error">
+                  {t('familyPlus.purchase.productsUnavailable')}
+                </AppText>
+              ) : null}
+              {billing.message ? (
+                <AppText tone="secondary">
+                  {t(`familyPlus.purchase.${billing.message}`)}
+                </AppText>
+              ) : null}
+            </View>
+          ) : null}
         </View>
       ) : null}
       {billing ? (
@@ -625,7 +665,7 @@ export function FamilyPlusDetails({
               onPress={billing.reload}
             />
           ) : null}
-          {billing.message ? (
+          {!canSelect && billing.message ? (
             <AppText accessibilityLiveRegion="polite" tone="secondary">
               {t(`familyPlus.purchase.${billing.message}`)}
             </AppText>
@@ -765,6 +805,7 @@ const styles = StyleSheet.create({
   plans: { gap: spacing.md },
   widePlans: { flexDirection: 'row', alignItems: 'stretch' },
   plan: {
+    minWidth: 0,
     gap: spacing.sm,
     padding: spacing.lg,
     borderRadius: radius.lg,
@@ -777,6 +818,8 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.primarySoft,
   },
   planHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  chargeSummary: { gap: spacing.xs },
+  purchaseButton: { paddingVertical: spacing.md },
   management: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   benefitRow: {
     flexDirection: 'row',

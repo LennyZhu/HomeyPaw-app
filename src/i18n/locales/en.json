@@ -1542,6 +1542,23 @@
       "restoring": "Restoring purchases with Apple and verifying family membership…",
       "restored": "Purchases restored and family membership verified by the server.",
       "buy": "Subscribe with Apple",
+      "subscribe": {
+        "monthly": "Subscribe with Apple · {{price}}/month",
+        "yearly": "Subscribe with Apple · {{price}}/year"
+      },
+      "total": {
+        "monthly": "Charged {{price}} every month",
+        "yearly": "Charged {{price}} in full every year"
+      },
+      "preparing": "Preparing your subscription. Please wait…",
+      "openingStore": "Opening Apple purchase confirmation. Please follow Apple's prompts…",
+      "verifying": "Verifying your Apple transaction and family membership…",
+      "loadingPrices": "Loading Apple storefront prices…",
+      "productsUnavailable": "Apple prices for the selected plan are unavailable. Check your connection and reload Apple prices.",
+      "timedOut": "Reading Apple store information timed out. Payment has not started. Check your connection and reload Apple prices.",
+      "preflightFailed": "The purchase check did not complete. No new Apple payment has started. Refresh membership status before trying again.",
+      "operationInProgress": "Another Apple operation is still in progress. Please wait and try again.",
+      "accessDenied": "Your sign-in or test access has changed. Go back and sign in again.",
       "notReady": "Subscription actions are currently unavailable. Purchase, restore and subscription management are disabled.",
       "blocked": "This family already has an active subscription or a pending purchase. Restore or refresh its status before trying again.",
       "storeNotice": "The price above is supplied by your Apple storefront. Apple confirms the final price and subscription period before purchase.",

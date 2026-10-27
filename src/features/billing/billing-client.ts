@@ -8,6 +8,11 @@ import { getAppVersionHeaders } from '@/features/app-release/minimum-version';
 import { requireSupabase as requireDefaultSupabase } from '@/lib/supabase/client';
 import { supabaseEnvironment } from '@/lib/supabase/environment';
 import type { Json } from '@/types/database';
+import { logError } from '@/lib/logger';
+import {
+  readBillingStoreMetadata,
+  type BillingPurchaseStage,
+} from './billing-purchase-feedback';
 import {
   canUseBillingSandbox,
   canUseBillingSigning,
@@ -209,7 +214,9 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
       });
     else if ((await purchases.getAppUserID()) !== userId)
       await purchases.logIn(userId);
-    const customerInfo = await purchases.getCustomerInfo();
+    const customerInfo = await readBillingStoreMetadata(() =>
+      purchases.getCustomerInfo(),
+    );
     if (customerInfo.originalAppUserId !== userId)
       throw new Error('BILLING_STORE_IDENTITY_REVIEW_REQUIRED');
     await assertAccount(userId, epoch);
@@ -227,7 +234,9 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
   async function storePackages(
     purchases: Awaited<ReturnType<typeof nativeCustomer>>['purchases'],
   ) {
-    const offerings = await purchases.getOfferings();
+    const offerings = await readBillingStoreMetadata(() =>
+      purchases.getOfferings(),
+    );
     const packages = offerings.all.default?.availablePackages ?? [];
     return packages.filter(
       (p) =>
@@ -247,6 +256,7 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
       const { purchases, epoch } = await nativeCustomer(userId);
       const packages = await storePackages(purchases);
       await assertAccount(userId, epoch);
+      if (!packages.length) throw new Error('BILLING_PRODUCTS_UNAVAILABLE');
       return packages;
     });
   }
@@ -264,8 +274,15 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
     userId: string,
     familyId: string,
     item: PurchasesPackage,
+    onStage?: (stage: BillingPurchaseStage) => void,
   ): Promise<BillingOutcome> {
+    let stage: BillingPurchaseStage = 'checking';
+    const progress = (next: BillingPurchaseStage) => {
+      stage = next;
+      onStage?.(next);
+    };
     return exclusive(async () => {
+      progress('checking');
       const { state } = await assertOwner(userId, familyId, true);
       if (
         state.purchase_blocked ||
@@ -274,6 +291,7 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
       )
         throw new Error('FAMILY_ALREADY_SUBSCRIBED');
       const { purchases, customerId, epoch } = await nativeCustomer(userId);
+      progress('products');
       // Re-resolve from the required Offering. Arbitrary packages cannot buy a
       // different product/period under this Family's server intent.
       const selected = (await storePackages(purchases)).find(
@@ -283,6 +301,7 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
       );
       if (!selected) throw new Error('BILLING_PRODUCTS_UNAVAILABLE');
       await assertAccount(userId, epoch);
+      progress('preflight');
       const { data: preflight, error: preflightError } =
         await requireSupabase().functions.invoke('family-billing-reconcile', {
           body: { operation: 'purchase_preflight' },
@@ -295,6 +314,7 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
       )
         throw new Error('BILLING_RECONCILIATION_REQUIRED');
       await assertAccount(userId, epoch);
+      progress('intent');
       const { data, error } = await requireSupabase().rpc(
         'begin_family_billing_purchase',
         {
@@ -320,6 +340,7 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
       await assertAccount(userId, epoch);
       await assertOwner(userId, familyId, true);
       try {
+        progress('store');
         await purchases.purchasePackage(selected);
       } catch (error) {
         const code = (error as { code?: string }).code;
@@ -334,13 +355,18 @@ export function createFamilyBillingClient(options?: FamilyBillingOptions) {
           if (cancelled.error) return 'pending';
           return 'cancelled';
         }
+        logError('family-billing.purchase-store', error, { stage });
         return 'failed'; // Ambiguous errors retain the intent for reconciliation.
       }
+      progress('verifying');
       await assertAccount(userId, epoch);
       await reconcileBilling();
       const next = await readFamilyBillingState(familyId);
       await assertAccount(userId, epoch);
       return next.tier === 'plus' ? 'confirmed' : 'pending';
+    }).catch((error: unknown) => {
+      logError('family-billing.purchase', error, { stage });
+      throw error;
     });
   }
   function restoreFamilyPlus(

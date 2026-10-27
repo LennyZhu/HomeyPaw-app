@@ -1,5 +1,11 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
+import { logError } from '@/lib/logger';
+
+import {
+  billingPurchaseErrorMessage,
+  type BillingPurchaseStage,
+} from './billing-purchase-feedback';
 
 import {
   isFamilyBillingEnabled,
@@ -38,6 +44,7 @@ export function useFamilyPlusPurchases(input: {
   };
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState<BillingPurchaseStage | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<
     FamilyPlusAction | 'refresh' | null
@@ -85,30 +92,42 @@ export function useFamilyPlusPurchases(input: {
     state.data?.billing.pending_intent === true;
   const products = useQuery({
     queryKey: ['family-store-products', input.userId, input.familyId],
-    queryFn: () => client.loadSandboxPackages(input.userId!, input.familyId!),
-    enabled: ready && input.role === 'owner' && !blocked,
+    queryFn: async () => {
+      try {
+        return await client.loadSandboxPackages(input.userId!, input.familyId!);
+      } catch (error) {
+        logError('family-billing.products', error);
+        throw error;
+      }
+    },
+    enabled: ready && input.role === 'owner' && !blocked && !busy,
     staleTime: 60_000,
     gcTime: 0,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const action = async (
     action: FamilyPlusAction | 'refresh',
     period: FamilyPlusPeriod,
   ) => {
+    if (lock.current) return;
     if (
-      lock.current ||
       input.role !== 'owner' ||
       (action === 'purchase' ? !ready : !managementReady) ||
       !input.userId ||
       !input.familyId
-    )
+    ) {
+      setMessage('notReady');
       return;
+    }
     const startedGeneration = generation.current;
     const present = () =>
       mounted.current && generation.current === startedGeneration;
     lock.current = true;
     setBusy(true);
     setMessage(null);
+    setStage(null);
     setMessageAction(action);
     try {
       let result: string;
@@ -121,6 +140,9 @@ export function useFamilyPlusPurchases(input: {
           input.userId,
           input.familyId,
           item,
+          (next) => {
+            if (present()) setStage(next);
+          },
         );
       } else if (action === 'restore')
         result = await client.restoreFamilyPlus(input.userId, input.familyId);
@@ -137,26 +159,22 @@ export function useFamilyPlusPurchases(input: {
         action === 'restore' && result === 'confirmed' ? 'restored' : result,
       );
     } catch (error) {
-      if (present())
-        setMessage(
-          error instanceof Error &&
-            [
-              'BILLING_STORE_IDENTITY_REVIEW_REQUIRED',
-              'BILLING_LEGACY_IDENTITY_REVIEW_REQUIRED',
-            ].includes(error.message)
-            ? 'identityReview'
-            : 'failed',
-        );
+      logError('family-billing.action', error, { action });
+      if (present()) setMessage(billingPurchaseErrorMessage(error));
     } finally {
-      if (present())
-        await Promise.allSettled([
+      // Cache refresh is follow-up work, not part of the native purchase lock.
+      // A slow refetch must not leave a completed/cancelled action spinning.
+      lock.current = false;
+      if (present()) {
+        setBusy(false);
+        setStage(null);
+        void Promise.allSettled([
           queryClient.invalidateQueries({
             queryKey: familyPlusKeys(input.userId, input.familyId),
           }),
           state.refetch(),
         ]);
-      lock.current = false;
-      if (present()) setBusy(false);
+      }
     }
   };
   return {
@@ -164,15 +182,22 @@ export function useFamilyPlusPurchases(input: {
     managementReady,
     blocked,
     busy: busy || products.isFetching,
-    message:
-      busy && messageAction === 'restore'
+    message: busy
+      ? messageAction === 'restore'
         ? 'restoring'
-        : messageAction === 'purchase' &&
-            ready &&
-            state.data?.billing.tier === 'plus' &&
-            (message === 'pending' || message === 'failed')
-          ? 'confirmed'
-          : message,
+        : messageAction === 'purchase'
+          ? stage === 'store'
+            ? 'openingStore'
+            : stage === 'verifying'
+              ? 'verifying'
+              : 'preparing'
+          : null
+      : messageAction === 'purchase' &&
+          ready &&
+          state.data?.billing.tier === 'plus' &&
+          (message === 'pending' || message === 'failed')
+        ? 'confirmed'
+        : message,
     productsLoading: products.isFetching,
     productsError: products.isError,
     prices: (products.data ?? []).map((p) => ({
@@ -183,8 +208,8 @@ export function useFamilyPlusPurchases(input: {
     })),
     action,
     reload: () => {
-      if (ready && input.role === 'owner') void products.refetch();
-      else if (enabled) void state.refetch();
+      if (enabled) void state.refetch();
+      if (ready && input.role === 'owner' && !blocked) void products.refetch();
     },
   };
 }

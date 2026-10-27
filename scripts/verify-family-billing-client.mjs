@@ -20,6 +20,8 @@ const load = (p, deps = {}, globals = {}) => {
     Error,
     Date,
     Boolean,
+    setTimeout,
+    clearTimeout,
     ...globals,
     require: (n) => {
       assert.ok(n in deps, n);
@@ -229,6 +231,10 @@ const env = {
   EXPO_PUBLIC_REVENUECAT_APPLE_KEY: 'appl_release_fixture',
 };
 const deps = {
+  './billing-purchase-feedback': load(
+    'src/features/billing/billing-purchase-feedback.ts',
+  ),
+  '@/lib/logger': { logError: () => undefined },
   'expo-application': {
     getIosApplicationReleaseTypeAsync: async () => releaseType,
   },
@@ -338,7 +344,10 @@ assert.equal(
   'SDK CustomerInfo active entitlement is not Family authority',
 );
 offering = 'other';
-assert.equal((await client.loadSandboxPackages(user, family)).length, 0);
+await assert.rejects(
+  client.loadSandboxPackages(user, family),
+  /PRODUCTS_UNAVAILABLE/,
+);
 offering = 'default';
 await assert.rejects(
   client.purchaseFamilyPlus(user, family, {

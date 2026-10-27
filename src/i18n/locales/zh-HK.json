@@ -1542,6 +1542,23 @@
       "restoring": "正在向 Apple 恢復購買，並核對家庭會員狀態…",
       "restored": "已完成恢復購買，並由服務端確認家庭會員權益。",
       "buy": "透過 Apple 訂閱",
+      "subscribe": {
+        "monthly": "透過 Apple 訂閱 · {{price}}／月",
+        "yearly": "透過 Apple 訂閱 · {{price}}／年"
+      },
+      "total": {
+        "monthly": "每月扣款 {{price}}",
+        "yearly": "每年一次性扣款 {{price}}"
+      },
+      "preparing": "正在準備訂閱，請稍候…",
+      "openingStore": "正在開啟 Apple 購買確認，請完成 Apple 的提示…",
+      "verifying": "正在核對 Apple 交易及家庭會員狀態…",
+      "loadingPrices": "正在載入 Apple 商店價格…",
+      "productsUnavailable": "暫時無法載入所選方案的 Apple 價格。請檢查網絡並重新載入 Apple 價格。",
+      "timedOut": "讀取 Apple 商店資料逾時，尚未開始付款。請檢查網絡並重新載入 Apple 價格。",
+      "preflightFailed": "購買前核對未完成，尚未開始新的 Apple 付款。請先更新會員狀態後再試。",
+      "operationInProgress": "另一項 Apple 操作仍在處理中，請稍候再試。",
+      "accessDenied": "目前登入或測試授權已變更。請返回並重新登入後再試。",
       "notReady": "訂閱操作暫未開放，暫時無法購買、恢復購買或管理訂閱。",
       "blocked": "家庭已有有效訂閱或待確認的購買。請先恢復購買或更新狀態，避免重複付款。",
       "storeNotice": "以上價格由你的 Apple 商店提供。購買前，Apple 會確認最終價格及續訂週期。",
