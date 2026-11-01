@@ -1,6 +1,73 @@
 # Family Plus: signed Sandbox RC and final App Review binary
 
-## Submitted review status — 2026-10-26
+## Build 14 preparation — 2026-11-01
+
+The local candidate is **HomeyPaw 1.4.0 (14)**, Bundle ID
+`com.zhushunli.homeypaw`, EAS **production** profile. Build 13's review Pending
+state could suppress the Apple product query; this candidate separates price
+reads from Pending, retains all checkout gates, distinguishes price/Pending/Gate
+UI states and supports bounded retry with account/Family/environment isolation.
+No Billing API, native purchase implementation or dependency changed.
+
+`eas.json` pins Production `HOMEYPAW_IOS_BUILD_NUMBER=14` (previously 13).
+`app.config.js` resolves that value into the native iOS build number. The existing
+local/RC default in `app.json` remains **11**; this is intentional profile-local
+version management. App Version **1.4.0**, `appVersionSource=local`,
+`autoIncrement=false`, store distribution, Production Supabase target and the
+separate Sandbox Test Account Login entry remain unchanged.
+
+The accepted backend snapshot is **2026-10-31 23:58 HKT**: Sandbox History **60**,
+specified Yearly request `abandoned` / Apple outcome `unknown`, Family A Free,
+active entitlements **0**, blocking Pending **0**. Database / Functions Billing
+**ON**, Release Lock **OFF**, Quota **OFF**, replacement **Cron #8 active**, old
+**#7 inactive**. The remaining review grant expires
+**2026-11-09 17:14:05.286226 HKT**. See the
+[completed Yearly record](BILLING_YEARLY_PENDING_PLAN.md). This preparation task
+uses saved evidence only; it makes no backend or RevenueCat connection/change.
+
+Local readiness checks are limited to TypeScript, targeted Lint, i18n parity,
+Family Plus Pending-price Mock, EAS Production configuration introspection,
+diff whitespace and pending-file credential/isolation checks. The configuration
+check uses synthetic public inputs; it does not verify remote EAS variables,
+Apple build-number availability, credentials or a signed artifact.
+Use `node scripts/verify-release-config.mjs --config-only` to avoid the unrelated
+startup-policy and push-registration Mock cases in that script.
+
+Recorded local results on **2026-11-01**:
+
+- Checks used the existing supported **Node 24.22.1** runtime. This machine's
+  default Node 24.0.0 is below the project's engine floor; use Node 22.13.x,
+  24.3+ or 25+ for local release commands. EAS remains pinned to Node **22.13.0**.
+- **PASS** TypeScript (`tsc --noEmit`) and ESLint on the 11 changed JS/TS files.
+- **PASS** English / zh-HK i18n parity and the Pending-price Hook/screen Mock:
+  real localized price display with Pending, checkout still denied, no false
+  product error, retry/reconnect/re-entry and stale-scope isolation.
+- **PASS** Expo config-only introspection resolves Production to **1.4.0 (14)**,
+  the correct Bundle ID, original target/review-entry flags and local version policy.
+- **PASS** Four Sandbox SQL hashes and directory isolation. Yearly's local bytes
+  match the previous deployment audit's complete original SQL; no live query.
+- **PASS** Pending-file secret/credential/real-review-ID scan, upload-scope
+  checks, no tracked ignored environment files, and `git diff --check`. Only
+  explicitly synthetic test inputs and unchanged public/example emails matched.
+
+There are 18 pending files, all within this release's scope, and no staged files.
+The Build 14 source commit does not exist until the user commits the changes.
+No SQL/database regression, purchase/restore or device/simulator test was rerun.
+
+After manually committing the reviewed files to `develop`, build and submit the
+specific resulting Build 14 artifact in separate steps:
+
+```sh
+EXPO_NO_DOTENV=1 npx eas-cli build --platform ios --profile production
+EXPO_NO_DOTENV=1 npx eas-cli submit --platform ios --profile production --id '<BUILD_14_EAS_BUILD_ID>'
+```
+
+Replace the ID with the successful Build 14 result. EAS Submit uploads to App
+Store Connect; select Build 14 for the 1.4.0 submission there. No EAS Build/Submit,
+Git staging/commit/push/merge or new cloud operation is performed by this record.
+Production launch/charging remains a separately authorized release step.
+
+## Historical submitted review status — 2026-10-26
 
 iOS 1.4.0 Build 12 (source commit
 `899ca06a434bbce35284699c4360ea817c83f7dc`), Monthly, Yearly and the subscription

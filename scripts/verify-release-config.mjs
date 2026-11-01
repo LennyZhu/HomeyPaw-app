@@ -3,6 +3,13 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { Script } from 'node:vm';
 import ts from 'typescript';
+import { checkStoreBuildTarget } from './check-store-build-target.mjs';
+
+const args = process.argv.slice(2);
+assert.ok(
+  args.length === 0 || (args.length === 1 && args[0] === '--config-only'),
+);
+const configOnly = args[0] === '--config-only';
 
 const read = (path) => readFileSync(path, 'utf8');
 const expo = JSON.parse(read('app.json')).expo;
@@ -23,10 +30,25 @@ assert.equal(
   eas.build['billing-rc-sandbox'].env.HOMEYPAW_IOS_BUILD_NUMBER,
   expo.ios.buildNumber,
 );
-assert.equal(production.env.HOMEYPAW_IOS_BUILD_NUMBER, '12');
+assert.equal(production.env.HOMEYPAW_IOS_BUILD_NUMBER, '14');
 assert.equal(production.autoIncrement, false);
 assert.equal(production.environment, 'production');
 assert.equal(production.env.EXPO_PUBLIC_FAMILY_PLUS_RELEASE_ENABLED, 'true');
+assert.equal(production.env.EXPO_PUBLIC_APP_REVIEW_ACCOUNT_ENABLED, 'true');
+assert.equal(
+  production.env.EXPO_PUBLIC_FAMILY_BILLING_SANDBOX_ENABLED,
+  'false',
+);
+// Syntax/target validation with synthetic PUBLIC inputs only. This neither
+// reads EAS remote variables nor authenticates to either backend.
+checkStoreBuildTarget({
+  ...production.env,
+  EAS_BUILD_PROFILE: 'production',
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_static_fixture',
+  EXPO_PUBLIC_SANDBOX_SUPABASE_PUBLISHABLE_KEY:
+    'sb_publishable_sandbox_fixture',
+  EXPO_PUBLIC_REVENUECAT_APPLE_KEY: 'appl_static_fixture',
+});
 assert.equal(production.distribution, 'store');
 assert.equal(production.extends, undefined);
 assert.notEqual(production.developmentClient, true);
@@ -128,8 +150,11 @@ for (const key of [
 assert.equal(ios.entitlements['aps-environment'], 'development');
 assert.ok(!ios.infoPlist.UIBackgroundModes?.includes('remote-notification'));
 console.log(
-  'PASS: 1.4.0 (11 RC / 12 Production), package/lock alignment, local EAS store profile, CNG version/permissions/APNs generation and pawday scheme. ASC build availability and signed archive remain manual checks.',
+  'PASS: 1.4.0 (11 RC / 14 Production), package/lock alignment, local EAS store profile, Production target and isolated review entry, CNG version/permissions/APNs generation and pawday scheme. Remote EAS variables, ASC build availability and signed archive are not checked.',
 );
+// Build preparation can stop after static configuration introspection, without
+// running the unrelated startup-policy and push-registration Mock cases below.
+if (configOnly) process.exit(0);
 
 function load(path, dependencies = {}, globals = {}) {
   const module = { exports: {} };
