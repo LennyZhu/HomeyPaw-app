@@ -632,9 +632,14 @@ export function FamilyPlusDetails({
                 <AppText tone="secondary">
                   {t('familyPlus.purchase.loadingPrices')}
                 </AppText>
-              ) : billing.productsError || (billing.ready && !selectedPrice) ? (
+              ) : billing.productsStatus === 'error' ||
+                (billing.productsStatus === 'success' && !selectedPrice) ? (
                 <AppText tone="error">
                   {t('familyPlus.purchase.productsUnavailable')}
+                </AppText>
+              ) : billing.productsStatus === 'idle' && billing.ready ? (
+                <AppText tone="secondary">
+                  {t('familyPlus.purchase.pricesNotLoaded')}
                 </AppText>
               ) : null}
               {billing.message ? (
@@ -652,17 +657,19 @@ export function FamilyPlusDetails({
             {t(
               !billing.ready
                 ? 'familyPlus.purchase.notReady'
-                : billing.blocked
-                  ? 'familyPlus.purchase.blocked'
-                  : 'familyPlus.purchase.storeNotice',
+                : billing.pendingIntent
+                  ? 'familyPlus.purchase.pendingPurchase'
+                  : billing.blocked
+                    ? 'familyPlus.purchase.blocked'
+                    : 'familyPlus.purchase.storeNotice',
             )}
           </AppText>
-          {role === 'owner' && !billing.blocked ? (
+          {role === 'owner' ? (
             <AppButton
               variant="ghost"
               disabled={billing.busy || billing.productsLoading}
               label={t('familyPlus.purchase.reload')}
-              onPress={billing.reload}
+              onPress={() => void billing.reload()}
             />
           ) : null}
           {!canSelect && billing.message ? (

@@ -76,6 +76,7 @@ let preflightFails = false;
 let storeOutcome = 'success';
 let admissionValid = true;
 let tier = 'free';
+let pendingIntent = false;
 const calls = [];
 const logs = [];
 const state = () => ({
@@ -87,7 +88,7 @@ const state = () => ({
   billing_enabled: true,
   has_subscription: false,
   purchase_blocked: false,
-  pending_intent: false,
+  pending_intent: pendingIntent,
 });
 const transport = {
   auth: { getUser: async () => ({ data: { user: { id: 'review-owner' } } }) },
@@ -255,6 +256,23 @@ assert.equal(
   (await billing.loadSandboxPackages('review-owner', 'review-family')).length,
   2,
 );
+pendingIntent = true;
+calls.length = 0;
+assert.equal(
+  (await billing.loadSandboxPackages('review-owner', 'review-family')).length,
+  2,
+  'Pending does not prevent the existing authenticated product read',
+);
+assert.ok(!calls.includes('begin_family_billing_purchase'));
+assert.ok(!calls.includes('store_pending'));
+assert.ok(!calls.includes('purchasePackage'));
+await assert.rejects(
+  billing.purchaseFamilyPlus('review-owner', 'review-family', products[1]),
+  /FAMILY_ALREADY_SUBSCRIBED/,
+);
+assert.ok(!calls.includes('begin_family_billing_purchase'));
+assert.ok(!calls.includes('purchasePackage'));
+pendingIntent = false;
 console.log(
   'PASS: isolated review-account Monthly/Yearly reach purchasePackage once after Intent; preflight/empty products/expiry deny safely; cancellation/pending/errors remain recoverable (Mock only).',
 );

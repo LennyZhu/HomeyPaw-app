@@ -25,6 +25,29 @@ import type {
   FamilyPlusRole,
 } from './family-plus-presentation';
 
+const defaultClient = {
+  isFamilyBillingEnabled,
+  loadSandboxPackages,
+  purchaseFamilyPlus,
+  readFamilyBillingState,
+  readBillingReleaseLock,
+  reconcileBilling,
+  restoreFamilyPlus,
+  manageAppleSubscription,
+};
+// Each client owns a pinned environment and Auth transport. Identical user and
+// Family IDs must never share a query across independent clients/sessions.
+const clientScopes = new WeakMap<object, number>();
+let nextClientScope = 0;
+function getClientScope(client: object) {
+  let scope = clientScopes.get(client);
+  if (scope === undefined) {
+    scope = ++nextClientScope;
+    clientScopes.set(client, scope);
+  }
+  return scope;
+}
+
 export function useFamilyPlusPurchases(input: {
   userId: string | null;
   familyId: string | null;
@@ -32,26 +55,26 @@ export function useFamilyPlusPurchases(input: {
   server: boolean;
   client?: FamilyBillingClient;
 }) {
-  const client = input.client ?? {
-    isFamilyBillingEnabled,
-    loadSandboxPackages,
-    purchaseFamilyPlus,
-    readFamilyBillingState,
-    readBillingReleaseLock,
-    reconcileBilling,
-    restoreFamilyPlus,
-    manageAppleSubscription,
-  };
+  const client = input.client ?? defaultClient;
+  const queryScope = [
+    getClientScope(client),
+    input.userId,
+    input.familyId,
+    input.role,
+  ];
+  const scope = JSON.stringify(queryScope);
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [actionScope, setActionScope] = useState<string | null>(null);
+  const [reloadingScope, setReloadingScope] = useState<string | null>(null);
   const [stage, setStage] = useState<BillingPurchaseStage | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [messageAction, setMessageAction] = useState<
     FamilyPlusAction | 'refresh' | null
   >(null);
   const lock = useRef(false);
+  const reloadLock = useRef(false);
   const mounted = useRef(true);
-  const scope = `${input.userId}:${input.familyId}:${input.role}`;
   const generation = useRef(0);
   useEffect(() => {
     mounted.current = true;
@@ -60,18 +83,21 @@ export function useFamilyPlusPurchases(input: {
       mounted.current = false;
       generation.current = currentGeneration + 1;
     };
-  }, [scope, input.client]);
+  }, [scope]);
+  const acting = busy && actionScope === scope;
   const enabled =
     input.server &&
     client.isFamilyBillingEnabled() &&
     Boolean(input.userId && input.familyId && input.role);
   const state = useQuery({
-    queryKey: ['family-billing', input.userId, input.familyId],
-    queryFn: async () => {
+    queryKey: ['family-billing', ...queryScope],
+    queryFn: async ({ signal }) => {
+      if (signal.aborted) throw new Error('BILLING_READ_CANCELLED');
       const [billing, locked] = await Promise.all([
         client.readFamilyBillingState(input.familyId!),
         client.readBillingReleaseLock(),
       ]);
+      if (signal.aborted) throw new Error('BILLING_READ_CANCELLED');
       return { billing, locked };
     },
     enabled,
@@ -91,27 +117,44 @@ export function useFamilyPlusPurchases(input: {
     state.data?.billing.purchase_blocked === true ||
     state.data?.billing.pending_intent === true;
   const products = useQuery({
-    queryKey: ['family-store-products', input.userId, input.familyId],
-    queryFn: async () => {
+    queryKey: ['family-store-products', ...queryScope],
+    queryFn: async ({ signal }) => {
       try {
-        return await client.loadSandboxPackages(input.userId!, input.familyId!);
+        if (signal.aborted) throw new Error('BILLING_READ_CANCELLED');
+        const packages = await client.loadSandboxPackages(
+          input.userId!,
+          input.familyId!,
+        );
+        if (signal.aborted) throw new Error('BILLING_READ_CANCELLED');
+        return packages;
       } catch (error) {
-        logError('family-billing.products', error);
+        if (!signal.aborted) logError('family-billing.products', error);
         throw error;
       }
     },
-    enabled: ready && input.role === 'owner' && !blocked && !busy,
+    // Reading prices never starts checkout. Pending still blocks action() and
+    // the unchanged purchase client/server checks, not this read-only query.
+    enabled: ready && input.role === 'owner' && !acting,
     staleTime: 60_000,
     gcTime: 0,
     retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
+  const productsStatus = products.isFetching
+    ? ('loading' as const)
+    : products.isError
+      ? ('error' as const)
+      : products.data
+        ? ('success' as const)
+        : ('idle' as const);
   const action = async (
     action: FamilyPlusAction | 'refresh',
     period: FamilyPlusPeriod,
   ) => {
-    if (lock.current) return;
+    if (lock.current || reloadLock.current) return;
+    setActionScope(scope);
     if (
       input.role !== 'owner' ||
       (action === 'purchase' ? !ready : !managementReady) ||
@@ -132,10 +175,14 @@ export function useFamilyPlusPurchases(input: {
     try {
       let result: string;
       if (action === 'purchase') {
+        if (blocked) {
+          setMessage('blocked');
+          return;
+        }
         const item = products.data?.find(
           (p) => p.packageType === (period === 'yearly' ? 'ANNUAL' : 'MONTHLY'),
         );
-        if (blocked || !item) throw new Error('BILLING_PRODUCTS_UNAVAILABLE');
+        if (!item) throw new Error('BILLING_PRODUCTS_UNAVAILABLE');
         result = await client.purchaseFamilyPlus(
           input.userId,
           input.familyId,
@@ -165,8 +212,10 @@ export function useFamilyPlusPurchases(input: {
       // Cache refresh is follow-up work, not part of the native purchase lock.
       // A slow refetch must not leave a completed/cancelled action spinning.
       lock.current = false;
+      // No newer action can own this lock yet. Release it even if the scope
+      // changed, so returning to the original Family cannot revive stale busy.
+      if (mounted.current) setBusy(false);
       if (present()) {
-        setBusy(false);
         setStage(null);
         void Promise.allSettled([
           queryClient.invalidateQueries({
@@ -181,24 +230,29 @@ export function useFamilyPlusPurchases(input: {
     ready,
     managementReady,
     blocked,
-    busy: busy || products.isFetching,
-    message: busy
-      ? messageAction === 'restore'
-        ? 'restoring'
-        : messageAction === 'purchase'
-          ? stage === 'store'
-            ? 'openingStore'
-            : stage === 'verifying'
-              ? 'verifying'
-              : 'preparing'
-          : null
-      : messageAction === 'purchase' &&
-          ready &&
-          state.data?.billing.tier === 'plus' &&
-          (message === 'pending' || message === 'failed')
-        ? 'confirmed'
-        : message,
-    productsLoading: products.isFetching,
+    busy: acting || products.isFetching || reloadingScope === scope,
+    message:
+      actionScope !== scope
+        ? null
+        : acting
+          ? messageAction === 'restore'
+            ? 'restoring'
+            : messageAction === 'purchase'
+              ? stage === 'store'
+                ? 'openingStore'
+                : stage === 'verifying'
+                  ? 'verifying'
+                  : 'preparing'
+              : null
+          : messageAction === 'purchase' &&
+              ready &&
+              state.data?.billing.tier === 'plus' &&
+              (message === 'pending' || message === 'failed')
+            ? 'confirmed'
+            : message,
+    pendingIntent: state.data?.billing.pending_intent === true,
+    productsStatus,
+    productsLoading: productsStatus === 'loading',
     productsError: products.isError,
     prices: (products.data ?? []).map((p) => ({
       period:
@@ -207,9 +261,36 @@ export function useFamilyPlusPurchases(input: {
       source: 'apple' as const,
     })),
     action,
-    reload: () => {
-      if (enabled) void state.refetch();
-      if (ready && input.role === 'owner' && !blocked) void products.refetch();
+    reload: async () => {
+      if (
+        !enabled ||
+        input.role !== 'owner' ||
+        lock.current ||
+        reloadLock.current
+      )
+        return;
+      const startedGeneration = generation.current;
+      const present = () =>
+        mounted.current && generation.current === startedGeneration;
+      reloadLock.current = true;
+      setReloadingScope(scope);
+      try {
+        // Recheck the Gate first. cancelRefetch:false joins an in-flight read
+        // instead of cancelling it and issuing duplicate SDK/network calls.
+        const fresh = await state.refetch({ cancelRefetch: false });
+        if (
+          !present() ||
+          fresh.isError ||
+          fresh.data?.billing.billing_enabled !== true ||
+          fresh.data.billing.sandbox_enabled !== true ||
+          fresh.data.locked !== false
+        )
+          return;
+        await products.refetch({ cancelRefetch: false });
+      } finally {
+        reloadLock.current = false;
+        if (mounted.current) setReloadingScope(null);
+      }
     },
   };
 }
