@@ -9,6 +9,8 @@ import {
   checkSandboxDeployment,
   productionRef,
   assertBillingSecrets,
+  sandboxRef,
+  sandboxSessionHost,
 } from '../supabase/functions/_shared/family-billing-target.mjs';
 
 const ref = 'abcdefghijklmnopqrst';
@@ -110,6 +112,101 @@ for (const change of [
 ])
   assert.throws(() => checkSandboxDeployment({ ...manifest, ...change }, ref));
 assert.throws(() => checkSandboxDeployment(manifest, 'wrong'));
+const session = {
+  ...manifest,
+  projectRef: sandboxRef,
+  url: `https://${sandboxRef}.supabase.co`,
+  serviceKey: key('service_role', sandboxRef),
+  anonKey: key('anon', sandboxRef),
+  databaseUrl: `postgresql://postgres.${sandboxRef}:synthetic@${sandboxSessionHost}:5432/postgres?sslmode=verify-full&sslrootcert=/private/tmp/official-ca.crt`,
+};
+assert.equal(
+  checkSandboxDeployment(session, sandboxRef).connectionMode,
+  'session',
+);
+const rejectUrl = (url) =>
+  assert.throws(() =>
+    checkSandboxDeployment({ ...session, databaseUrl: url }, sandboxRef),
+  );
+for (const transform of [
+  (url) => {
+    url.port = '6543';
+  },
+  (url) => {
+    url.port = '';
+  },
+  (url) => {
+    url.hostname = 'aws-1-ap-southeast-2.pooler.supabase.com';
+  },
+  (url) => {
+    url.hostname += '.attacker.invalid';
+  },
+  (url) => {
+    url.username = 'postgres';
+  },
+  (url) => {
+    url.username = `postgres.${ref}`;
+  },
+  (url) => {
+    url.username = `postgres.${productionRef}`;
+  },
+  (url) => {
+    url.pathname = '/other';
+  },
+  (url) => {
+    url.searchParams.set('sslmode', 'require');
+  },
+  (url) => {
+    url.searchParams.set('sslmode', 'verify-ca');
+  },
+  (url) => {
+    url.searchParams.set('sslmode', 'disable');
+  },
+  (url) => {
+    url.searchParams.set('sslrootcert', 'system');
+  },
+  (url) => {
+    url.searchParams.set('sslrootcert', '//relative/ca');
+  },
+  (url) => {
+    url.searchParams.append('sslmode', 'disable');
+  },
+  (url) => {
+    url.searchParams.append('sslrootcert', '/another');
+  },
+  (url) => {
+    url.searchParams.set('host', 'unapproved.invalid');
+  },
+  (url) => {
+    url.searchParams.set('options', '-c role=postgres');
+  },
+  (url) => {
+    url.hash = 'fragment';
+  },
+]) {
+  const url = new URL(session.databaseUrl);
+  transform(url);
+  rejectUrl(url.href);
+}
+assert.throws(() =>
+  checkSandboxDeployment({ ...session, projectRef: ref }, ref),
+);
+assert.throws(() =>
+  checkSandboxDeployment(
+    { ...session, serviceKey: key('service_role', ref) },
+    sandboxRef,
+  ),
+);
+const verifiedDirect = new URL(session.databaseUrl);
+verifiedDirect.hostname = `db.${sandboxRef}.supabase.co`;
+verifiedDirect.username = 'postgres';
+assert.equal(
+  checkSandboxDeployment(
+    { ...session, databaseUrl: verifiedDirect.href },
+    sandboxRef,
+  ).connectionMode,
+  'direct',
+);
 const temp = mkdtempSync(join(tmpdir(), 'homeypaw-target-test-'));
 try {
   const path = join(temp, 'manifest.json');
@@ -151,5 +248,5 @@ const runtime = readFileSync(
 assert.ok(!runtime.includes("get('SUPABASE_SERVICE_ROLE_KEY')"));
 assert.ok(!runtime.includes("get('SUPABASE_URL')"));
 console.log(
-  'PASS: explicit local/cloud identity, hosted deployment ref, role/ref credentials, Production/missing/wrong targets denied, test_ key rejected, offline preflight never authorizes writes or loads env/linked credentials.',
+  'PASS: existing Direct/local/Production isolation retained; exact Sandbox Session host/tenant/5432/verify-full accepted; wrong host/project/user, 6543, TLS downgrade and parameter overrides denied. Offline checks never authorize writes.',
 );

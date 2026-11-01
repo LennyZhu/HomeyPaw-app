@@ -1,6 +1,44 @@
 # Billing test and App Review migrations (Sandbox only)
 
-## Verified status — 2026-10-26
+## Latest accepted deployment — 2026-10-31
+
+Recorded on **2026-11-01** from the completed, authorized Sandbox operation's
+verification evidence; this documentation update makes no cloud connection.
+All **four** migrations in this directory are deployed and verified in
+`yhxxsawcaffxonpconaq`. Accepted Migration History is **60 entries**. Their source
+SQL is unchanged; none belongs in Production's default migration directory.
+
+- Owner A / Family A's exact Yearly request is `abandoned`; Apple's outcome
+  remains **unknown**. Exact-argument replay passed. The Monthly request, all
+  transaction/subscription history and immutable audits remain intact.
+- At final verification, Family A was Free, active entitlements **0**, blocking
+  Pending requests **0**. Late trusted transaction matching remains available.
+- The replacement review generation began **2026-10-31 23:56:45.286226 HKT** and
+  expires **2026-11-09 17:14:05.286226 HKT**, earlier than the original cap.
+- Sandbox Database Billing / Functions Billing **ON**, Release Lock **OFF**,
+  Quota **OFF**. **Cron #8 enabled**, bound to the replacement generation;
+  **Cron #7 disabled**. Deadline denial does not depend on Cron execution time.
+- Production was not connected or changed. No Edge Function deployment was needed.
+
+Yearly forward SHA-256:
+`9431e8e34c144d4b747825e70a3a8373aa6f2c7d78febdb2c75cfd1c63bfb2a6`.
+
+See [the Yearly evidence, deployment and remaining-window runbook](../../docs/BILLING_YEARLY_PENDING_PLAN.md).
+The runbook retains the completed close/deploy/evidence/abandon/restore procedure
+as a historical record. Do not repeat it against the already abandoned request;
+future cloud work requires separate explicit authorization.
+
+The local Session Pooler adapter now supports the exact official Sandbox
+host/tenant on port 5432 with a pinned CA and mandatory verify-full. Its
+pre-deployment read-only preview passed with 59 matching applied migrations and
+only pending `20261031141904`; atomic deployment then produced 60 entries.
+The one-operation adapter deliberately rejects the now-applied baseline rather
+than deploying again. See the runbook's **Verified Session Pooler adapter** section
+for the protected manifest, single-session checks and atomic DDL/History batch.
+The original Yearly SQL/hash is unchanged. Repository documentation and tooling
+do not authorize another deployment, closure or window extension.
+
+## Historical verified status — 2026-10-26 (superseded above)
 
 This is the accepted deployment/activation record, not a new cloud check. All
 three Sandbox migrations below were deployed and verified in the independent
@@ -37,18 +75,19 @@ into a Production deployment. No credential, test identity, subscription or
 approval is embedded here. Runtime/admin `environment='SANDBOX'` checks supplement,
 but cannot replace, independent project identity verification. The 90-minute
 forward does not reject Production at installation time: directory/manifest
-isolation is mandatory. **Production must execute none of these three files.**
+isolation is mandatory. **Production must execute none of these four files.**
 
 | Version | File in this directory | Deployment | SHA-256 |
 | --- | --- | --- | --- |
 | `20261025143824` | `20261025143824_family_billing_test_window_guards.sql` | Verified | `a71b2b0925166535369e74a7e0d1bee9bd03ed30b13d9fb315bd1cdc156816b7` |
 | `20261026051034` | `20261026051034_family_billing_app_review_access.sql` | Verified | `591aa2265c01f91de1e1529b2926eb5c3e92dc16e66dc223ccf0403dc980dd5e` |
 | `20261026074212` | `20261026074212_family_billing_abandoned_intent.sql` | Verified | `abb9cad7ee95f04999ef66a90c5cd4dffe8c82f747218c97095c22b0eb7732e6` |
+| `20261031141904` | `20261031141904_family_billing_yearly_abandonment.sql` | Verified | `9431e8e34c144d4b747825e70a3a8373aa6f2c7d78febdb2c75cfd1c63bfb2a6` |
 
 On 2026-10-26, the first file moved from the default migration directory to this
 directory with identical bytes, filename, version and SHA-256. No deployed SQL
 or remote History changed. The Production directory retains the 58-file RC
-baseline; the latest accepted Sandbox History has 59 entries. Two Production
+baseline; the latest accepted Sandbox History has 60 entries. Two Production
 compatibility forwards are absent from that Sandbox History. Never copy every
 file from both directories into a Sandbox CLI manifest.
 
@@ -78,7 +117,7 @@ After independent same-session Sandbox identity and History verification, use
 `available = sandbox_migration_sources(ROOT, verified_project_ref)` and select
 only `available[row['version']]` for the exact verified applied History plus
 the single separately approved pending forward. Compare original statement
-contents and hashes before copying into the disposable CLI workdir. The three
+contents and hashes before copying into the disposable CLI workdir. The four
 files above are already applied, not new pending work. Never derive the
 verified ref from a linked project/default environment. Never use this lookup
 for Production: its standard source is only `supabase/migrations`.

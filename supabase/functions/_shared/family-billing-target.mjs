@@ -1,4 +1,7 @@
 export const productionRef = 'tknaobmlwmodsqtpqwkr';
+export const sandboxRef = 'yhxxsawcaffxonpconaq';
+// Copied from this project's official Connect panel, not inferred from region.
+export const sandboxSessionHost = 'aws-0-ap-southeast-2.pooler.supabase.com';
 export function assertBillingSecrets({
   webhook,
   reconcile,
@@ -140,16 +143,37 @@ export function checkSandboxDeployment(config, confirmedRef) {
   } catch {
     return fail();
   }
+  const direct =
+    db.hostname === `db.${confirmedRef}.supabase.co` &&
+    decodeURIComponent(db.username) === 'postgres' &&
+    (!db.port || db.port === '5432');
+  const session =
+    confirmedRef === sandboxRef &&
+    db.hostname === sandboxSessionHost &&
+    decodeURIComponent(db.username) === `postgres.${sandboxRef}` &&
+    db.port === '5432';
+  const query = [...db.searchParams];
+  // Preserve the old Direct configuration format. Execution must still upgrade
+  // it to verify-full with the independently pinned official CA; require alone
+  // is encryption, not server identity verification. Pooler never accepts it.
+  const legacyDirectTls =
+    direct &&
+    query.length === 1 &&
+    db.searchParams.get('sslmode') === 'require';
+  const verifiedTls =
+    query.length === 2 &&
+    query.every(([key]) => ['sslmode', 'sslrootcert'].includes(key)) &&
+    db.searchParams.getAll('sslmode').length === 1 &&
+    db.searchParams.getAll('sslrootcert').length === 1 &&
+    db.searchParams.get('sslmode') === 'verify-full' &&
+    /^\/(?!\/)[^\0\r\n]+$/.test(db.searchParams.get('sslrootcert') ?? '');
   if (
     db.protocol !== 'postgresql:' ||
-    db.hostname !== `db.${confirmedRef}.supabase.co` ||
-    decodeURIComponent(db.username) !== 'postgres' ||
+    (!direct && !session) ||
     !db.password ||
     db.pathname !== '/postgres' ||
-    (db.port && db.port !== '5432') ||
     db.hash ||
-    [...db.searchParams].length !== 1 ||
-    db.searchParams.get('sslmode') !== 'require'
+    (!legacyDirectTls && !verifiedTls)
   )
     fail();
   if (
@@ -164,5 +188,10 @@ export function checkSandboxDeployment(config, confirmedRef) {
     fail();
   // Never emit config: it contains credentials, even on rejection.
   if (JSON.stringify(config).includes(productionRef)) fail();
-  return { projectRef: confirmedRef, mode: 'cloud', writesAuthorized: false };
+  return {
+    projectRef: confirmedRef,
+    mode: 'cloud',
+    connectionMode: session ? 'session' : 'direct',
+    writesAuthorized: false,
+  };
 }
