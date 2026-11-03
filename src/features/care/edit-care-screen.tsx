@@ -26,7 +26,7 @@ export default function EditCareScreen() {
   const { showFeedback } = useFeedback();
   const logQuery = useCareLog(id);
   const petsQuery = usePets();
-  const updateCare = useUpdateCareLog(id);
+  const updateCare = useUpdateCareLog(id, logQuery.data?.time_zone);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const log = logQuery.data;
   const pet = petsQuery.data?.find((candidate) => candidate.id === log?.pet_id);
@@ -75,6 +75,8 @@ export default function EditCareScreen() {
       </View>
       <CareForm
         careType={log.care_type}
+        timeZone={log.time_zone}
+        allowFutureMinutes={0}
         healthSubtype={log.health_subtype}
         initialValues={initialValues}
         onSubmit={async (values) => {

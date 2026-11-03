@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
+import { Script } from 'node:vm';
+import ts from 'typescript';
 
 import { layout, contentMaxWidth } from '../src/theme/layout.ts';
 import {
@@ -9,6 +11,10 @@ import {
   getPhotoEditorDisplayScale,
   getPhotoEditorExportSize,
 } from '../src/features/posts/photo-editor-state.ts';
+import {
+  clampPhotoViewerIndex,
+  getPhotoViewerPageOffset,
+} from '../src/features/posts/photo-viewer-state.ts';
 
 const read = (path) => readFileSync(path, 'utf8');
 const config = JSON.parse(read('app.json')).expo;
@@ -17,8 +23,7 @@ assert.equal(config.ios.requireFullScreen, false);
 assert.equal(config.orientation, 'portrait');
 assert.equal(config.scheme, 'pawday');
 assert.equal(config.ios.bundleIdentifier, 'com.zhushunli.homeypaw');
-assert.equal(config.version, '1.1.0');
-assert.equal(config.ios.buildNumber, '4');
+// Version/build consistency belongs to verify:release-config, not layout.
 assert.equal(
   config.extra.eas.projectId,
   '3623de2b-5a77-48ec-b2ec-45e8136d9ac7',
@@ -168,7 +173,56 @@ assert(editor.includes('const [canvasWidth] = useState'));
 assert(editor.includes('getPhotoEditorDisplayScale('));
 assert(editor.includes('event.translationX / displayScale'));
 assert(editor.includes('styles.bottomPanel'));
-assert(viewer.includes('[width, height, visible, currentIndex]'));
+// Execute the current measured-viewport resize effect instead of requiring the
+// obsolete window-dimension dependency string from the old pager.
+const viewerModule = ts.createSourceFile(
+  'post-photo-viewer.tsx',
+  viewer,
+  ts.ScriptTarget.Latest,
+  true,
+  ts.ScriptKind.TSX,
+);
+let resizeEffect;
+function findResizeEffect(node) {
+  if (
+    ts.isCallExpression(node) &&
+    node.expression.getText(viewerModule) === 'useEffect' &&
+    node.arguments[1]?.getText(viewerModule).includes('pagerViewport.width')
+  ) {
+    assert.equal(resizeEffect, undefined, 'One measured-width resize effect');
+    resizeEffect = node.arguments[0].getText(viewerModule);
+  }
+  ts.forEachChild(node, findResizeEffect);
+}
+findResizeEffect(viewerModule);
+assert.ok(resizeEffect, 'Viewer realigns after its measured viewport changes');
+assert(viewer.includes('onLayout={handlePagerLayout}'));
+for (const width of [0, 390, 834, 1194]) {
+  const offsets = [];
+  const indices = [];
+  new Script(`(${resizeEffect})()`).runInNewContext({
+    visible: true,
+    media: Array(4).fill(null),
+    pagerViewport: { width },
+    currentIndexRef: { current: 2 },
+    clampPhotoViewerIndex,
+    getPhotoViewerPageOffset,
+    requestAnimationFrame: (callback) => {
+      callback();
+      return 1;
+    },
+    cancelAnimationFrame: () => undefined,
+    setCurrentIndex: (index) => indices.push(index),
+    setIsCurrentPhotoZoomed: () => undefined,
+    listRef: { current: { scrollToOffset: (value) => offsets.push(value) } },
+  });
+  assert.deepEqual(indices, width === 0 ? [] : [2]);
+  assert.equal(offsets.length, width === 0 ? 0 : 1);
+  if (width > 0) {
+    assert.equal(offsets[0].offset, 2 * width);
+    assert.equal(offsets[0].animated, false);
+  }
+}
 assert(!viewer.includes('contentStyles.readable'));
 console.log(
   'PASS: bounded editor with stable resize coordinates and 2048px export; viewport-sized Viewer resynchronizes current page.',

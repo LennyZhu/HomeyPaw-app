@@ -16,6 +16,7 @@ import { useAuth } from './auth-context';
 import { AuthField } from './components/auth-field';
 import { AuthScreen } from './components/auth-screen';
 import { FormMessage } from './components/form-message';
+import { canUseBillingTestAccount } from '@/features/billing/billing-test-account';
 
 export default function SignInScreen() {
   const { t } = useTranslation();
@@ -133,6 +134,13 @@ export default function SignInScreen() {
         onPress={() => router.push('/forgot-password')}
         variant="ghost"
       />
+      {canUseBillingTestAccount() ? (
+        <AppButton
+          label={t('billingTestAccount.title')}
+          variant="ghost"
+          onPress={() => router.push('/billing-test-account')}
+        />
+      ) : null}
     </AuthScreen>
   );
 }

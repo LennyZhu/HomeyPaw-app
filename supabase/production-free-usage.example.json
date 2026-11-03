@@ -1,0 +1,20 @@
+{
+  "projectRef": "tknaobmlwmodsqtpqwkr",
+  "plan": "free",
+  "verified": false,
+  "observedAt": "REPLACE_WITH_ACTUAL_UTC_OBSERVATION",
+  "cycleStartedAt": "REPLACE_WITH_ACTUAL_BILLING_CYCLE_START",
+  "cycleEndsAt": "REPLACE_WITH_ACTUAL_BILLING_CYCLE_END",
+  "usage": {
+    "databaseBytes": 0,
+    "organizationDatabaseBytes": 0,
+    "diskUsedBytes": 0,
+    "storageBytes": 0,
+    "egressBytes": 0,
+    "cachedEgressBytes": 0,
+    "mau": 0,
+    "functionInvocations": 0,
+    "realtimeMessages": 0,
+    "realtimePeakConnections": 0
+  }
+}

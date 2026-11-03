@@ -636,6 +636,34 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      get_family_billing_test_access: {
+        Args: Record<PropertyKey, never>;
+        Returns: Json;
+      };
+      is_pre_cutover_release_locked: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      get_family_plus_summary: {
+        Args: { target_family_id: string };
+        Returns: Json;
+      };
+      get_family_billing_customer: {
+        Args: Record<PropertyKey, never>;
+        Returns: string;
+      };
+      get_family_billing_state: {
+        Args: { target_family_id: string };
+        Returns: Json;
+      };
+      begin_family_billing_purchase: {
+        Args: { target_family_id: string; request_id: string; period: string };
+        Returns: Json;
+      };
+      update_family_billing_intent: {
+        Args: { target_intent_id: string; next_status: string };
+        Returns: undefined;
+      };
       has_shared_family_for_push: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
@@ -673,6 +701,22 @@ export type Database = {
       claim_media_cleanup_jobs: {
         Args: { job_limit?: number };
         Returns: Database['public']['Tables']['media_cleanup_jobs']['Row'][];
+      };
+      get_today_care_logs: {
+        Args: { target_pet_id: string };
+        Returns: Database['public']['Tables']['care_logs']['Row'][];
+      };
+      complete_care_shift_task_v2: {
+        Args: Database['public']['Functions']['complete_care_shift_task']['Args'] & {
+          care_occurred_at: string | null;
+        };
+        Returns: Database['public']['Functions']['complete_care_shift_task']['Returns'];
+      };
+      complete_care_task_v2: {
+        Args: Database['public']['Functions']['complete_care_task']['Args'] & {
+          care_occurred_at: string | null;
+        };
+        Returns: Database['public']['Functions']['complete_care_task']['Returns'];
       };
       complete_care_shift_task: {
         Args: {

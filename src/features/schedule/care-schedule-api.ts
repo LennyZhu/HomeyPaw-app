@@ -137,9 +137,10 @@ export async function cancelCareShiftTask(shiftTaskId: string) {
 
 export async function completeCareShiftTask(input: CompleteCareShiftTaskInput) {
   const { data, error } = await requireSupabase().rpc(
-    'complete_care_shift_task',
+    'complete_care_shift_task_v2',
     {
       care_log_id: input.careLogId,
+      care_occurred_at: input.occurredAt,
       completion_duration_minutes: input.completionDurationMinutes ?? null,
       completion_id: input.completionId,
       completion_note: input.completionNote ?? null,

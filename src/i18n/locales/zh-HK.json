@@ -609,7 +609,17 @@
       "title": "完成照顧提醒",
       "action": "標記完成",
       "note": "完成備註（選填）",
-      "notePlaceholder": "有甚麼需要讓家人知道"
+      "notePlaceholder": "有甚麼需要讓家人知道",
+      "actualTime": {
+        "planned": "原定時間：{{time}}",
+        "question": "實際什麼時候照顧的？",
+        "plannedChoice": "按計劃時間完成",
+        "nowChoice": "剛剛完成",
+        "nowHint": "以確認時的時間記錄",
+        "otherChoice": "其他時間",
+        "futurePlanned": "原定時間尚未到，請選擇實際照顧時間。",
+        "invalid": "請選擇有效且不在未來的照顧時間。"
+      }
     },
     "undo": {
       "action": "復原完成",
@@ -1305,10 +1315,10 @@
     "contact": "聯絡支援",
     "privacyTitle": "私隱政策",
     "termsTitle": "服務條款",
-    "updated": "更新日期：2026 年 9 月 11 日",
-    "privacyUpdated": "更新日期：2026 年 9 月 29 日",
-    "privacyBody": "HomeyPaw 使用你的帳戶、個人檔案、毛孩、家庭、日記、照顧、提醒、排班及推送裝置資料，提供私人家庭毛孩照顧功能。日記相片、短影片及縮圖儲存在 Supabase，只按角色分享給獲授權家庭成員。\n\n只有你選擇拍照時，App 才要求相機權限。相片庫權限用於選擇相片或影片，以及將內容儲存到相片庫。影片來自你選擇的相片庫內容，可保留原有聲音；App 不錄製影片，也不使用麥克風。\n\n當你主動打開其他成員的日記詳情、相片或影片檢視器，App 會記錄該篇日記、你的帳戶及首次查看時間，用於家庭協作。只在 Feed 瀏覽或預載媒體不算查看；重複打開不會改變首次查看時間。獲授權家庭成員可查看目前讀者的暱稱、頭像及首次查看時間。這些記錄只用於 App 功能，不用於瀏覽量分析、廣告或跨 App 追蹤。\n\n通知權限用於本機提醒，以及家庭日記、照顧、健康、提醒與聊天通知。App 保存與帳戶關聯的安裝及推送代碼資料，並透過 Expo 及裝置通知服務傳送。聊天通知可顯示發訊者暱稱，並附帶導向家庭聊天室的識別資料，但不包含聊天正文、日記內容、照顧或健康備註、藥物詳情。拒絕通知權限不會阻止使用核心功能。\n\nHomeyPaw 不使用廣告追蹤、聯絡人或 GPS。你可在「我的 → 帳戶與安全」刪除帳戶；Owner 須先轉移擁有權或刪除家庭。共享歷史可保留，但作者帳戶連結會被移除。公開政策：https://homeypaw.vercel.app/privacy。支援：lenny996@163.com。",
-    "termsBody": "你須為自己的帳戶憑據與分享邀請碼負責，並只上載你有權使用的內容。家庭成員可依角色查看或管理共享毛孩資料；移除成員會停止其之後的存取，但已發佈內容會依產品列明的資料生命週期處理。提醒屬輔助工具，不應取代獸醫或緊急照護建議。服務可能因維護或網絡中斷而暫時不可用。刪除帳戶或毛孩是不可復原操作。如需支援，請電郵 lenny996@163.com。公開條款網址會在正式發佈前提供。"
+    "updated": "更新日期：2026 年 10 月 23 日",
+    "privacyUpdated": "更新日期：2026 年 10 月 23 日",
+    "privacyBody": "HomeyPaw 使用你的帳戶、個人檔案、毛孩、家庭、日記、照顧、提醒、排班及推送裝置資料，提供私人家庭毛孩照顧功能。日記相片、短影片及縮圖儲存在 Supabase，只按角色分享給獲授權家庭成員。\n\n只有你選擇拍照時，App 才要求相機權限。相片庫權限用於選擇相片或影片，以及將內容儲存到相片庫。影片來自你選擇的相片庫內容，可保留原有聲音；App 不錄製影片，也不使用麥克風。\n\n當你主動打開其他成員的日記詳情、相片或影片檢視器，App 會記錄該篇日記、你的帳戶及首次查看時間，用於家庭協作。只在 Feed 瀏覽或預載媒體不算查看；重複打開不會改變首次查看時間。獲授權家庭成員可查看目前讀者的暱稱、頭像及首次查看時間。這些記錄只用於 App 功能，不用於瀏覽量分析、廣告或跨 App 追蹤。\n\n通知權限用於本機提醒，以及家庭日記、照顧、健康、提醒與聊天通知。App 保存與帳戶關聯的安裝及推送代碼資料，並透過 Expo 及裝置通知服務傳送。聊天通知可顯示發訊者暱稱，並附帶導向家庭聊天室的識別資料，但不包含聊天正文、日記內容、照顧或健康備註、藥物詳情。拒絕通知權限不會阻止使用核心功能。\n\n啟用 Family Plus 購買時，付款由 Apple 處理，RevenueCat 負責核驗訂閱。HomeyPaw 與 RevenueCat 會處理帳戶識別資料、商店交易識別資料、商品、訂閱狀態及續訂／到期資料，用於提供家庭共享權益、恢復購買及防止重複認領。HomeyPaw 不接收你的信用卡或銀行資料。購買記錄只用於 App 功能，不用於廣告或跨 App 追蹤。\n\nHomeyPaw 不使用廣告追蹤、聯絡人或 GPS。你可在「我的 → 帳戶與安全」刪除帳戶；Owner 須先轉移擁有權或刪除家庭。共享歷史可保留，但作者帳戶連結會被移除。公開政策：https://homeypaw.vercel.app/privacy。支援：lenny996@163.com。",
+    "termsBody": "你須為自己的帳戶憑據與分享邀請碼負責，並只上載你有權使用的內容。家庭成員可依角色查看或管理共享毛孩資料；移除成員會停止其之後的存取，但已發佈內容會依產品列明的資料生命週期處理。提醒屬輔助工具，不應取代獸醫或緊急照護建議。服務可能因維護或網絡中斷而暫時不可用。刪除帳戶或毛孩是不可復原操作。如需支援，請電郵 lenny996@163.com。公開條款：https://homeypaw.vercel.app/terms。\n\n開放購買後，Family Plus 為 Apple 按月或按年自動續訂的訂閱。購買頁顯示 Apple 提供的本地價格及扣款週期；年付為每年一次扣款。付款、續訂、取消及退款申請按 Apple 條款處理，可於 Apple「訂閱」管理或取消。取消續訂不會立即終止仍有效的權益。一個家庭共享訂閱；轉移家庭擁有權、離開家庭或刪除 HomeyPaw 帳戶，不會轉移或取消原付款人的 Apple 訂閱。到期或儲存超額不會自動刪除歷史媒體，核心家庭照顧功能繼續免費。"
   },
   "accountSecurity": {
     "ownsFamilyTitle": "請先處理家庭擁有權",
@@ -1334,5 +1344,242 @@
       "body": "我們正在進行維護，請稍後再試。"
     },
     "checkAgain": "重新檢查"
+  },
+  "billingSandbox": {
+    "title": "Family Plus Sandbox",
+    "notice": "僅供開發測試，尚未啟用儲存限制。請使用 Apple Sandbox 測試帳戶；此頁不提供正式購買。",
+    "noFamily": "請先加入或建立家庭。",
+    "free": "免費 · 300 MiB",
+    "transition": "過渡期 · 1 GiB",
+    "plus": "Family Plus · 5 GiB",
+    "loadProducts": "載入訂閱商品",
+    "monthly": "月付",
+    "yearly": "年付",
+    "restore": "恢復購買",
+    "refresh": "驗證訂閱狀態",
+    "manage": "管理 Apple 訂閱",
+    "ownerOnly": "只有目前家庭 Owner 可以發起新的購買。",
+    "alreadySubscribed": "家庭已有訂閱。請管理現有訂閱，避免重複付款。",
+    "ready": "已準備好進行測試。",
+    "confirmed": "驗證完成，請以以上家庭權益狀態為準。",
+    "pending": "正等待商店或服務端確認，請勿再次購買。",
+    "cancelled": "已取消購買。",
+    "failed": "暫時無法確認購買，請先驗證狀態再重試。",
+    "unavailable": "需要完成 Sandbox 設定或使用新的 Development Build。如有待確認購買，請先驗證，勿重複購買。",
+    "checking": "正在確認家庭權益…",
+    "nothingToRestore": "未能確認此帳戶有有效訂閱。請使用原付款人的 HomeyPaw 帳戶恢復購買。"
+  },
+  "familyPlus": {
+    "entry": "家庭方案",
+    "entryPreview": "Family Plus · 開發預覽",
+    "previewNotice": "所有會員狀態、用量及價格均為示例，不是真實家庭統計。尚未開放購買，也不會變更任何會員權益。",
+    "showScenes": "切換情境",
+    "hideScenes": "收起情境",
+    "rolePreview": "角色預覽僅改變此頁示例，不會更改實際家庭角色或權限。",
+    "headline": "給家人的回憶，多一點空間。",
+    "loading": "正在讀取家庭會員狀態…",
+    "retry": "重新載入",
+    "previewOnly": "目前為開發預覽，尚未開放購買、恢復或管理訂閱。",
+    "ownerOnly": "家庭會員由擁有者管理。你仍可查看家庭方案與儲存用量。",
+    "disabled": "此預覽僅供本機開發環境使用。",
+    "linkError": "暫時無法開啟連結，請稍後再試。",
+    "compareTitle": "家庭方案比較",
+    "choosePlan": "訂閱週期",
+    "referencePrices": "美元參考價，並非結算金額；正式購買以 Apple 回傳的本地幣種及售價為準。",
+    "storePrices": "價格由 Apple 商店提供。",
+    "priceUnavailable": "商店價格尚未提供",
+    "previewPurchase": "繼續 · 開發預覽",
+    "restore": "恢復購買 · 預覽",
+    "manage": "管理 Apple 訂閱 · 預覽",
+    "yearlySaving": "按美元參考價，較連續 12 個月月付約省 37%。",
+    "videoLimits": "每段影片最長 15 秒，仍受現有單檔大小與家庭空間限制。",
+    "coreFree": "照顧、提醒、排班、家庭聊天及通知等基本協作功能繼續免費。",
+    "renewal": "月付及年付皆自動續訂。年付每年一次性扣款，非按月分期。可在 Apple 訂閱設定取消續訂。",
+    "payer": "家庭擁有權轉讓不會轉移 Apple 付款關係。現有訂閱請由原付款人管理，避免重複購買。",
+    "scenes": {
+      "free": "Free",
+      "active": "Plus 有效",
+      "grace": "付款寬限期",
+      "cancelled": "已取消續訂",
+      "expired": "已到期",
+      "unavailable": "狀態未知",
+      "transition": "過渡期示例",
+      "loading": "載入中",
+      "empty": "尚無家庭",
+      "error": "載入失敗",
+      "offline": "離線",
+      "revoked": "已撤銷"
+    },
+    "status": {
+      "free": "目前方案 · Free",
+      "active": "Family Plus · 有效",
+      "grace": "Family Plus · 付款寬限期",
+      "cancelled": "Family Plus · 已取消續訂",
+      "expired": "Family Plus 已到期 · Free",
+      "unavailable": "暫時無法確認會員狀態",
+      "transition": "家庭容量過渡期",
+      "revoked": "Family Plus · 已撤銷"
+    },
+    "statusBody": {
+      "free": "基本家庭協作完整保留，媒體額度由全家共用。",
+      "active": "家庭所有成員共享 Plus 媒體空間。",
+      "grace": "示例：商店仍授權有效存取，付款狀態有待處理。實際有效期以服務端確認為準。",
+      "cancelled": "不再自動續訂；已確認有效期內仍保留 Plus 權益。",
+      "expired": "歷史資料不會自動刪除，基本家庭照顧功能不受影響。",
+      "unavailable": "未能取得可信狀態；不會將未知狀態視為已開通或已到期。",
+      "transition": "符合資格的超額 Free 家庭，由容量政策啟用起享有一次性 15 天、1 GiB 過渡期。到期後保留歷史媒體，超額時只暫停新增媒體。",
+      "revoked": "會員存取已撤銷，歷史媒體與基本照顧功能仍保留。"
+    },
+    "transitionDeadline_one": "尚餘 {{count}} 天 · 截止 {{date}}",
+    "transitionDeadline_other": "尚餘 {{count}} 天 · 截止 {{date}}",
+    "transitionEnded": "過渡期已結束。正在重新確認家庭方案；歷史媒體仍保留。",
+    "dataState": {
+      "empty": "加入或建立家庭後，可在這裡查看家庭會員。這裡沒有真實用量可供顯示。",
+      "error": "暫時無法載入家庭資料，請重新載入。",
+      "offline": "目前無法連線，會員狀態及用量暫不可用。連線後請重新載入。"
+    },
+    "storage": {
+      "title": "家庭儲存空間",
+      "used": "已使用",
+      "remaining": "剩餘 {{amount}}",
+      "over": "超出方案空間 {{amount}}",
+      "retained": "歷史媒體仍可查看、下載和刪除。正式啟用配額後，超額只限制新增媒體。",
+      "noData": "暫時未能取得家庭儲存用量。",
+      "unlimited": "每月影片不限段數，仍受空間與單檔限制。",
+      "enforcementOff": "配額限制尚未啟用。",
+      "videosUsed_one": "本月已發布 {{count}} 段影片",
+      "videosUsed_other": "本月已發布 {{count}} 段影片",
+      "videosRemaining_one": "本月尚餘 {{count}} 段免費影片",
+      "videosRemaining_other": "本月尚餘 {{count}} 段免費影片",
+      "videoCounting": "相片、影片及縮圖共用家庭媒體空間，仍受現有單檔大小及影片時長限制。"
+    },
+    "features": {
+      "space": "家庭媒體空間",
+      "video": "短影片",
+      "care": "家庭協作"
+    },
+    "free": {
+      "space": "300 MiB",
+      "video": "受家庭空間限制",
+      "care": "完整保留"
+    },
+    "plus": {
+      "space": "5 GiB",
+      "video": "受家庭空間限制",
+      "care": "完整保留"
+    },
+    "period": {
+      "monthly": "月付",
+      "yearly": "年付"
+    },
+    "unit": {
+      "monthly": "月",
+      "yearly": "年"
+    },
+    "charge": {
+      "monthly": "每月扣款，自動續訂。",
+      "yearly": "每年一次性扣款，自動續訂。"
+    },
+    "previewSummary": "開發預覽 · 資料均為示例",
+    "benefits": {
+      "title": "Family Plus 權益",
+      "upgradeTitle": "升級 Family Plus 可享",
+      "resubscribeTitle": "重新訂閱 Family Plus 可享",
+      "offeredTitle": "Family Plus 提供的權益",
+      "learnTitle": "了解 Family Plus 權益",
+      "space": "5 GiB 家庭媒體空間",
+      "video": "相片與短影片共用家庭空間",
+      "sharing": "一位家庭擁有者訂閱，全家庭共享"
+    },
+    "legal": {
+      "video": "影片限制",
+      "subscription": "訂閱與取消",
+      "payer": "家庭付款關係",
+      "links": "條款與私隱"
+    },
+    "identity": {
+      "free": "Free · 基本家庭方案",
+      "active": "Family Plus · 已啟用",
+      "grace": "Family Plus · 付款寬限期",
+      "cancelled": "已取消續訂 · Plus 權益仍有效",
+      "expired": "Family Plus · 已到期",
+      "revoked": "Family Plus · 已撤銷",
+      "unavailable": "暫時無法確認家庭方案",
+      "transition": "家庭過渡權益 · 非 Plus 訂閱",
+      "loading": "正在確認家庭方案…",
+      "empty": "尚未加入家庭",
+      "error": "暫時無法載入方案",
+      "offline": "離線 · 暫無方案資料"
+    },
+    "identityPreview": "{{status}} · 預覽",
+    "identityLocal": "{{status}} · 本機資料",
+    "localReadOnly": "本機唯讀資料 · 尚未開放購買",
+    "readLocal": "讀取本機資料（唯讀）",
+    "localReadInfo": "讀取本機服務端確認的方案及用量，不會寫入權益或啟用配額。點選情境可返回開發預覽。",
+    "localNotReady": "本機會員資料暫未就緒，或暫時無法讀取。請確認本機資料庫版本及連線後重試。",
+    "meteringPending": "媒體計量尚未完成確認，暫不顯示已使用空間。",
+    "videoPolicyPending": "本月影片統計尚未就緒，暫不顯示使用次數。",
+    "videoPolicyCandidate": "影片月份與計數方式目前為本機測試設定，尚未鎖定正式規則。",
+    "usage": {
+      "reservedBytes": "上傳預留：{{amount}}（未計入已使用空間）",
+      "unpublishedBytes": "已上傳、待發布或處理：{{amount}}（包含於用量）",
+      "cleanupPendingBytes": "等待清理：{{amount}}（確認清理前仍計入用量）"
+    },
+    "badge": {
+      "text": "PLUS",
+      "previewText": "PLUS · 預覽",
+      "label": "有效的 Family Plus 家庭會員",
+      "previewLabel": "Family Plus 家庭會員開發預覽，並非真實訂閱"
+    },
+    "identitySandbox": "{{status}} · Sandbox 資料",
+    "identityServer": "{{status}}",
+    "entrySandbox": "Family Plus · Sandbox",
+    "entryServer": "全家共享會員方案",
+    "purchase": {
+      "sandboxNotice": "Apple Sandbox 測試 · 會員及用量為測試資料，不代表 Production 權益。儲存限額的啟用狀態顯示於下方。",
+      "restore": "恢復購買",
+      "manage": "管理 Apple 訂閱",
+      "restoring": "正在向 Apple 恢復購買，並核對家庭會員狀態…",
+      "restored": "已完成恢復購買，並由服務端確認家庭會員權益。",
+      "buy": "透過 Apple 訂閱",
+      "subscribe": {
+        "monthly": "透過 Apple 訂閱 · {{price}}／月",
+        "yearly": "透過 Apple 訂閱 · {{price}}／年"
+      },
+      "total": {
+        "monthly": "每月扣款 {{price}}",
+        "yearly": "每年一次性扣款 {{price}}"
+      },
+      "preparing": "正在準備訂閱，請稍候…",
+      "openingStore": "正在開啟 Apple 購買確認，請完成 Apple 的提示…",
+      "verifying": "正在核對 Apple 交易及家庭會員狀態…",
+      "loadingPrices": "正在載入 Apple 商店價格…",
+      "pricesNotLoaded": "Apple 商店價格尚未載入。可重新載入價格。",
+      "productsUnavailable": "暫時無法載入所選方案的 Apple 價格。請檢查網絡並重新載入 Apple 價格。",
+      "timedOut": "讀取 Apple 商店資料逾時，尚未開始付款。請檢查網絡並重新載入 Apple 價格。",
+      "preflightFailed": "購買前核對未完成，尚未開始新的 Apple 付款。請先更新會員狀態後再試。",
+      "operationInProgress": "另一項 Apple 操作仍在處理中，請稍候再試。",
+      "accessDenied": "目前登入或測試授權已變更。請返回並重新登入後再試。",
+      "notReady": "訂閱操作暫未開放，暫時無法購買、恢復購買或管理訂閱。",
+      "blocked": "家庭已有有效訂閱或待確認的購買。請先恢復購買或更新狀態，避免重複付款。",
+      "pendingPurchase": "家庭有一筆尚待確認的購買。請更新會員狀態或恢復購買，確認前請勿重複付款。",
+      "storeNotice": "以上價格由你的 Apple 商店提供。購買前，Apple 會確認最終價格及續訂週期。",
+      "reload": "重新載入 Apple 價格",
+      "refresh": "更新會員狀態",
+      "confirmed": "服務端已確認家庭會員權益。",
+      "pending": "Apple 交易或會員驗證仍待確認。請勿重複購買，稍後再更新狀態。",
+      "cancelled": "已取消購買。",
+      "failed": "暫時無法確認操作結果。再次購買前，請檢查 Apple 訂閱並更新狀態。",
+      "nothingToRestore": "未能確認此帳戶有有效訂閱。請使用原付款人的 HomeyPaw 帳戶恢復購買。",
+      "managed": "完成 Apple 訂閱管理後，可返回此頁更新狀態。",
+      "refreshed": "已更新會員狀態。",
+      "identityReview": "此購買身份需要核查。請使用原付款人的 HomeyPaw 帳戶恢復購買，勿透過再次購買轉移訂閱。",
+      "summaryUnavailable": "暫時無法讀取家庭方案，未能確認會員狀態或儲存用量。"
+    }
+  },
+  "billingTestAccount": {
+    "title": "測試帳戶登入",
+    "body": "只供服務端批准的測試帳戶使用。本頁的購買及家庭資料均位於獨立 Sandbox，不會登入你的正式帳戶。",
+    "denied": "此測試帳戶暫不可用或授權已到期，請聯絡應用程式提供者。"
   }
 }

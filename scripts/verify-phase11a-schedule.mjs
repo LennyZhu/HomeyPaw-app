@@ -149,7 +149,8 @@ assert(
 );
 assert(
   api.includes("rpc('create_care_shift'") &&
-    api.includes("'complete_care_shift_task'") &&
+    api.includes("'complete_care_shift_task_v2'") &&
+    api.includes('care_occurred_at: input.occurredAt') &&
     api.includes("'get_care_schedule_range'") &&
     queries.includes("['care-schedule', userId]") &&
     queries.includes('startLocalDate') &&

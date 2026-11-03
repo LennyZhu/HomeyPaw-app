@@ -2,23 +2,41 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText } from '@/components/app-text';
+import {
+  actualCareTimeFromFields,
+  careTimeFields,
+} from '@/features/schedule/care-completion-time';
 import { lightColors, radius, spacing, typography } from '@/theme';
 
 type Props = {
   error?: string | undefined;
+  timeZone?: string | undefined;
+  allowFutureMinutes?: number | undefined;
   label: string;
   onChange: (value: string) => void;
   value: string;
 };
 
-function toLocalInputValue(value: string) {
-  const date = new Date(value);
+function toLocalInputValue(value: string, timeZone?: string) {
+  const date = Number.isFinite(Date.parse(value))
+    ? new Date(value)
+    : new Date();
+  if (timeZone) {
+    const fields = careTimeFields(date, timeZone);
+    return `${fields.date}T${fields.time}`;
+  }
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
 
-export function CareDateTimeField({ error, label, onChange, value }: Props) {
-  const [draft, setDraft] = useState(() => toLocalInputValue(value));
+export function CareDateTimeField({
+  error,
+  label,
+  onChange,
+  value,
+  timeZone,
+}: Props) {
+  const [draft, setDraft] = useState(() => toLocalInputValue(value, timeZone));
 
   return (
     <View style={styles.field}>
@@ -26,11 +44,16 @@ export function CareDateTimeField({ error, label, onChange, value }: Props) {
       <TextInput
         accessibilityLabel={label}
         onBlur={() => {
+          if (timeZone) {
+            const [day = '', time = ''] = draft.split(/[T ]/u);
+            onChange(actualCareTimeFromFields(day, time, timeZone) ?? '');
+            return;
+          }
           const date = new Date(draft);
           if (Number.isFinite(date.getTime())) {
             onChange(date.toISOString());
           } else {
-            setDraft(toLocalInputValue(value));
+            setDraft(toLocalInputValue(value, timeZone));
           }
         }}
         onChangeText={setDraft}

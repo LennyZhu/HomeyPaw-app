@@ -1,7 +1,7 @@
 {
   "name": "homeypaw",
   "main": "expo-router/entry",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^5.9.1",
@@ -40,6 +40,7 @@
     "react-native": "0.86.3",
     "react-native-compressor": "2.0.3",
     "react-native-gesture-handler": "~2.32.0",
+    "react-native-purchases": "10.13.0",
     "react-native-reanimated": "4.5.1",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
@@ -65,6 +66,8 @@
   },
   "scripts": {
     "start": "expo start",
+    "start:sandbox": "node scripts/start-family-plus-sandbox.mjs",
+    "verify:family-plus-integration": "node scripts/verify-family-plus-integration.mjs",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
@@ -155,7 +158,24 @@
     "verify:care-task-notification-plan": "node --experimental-strip-types scripts/verify-care-task-notification-plan.mjs",
     "verify:post-read-client": "node --experimental-strip-types scripts/verify-post-read-client.mjs",
     "verify:post-read-sql": "node scripts/verify-post-read-sql.mjs",
-    "verify:profile-branding": "node scripts/verify-profile-branding.mjs"
+    "verify:profile-branding": "node scripts/verify-profile-branding.mjs",
+    "verify:care-completion-time": "node scripts/verify-care-completion-time.mjs",
+    "verify:care-completion-time-sql": "node scripts/verify-care-completion-time-sql.mjs",
+    "verify:family-storage-quota": "node scripts/verify-family-storage-quota.mjs",
+    "verify:family-storage-transport": "node scripts/verify-family-storage-transport.mjs",
+    "verify:family-billing-sql": "node scripts/verify-family-billing-sql.mjs",
+    "verify:family-billing-webhook": "node scripts/verify-family-billing-webhook.mjs",
+    "verify:family-billing-recovery": "node scripts/verify-family-billing-recovery.mjs",
+    "verify:family-billing-client": "node scripts/verify-family-billing-client.mjs",
+    "verify:family-billing-access": "node scripts/verify-family-billing-access.mjs",
+    "verify:family-billing-target": "node scripts/verify-family-billing-target.mjs",
+    "verify:family-plus-ui": "node scripts/verify-family-plus-ui.mjs",
+    "verify:family-plus-data-client": "node scripts/verify-family-plus-data-client.mjs",
+    "verify:family-plus-data-sql": "node scripts/verify-family-plus-data-sql.mjs",
+    "check:billing-sandbox-target": "node scripts/check-billing-sandbox-target.mjs",
+    "verify:family-media-capacity": "node scripts/verify-family-media-capacity.mjs",
+    "eas-build-pre-install": "node scripts/check-store-build-target.mjs",
+    "verify:billing-store-target": "node scripts/verify-billing-store-target.mjs"
   },
   "engines": {
     "node": "^22.13.0 || ^24.3.0 || >=25.0.0"

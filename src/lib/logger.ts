@@ -15,15 +15,28 @@ function redact(value: string, maximumLength = 240) {
 }
 
 function safeErrorDetails(error: unknown, includeMessage: boolean) {
-  if (!(error instanceof Error)) {
+  if (!error || typeof error !== 'object') {
     return { name: 'UnknownError' };
   }
 
-  const candidate = error as Error & { code?: unknown; status?: unknown };
+  // PostgREST returns plain objects unless throwOnError is enabled. Keep only
+  // these known fields; details/hint/cause may contain private row data.
+  const candidate = error as {
+    name?: unknown;
+    message?: unknown;
+    code?: unknown;
+    status?: unknown;
+  };
   return {
-    name: redact(candidate.name || 'Error'),
-    ...(includeMessage
-      ? { message: redact(candidate.message || 'Unexpected failure') }
+    name: redact(
+      typeof candidate.name === 'string'
+        ? candidate.name
+        : typeof candidate.code === 'string' && candidate.code
+          ? 'PostgrestError'
+          : 'Error',
+    ),
+    ...(includeMessage && typeof candidate.message === 'string'
+      ? { message: redact(candidate.message) }
       : {}),
     ...(typeof candidate.code === 'string'
       ? { code: redact(candidate.code) }

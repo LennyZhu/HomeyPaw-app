@@ -11,6 +11,8 @@ export type CareShiftTaskInput = {
 };
 
 export type CompleteCareShiftTaskInput = {
+  // null requests the server's first successful completion time.
+  occurredAt: string | null;
   careLogId: string;
   completionDurationMinutes?: number | null;
   completionId: string;

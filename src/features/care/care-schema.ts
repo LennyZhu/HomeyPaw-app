@@ -9,7 +9,11 @@ export type CareFormValues = {
   occurredAt: string;
 };
 
-export function createCareFormSchema(t: TFunction, careType: CareType) {
+export function createCareFormSchema(
+  t: TFunction,
+  careType: CareType,
+  allowFutureMinutes = 5,
+) {
   return z
     .object({
       durationMinutes: z.string(),
@@ -17,7 +21,8 @@ export function createCareFormSchema(t: TFunction, careType: CareType) {
       occurredAt: z.string().refine((value) => {
         const timestamp = Date.parse(value);
         return (
-          Number.isFinite(timestamp) && timestamp <= Date.now() + 5 * 60_000
+          Number.isFinite(timestamp) &&
+          timestamp <= Date.now() + allowFutureMinutes * 60_000
         );
       }, t('care.validation.timeInvalid')),
     })

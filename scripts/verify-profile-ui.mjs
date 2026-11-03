@@ -276,10 +276,18 @@ assert.ok(
   legal.includes(
     "kind === 'privacy' ? 'about.privacyUpdated' : 'about.updated'",
   ),
-  'Privacy gets its own date without redating unchanged Terms',
+  'Privacy uses its explicit update date',
 );
-assert.equal(en.about.privacyUpdated, 'Updated September 29, 2026');
-assert.equal(zh.about.privacyUpdated, '更新日期：2026 年 9 月 29 日');
+assert.equal(en.about.privacyUpdated, 'Updated October 23, 2026');
+assert.equal(zh.about.privacyUpdated, '更新日期：2026 年 10 月 23 日');
+for (const copy of [en.about.privacyBody, zh.about.privacyBody]) {
+  assert.match(copy, /RevenueCat/u);
+  assert.match(copy, /Apple/u);
+}
+for (const copy of [en.about.termsBody, zh.about.termsBody]) {
+  assert.match(copy, /https:\/\/homeypaw.vercel.app\/terms/u);
+  assert.match(copy, /Family Plus/u);
+}
 for (const [copy, required, forbidden] of [
   [
     en.about.privacyBody,

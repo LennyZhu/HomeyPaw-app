@@ -6,21 +6,34 @@ import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppText } from '@/components/app-text';
+import {
+  actualCareTimeFromFields,
+  careTimeFields,
+} from '@/features/schedule/care-completion-time';
 import { lightColors, radius, spacing } from '@/theme';
 
 type Props = {
   error?: string | undefined;
+  timeZone?: string | undefined;
+  allowFutureMinutes?: number | undefined;
   label: string;
   onChange: (value: string) => void;
   value: string;
 };
 
-export function CareDateTimeField({ error, label, onChange, value }: Props) {
+export function CareDateTimeField({
+  error,
+  label,
+  onChange,
+  value,
+  timeZone,
+  allowFutureMinutes = 5,
+}: Props) {
   const { i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [androidMode, setAndroidMode] = useState<'date' | 'time'>('date');
   const [maximumDate, setMaximumDate] = useState(
-    () => new Date(Date.now() + 5 * 60_000),
+    () => new Date(Date.now() + allowFutureMinutes * 60_000),
   );
   const selectedDate = Number.isFinite(Date.parse(value))
     ? new Date(value)
@@ -29,12 +42,32 @@ export function CareDateTimeField({ error, label, onChange, value }: Props) {
   const handleChange = (_event: DateTimePickerChangeEvent, date: Date) => {
     if (Platform.OS === 'android' && androidMode === 'date') {
       const next = new Date(selectedDate);
-      next.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-      onChange(next.toISOString());
+      if (timeZone) {
+        onChange(
+          actualCareTimeFromFields(
+            careTimeFields(date, timeZone).date,
+            careTimeFields(selectedDate, timeZone).time,
+            timeZone,
+          ) ?? '',
+        );
+      } else {
+        next.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+        onChange(next.toISOString());
+      }
       setAndroidMode('time');
       return;
     }
-    onChange(date.toISOString());
+    if (Platform.OS === 'android' && timeZone) {
+      onChange(
+        actualCareTimeFromFields(
+          careTimeFields(selectedDate, timeZone).date,
+          careTimeFields(date, timeZone).time,
+          timeZone,
+        ) ?? '',
+      );
+    } else {
+      onChange(date.toISOString());
+    }
     if (Platform.OS === 'android') {
       setAndroidMode('date');
       setIsOpen(false);
@@ -48,7 +81,7 @@ export function CareDateTimeField({ error, label, onChange, value }: Props) {
         accessibilityLabel={label}
         accessibilityRole="button"
         onPress={() => {
-          setMaximumDate(new Date(Date.now() + 5 * 60_000));
+          setMaximumDate(new Date(Date.now() + allowFutureMinutes * 60_000));
           setAndroidMode('date');
           setIsOpen((open) => !open);
         }}
@@ -62,6 +95,7 @@ export function CareDateTimeField({ error, label, onChange, value }: Props) {
           {new Intl.DateTimeFormat(i18n.language, {
             dateStyle: 'medium',
             timeStyle: 'short',
+            timeZone,
           }).format(selectedDate)}
         </AppText>
       </Pressable>
@@ -69,6 +103,7 @@ export function CareDateTimeField({ error, label, onChange, value }: Props) {
         <DateTimePicker
           display={Platform.OS === 'ios' ? 'compact' : 'default'}
           maximumDate={maximumDate}
+          {...(timeZone ? { timeZoneName: timeZone } : {})}
           mode={Platform.OS === 'ios' ? 'datetime' : androidMode}
           onDismiss={() => {
             setAndroidMode('date');

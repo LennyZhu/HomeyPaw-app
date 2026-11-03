@@ -50,13 +50,18 @@ export function isChatAccessError(error: unknown) {
   );
 }
 
-export async function fetchChatChannelVersion(familyId: string) {
-  const { data, error } = await requireSupabase().rpc(
-    'get_family_chat_channel_version',
-    { target_family_id: familyId },
-  );
+export async function fetchChatChannelVersion(
+  familyId: string,
+  signal?: AbortSignal,
+) {
+  const request = requireSupabase().rpc('get_family_chat_channel_version', {
+    target_family_id: familyId,
+  });
+  const { data, error, status } = await (signal
+    ? request.abortSignal(signal)
+    : request);
 
-  if (error) throw error;
+  if (error) throw { ...error, status };
   return data;
 }
 
@@ -86,16 +91,21 @@ async function fetchChatPage(
   };
 }
 
-export async function fetchChatMessageById(messageId: string) {
-  const { data, error } = await requireSupabase()
+export async function fetchChatMessageById(
+  messageId: string,
+  signal?: AbortSignal,
+) {
+  const request = requireSupabase()
     .from('chat_messages')
     .select(
       'id, family_id, pet_id, sender_id, client_message_id, body, created_at, updated_at',
     )
-    .eq('id', messageId)
-    .maybeSingle();
+    .eq('id', messageId);
+  const { data, error, status } = await (
+    signal ? request.abortSignal(signal) : request
+  ).maybeSingle();
 
-  if (error) throw error;
+  if (error) throw { ...error, status };
   return data;
 }
 

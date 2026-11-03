@@ -1,0 +1,16 @@
+-- Manual Sandbox-only operation, after separate approval of an actual window.
+-- Source: sandbox-migrations/20261025143824_family_billing_test_window_guards.sql.
+-- This <=90-minute development example is not the active 14-day review job;
+-- see sandbox-migrations/README.md for the dated Cron #7 review-window record.
+-- No credentials, Recovery scheduling, subscriber data or client changes.
+-- Use a verified direct postgres connection with no JWT/HTTP session context.
+-- In the SAME transaction as the bounded admission/Billing activation, call:
+-- select private.schedule_family_billing_test_window_close(<approved user UUID>);
+-- Never enable Billing unless this succeeds and the existing Recovery job stays
+-- unchanged. Admission must be <=90 minutes and bound to the current Owner/Family.
+-- The independent 10-second job closes Billing, revokes only that admission and
+-- restores Release Lock ON atomically, including when the lock is already ON.
+-- It disables itself only on success/stale generation; errors roll back and retry.
+-- Monitor cron.job_run_details for the returned jobid and alert on failed runs.
+-- Deadline rejection is enforced on user writes even if Cron is delayed/fails.
+-- Functions runtime Secret is restored OFF manually after the phone test.
