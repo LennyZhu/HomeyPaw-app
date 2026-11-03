@@ -1,5 +1,24 @@
 # Billing Recovery operation
 
+## Current Production acceptance — 2026-11-03
+
+The owner now plans a **Free-plan paid launch**; Pro upgrade is optional later
+capacity expansion, not a mandatory prerequisite. Current local Production
+installation/control/health tooling and explicit risk gates are documented in
+[PRODUCTION_FREE_RELEASE_RUNBOOK.md](PRODUCTION_FREE_RELEASE_RUNBOOK.md).
+Stage 2 installed the two private operational objects, dedicated Production Vault
+references and Cron **#3** `homeypaw-production-billing-recovery` **inactive**.
+Stage 3 then separately activated lifecycle DB/Functions Billing and Release
+Approved, enabled that same job and verified two real Cron dispatches with HTTP
+200, authenticated healthy empty-work responses and no backlog/business mutation.
+Stage 4 enabled Quota with the separately accepted Legacy TUS exception; checkout
+remains closed (`release_ready=false`) and Release Lock remains OFF. The job stays
+active for lifecycle handling. Do not reinstall it or replay the activation.
+All 58 already accepted formal migrations and current Functions remain unchanged.
+Independent backups and the PARTIAL local restore limitation are recorded in
+[PRODUCTION_BACKUP.md](PRODUCTION_BACKUP.md). The Sandbox results below are
+historical and do not replace current review-window/Pending evidence.
+
 This is an operation runbook, not authorization to deploy or activate a project.
 The accepted 2026-10-25 Sandbox deployment reached 56/56 and verified real
 Cron → Edge Function → RevenueCat → database recovery, including Family A expiry,
@@ -8,9 +27,9 @@ Billing/runtime/client OFF, Release Lock ON, Quota OFF. These are prior accepted
 results, not a new cloud observation. The minimum Sandbox deployment steps below
 describe that completed procedure; do not repeat them as new release work.
 
-For Production follow [FAMILY_PLUS_LAUNCH.md](FAMILY_PLUS_LAUNCH.md). The current
-installer template pins Sandbox and is **not** a Production installer. Production
-needs an explicitly reviewed target-bound Vault/Cron setup and separate approval.
+For Production follow the current runbook linked above. The old Sandbox installer
+template is **not** a Production installer. Production uses the new offline
+`scripts/prepare-production-recovery.mjs` and separately approved Vault/Cron setup.
 During ordinary paid-service incidents pause **new orders** with
 `private.family_billing_config.release_ready=false`; leave DB/runtime Billing,
 `FAMILY_BILLING_RELEASE_APPROVED`, Webhook, Recovery and necessary database writes
@@ -86,8 +105,10 @@ alert integration is configured, a named operator must actively monitor these
 Dashboard panels during acceptance and inspect them at least every five minutes
 while the paid service is enabled. No alert destination was created here.
 
-For incidents pause the job with `cron.unschedule('homeypaw-billing-recovery')`,
-then use the approved window-close procedure if appropriate. Retain evidence,
+For Production worker incidents prepare the new `disable` operation, which uses
+`cron.alter_job(active:=false)` for only the exact Production job and preserves its
+identity/history. Do not disable a healthy worker merely to stop new checkout.
+For Sandbox use its separately approved exact-generation close procedure. Retain evidence,
 fix credentials/provider errors and rerun current-state recovery; do not delete
 inbox/subscriptions/media, repair history, forge webhooks or rebind purchases.
 

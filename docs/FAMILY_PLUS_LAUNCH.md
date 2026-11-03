@@ -1,5 +1,38 @@
 # Family Plus 1.4.0 release execution plan — 2026-10-25
 
+## 当前发布策略 — 2026-11-03（优先于下方历史记录）
+
+Apple 已批准 iOS 1.4.0 **Build 14**、Monthly、Yearly 和订阅组，仍为手动发布。
+用户最新决定：Production 暂留 **Free**，正式上线开放原价格及 **5 GiB** Plus
+权益，Pro 改为后续扩容事项，不作为收费硬前提。Free 1 GB 是组织共享容量，
+不能保证单家庭随时用满 5 GiB；上线前须明确接受每日监控之间突发耗尽、暂停及
+独立备份的运营风险，不得通过更改商品、权益或已审核客户端掩盖限制。
+
+Production 阶段 1–4 已按独立授权完成：Database/Storage 加密备份及完整性 PASS，
+隔离本地恢复 PARTIAL（托管服务恢复范围限制保留）；Recovery 私有对象/Vault 已安装，
+Cron #3 active，真实 HTTP/认证/空批次健康验收 PASS。Database/Functions Billing、
+Release Approved 和 Quota ON；`release_ready=false`、Release Lock OFF。
+
+2026-11-03 已明确接受 Legacy TUS 残余风险及本项目实际 **全局 50 MB** 的例外：
+Free Dashboard 显示该全局值不可编辑，视频 Bucket 仍为 **25 MiB**。下方历史
+「全局 25 MiB」建议未满足，不得误写为已满足；风险接受标记 true，严格 TUS
+准入事实标记仍 false。这与 Free 总容量风险是两个独立决定。首次容量代次已刷新，
+符合条件的历史家庭获得一次性 1 GiB / 360 小时过渡；T0 为
+**2026-11-03 20:40:20.940002 HKT**，到期为 **2026-11-18 20:40:20.940002 HKT**，
+不得重置或延长该时钟。
+
+Git 发布同步由本次独立授权执行，结果以提交及合并历史为准。剩余 `release_ready`
+激活和 App Store 手动发布仍需各自授权，见
+[Free 正式收费执行方案](PRODUCTION_FREE_RELEASE_RUNBOOK.md) 及
+[独立数据库/Storage 备份](PRODUCTION_BACKUP.md)。正式 58/58 Migration、已验证
+Functions、Webhook 和 Build 14 不重复部署/构建。Recovery 安装默认停用是安装
+安全设计，不能将它误读为当前 Cron 状态。
+Sandbox 四条专用 forward 已隔离；现有 Cron #8、审核截止及新增 11 月 2 日
+Monthly Pending 的收尾另行处理。本地文档不代表已重新核对云端或授权任何操作。
+
+下方 Build 12、Cron #7、56/56 及「先 Pro」均为有日期的历史计划，**不再作为
+当前执行指令**；当前实际步骤仅以上述新 runbook 为准。
+
 ## 状态更新 — 2026-10-26
 
 iOS 1.4.0 Build 12、Monthly、Yearly 和订阅组均已提交，四项皆为
