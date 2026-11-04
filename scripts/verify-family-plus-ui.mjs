@@ -1718,6 +1718,7 @@ for (const lang of ['en', 'zh-HK']) {
   await translator.changeLanguage(lang);
   for (const dimensions of [
     { wide: false, scale: 1 },
+    { wide: false, scale: 1.6 },
     { wide: true, scale: 1 },
     { wide: true, scale: 1.6 },
   ]) {
@@ -1727,7 +1728,14 @@ for (const lang of ['en', 'zh-HK']) {
       const actions = [];
       const prices = connected.prices.map((p) => ({
         ...p,
-        priceString: p.period === 'monthly' ? '€4,99' : '€39,99',
+        priceString:
+          dimensions.scale > 1
+            ? p.period === 'monthly'
+              ? 'CHF 1’234’567.89'
+              : 'CHF 12’345’678.90'
+            : p.period === 'monthly'
+              ? '€4,99'
+              : '€39,99',
       }));
       const price = prices.find((p) => p.period === period).priceString;
       const tree = render(
@@ -1741,11 +1749,18 @@ for (const lang of ['en', 'zh-HK']) {
           billing: { ...connected, prices },
         }),
       );
-      const prominent = nodes(tree).filter(
-        (n) => n.type === 'AppText' && n.props.variant === 'largeTitle',
+      const cards = nodes(tree).filter(
+        (n) => n.type === 'Pressable' && n.props.accessibilityRole === 'radio',
       );
-      assert.equal(prominent.length, 2);
+      assert.equal(cards.length, 2);
+      const prominent = cards.map((card) =>
+        nodes(card).find(
+          (n) => n.type === 'AppText' && n.props.variant === 'title3',
+        ),
+      );
+      assert.ok(prominent.every(Boolean));
       assert.ok(prominent.some((n) => text(n).includes(price)));
+      assert.ok(prominent.every((n) => n.props.style.maxWidth === '100%'));
       assert.ok(
         text(tree).includes(
           translator.t(`familyPlus.purchase.total.${period}`, { price }),
