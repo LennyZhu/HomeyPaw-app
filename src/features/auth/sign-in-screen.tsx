@@ -1,8 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useRef, useState } from 'react';
+import {
+  Link,
+  useFocusEffect,
+  useLocalSearchParams,
+  useRouter,
+} from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
 import { AppButton } from '@/components/app-button';
@@ -18,6 +23,9 @@ import { AuthScreen } from './components/auth-screen';
 import { FormMessage } from './components/form-message';
 import { canUseBillingTestAccount } from '@/features/billing/billing-test-account';
 
+const reviewEntryTapCount = 7;
+const reviewEntryTapWindowMs = 5000;
+
 export default function SignInScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -25,6 +33,13 @@ export default function SignInScreen() {
   const { isConfigured } = useAuth();
   const passwordRef = useRef<TextInput>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const reviewEntry = useRef({
+    active: false,
+    count: 0,
+    startedAt: 0,
+    promptOpen: false,
+    generation: 0,
+  });
   const schema = useMemo(() => createSignInSchema(t), [t]);
   const {
     control,
@@ -34,6 +49,70 @@ export default function SignInScreen() {
     defaultValues: { email: '', password: '' },
     resolver: zodResolver(schema),
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      const entry = reviewEntry.current;
+      entry.active = true;
+      entry.count = 0;
+      entry.promptOpen = false;
+      entry.generation++;
+      return () => {
+        entry.active = false;
+        entry.count = 0;
+        entry.promptOpen = false;
+        entry.generation++;
+      };
+    }, []),
+  );
+
+  const onBrandPress = () => {
+    const entry = reviewEntry.current;
+    if (
+      !entry.active ||
+      entry.promptOpen ||
+      isSubmitting ||
+      !canUseBillingTestAccount()
+    )
+      return;
+    const now = Date.now();
+    if (
+      !entry.count ||
+      now < entry.startedAt ||
+      now - entry.startedAt > reviewEntryTapWindowMs
+    ) {
+      entry.count = 0;
+      entry.startedAt = now;
+    }
+    if (++entry.count < reviewEntryTapCount) return;
+    entry.count = 0;
+    entry.promptOpen = true;
+    const generation = entry.generation;
+    const dismiss = () => {
+      if (entry.generation === generation) entry.promptOpen = false;
+    };
+    // Discovery only: the existing isolated Auth and server admission still apply.
+    Alert.alert(
+      t('billingTestAccount.title'),
+      t('billingTestAccount.body'),
+      [
+        { text: t('common.cancel'), style: 'cancel', onPress: dismiss },
+        {
+          text: t('common.continue'),
+          onPress: () => {
+            const allowed =
+              entry.active &&
+              entry.promptOpen &&
+              entry.generation === generation &&
+              canUseBillingTestAccount();
+            dismiss();
+            if (allowed) router.push('/billing-test-account');
+          },
+        },
+      ],
+      { cancelable: true, onDismiss: dismiss },
+    );
+  };
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
@@ -54,6 +133,7 @@ export default function SignInScreen() {
 
   return (
     <AuthScreen
+      onBrandPress={onBrandPress}
       footer={
         <View style={styles.footerRow}>
           <AppText tone="secondary" variant="subheadline">
@@ -134,13 +214,6 @@ export default function SignInScreen() {
         onPress={() => router.push('/forgot-password')}
         variant="ghost"
       />
-      {canUseBillingTestAccount() ? (
-        <AppButton
-          label={t('billingTestAccount.title')}
-          variant="ghost"
-          onPress={() => router.push('/billing-test-account')}
-        />
-      ) : null}
     </AuthScreen>
   );
 }

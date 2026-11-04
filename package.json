@@ -83,6 +83,7 @@
     "verify:journal-detail-ui": "node --experimental-strip-types scripts/verify-journal-detail-ui.mjs",
     "verify:care-ui": "node --experimental-strip-types scripts/verify-care-ui.mjs",
     "verify:auth-ui": "node --experimental-strip-types scripts/verify-auth-ui.mjs",
+    "verify:review-login-entry": "node scripts/verify-review-login-entry.mjs",
     "verify:profile-ui": "node --experimental-strip-types scripts/verify-profile-ui.mjs",
     "verify:reminder-ui": "node --experimental-strip-types scripts/verify-reminder-ui.mjs",
     "verify:phase5-dates": "node --experimental-strip-types scripts/verify-phase5-local-dates.mjs",
