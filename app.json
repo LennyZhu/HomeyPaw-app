@@ -2,7 +2,7 @@
   "expo": {
     "name": "HomeyPaw",
     "slug": "homeypaw",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "orientation": "portrait",
     "icon": "./assets/branding/homeypaw-app-icon.png",
     "scheme": "pawday",
@@ -30,7 +30,7 @@
       "supportsTablet": true,
       "requireFullScreen": false,
       "bundleIdentifier": "com.zhushunli.homeypaw",
-      "buildNumber": "11",
+      "buildNumber": "15",
       "config": {
         "usesNonExemptEncryption": false
       }

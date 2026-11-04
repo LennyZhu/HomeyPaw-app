@@ -17,20 +17,22 @@ const eas = JSON.parse(read('eas.json'));
 const pkg = JSON.parse(read('package.json'));
 const lock = JSON.parse(read('package-lock.json'));
 const production = eas.build.production;
-assert.equal(expo.version, '1.4.0');
-assert.equal(expo.ios.buildNumber, '11');
+assert.equal(expo.version, '1.4.1');
+assert.equal(expo.ios.buildNumber, '15');
 assert.equal(expo.ios.version ?? expo.version, expo.version);
 assert.equal(pkg.version, expo.version);
 assert.equal(lock.version, pkg.version);
 assert.equal(lock.packages[''].version, pkg.version);
 assert.equal(expo.ios.bundleIdentifier, 'com.zhushunli.homeypaw');
+assert.equal(expo.extra.eas.projectId, '3623de2b-5a77-48ec-b2ec-45e8136d9ac7');
 assert.equal(expo.scheme, 'pawday');
 assert.equal(eas.cli.appVersionSource, 'local');
 assert.equal(
   eas.build['billing-rc-sandbox'].env.HOMEYPAW_IOS_BUILD_NUMBER,
-  expo.ios.buildNumber,
+  '11',
 );
-assert.equal(production.env.HOMEYPAW_IOS_BUILD_NUMBER, '14');
+assert.equal(production.env.HOMEYPAW_IOS_BUILD_NUMBER, '15');
+assert.equal(production.env.HOMEYPAW_IOS_BUILD_NUMBER, expo.ios.buildNumber);
 assert.equal(production.autoIncrement, false);
 assert.equal(production.environment, 'production');
 assert.equal(production.env.EXPO_PUBLIC_FAMILY_PLUS_RELEASE_ENABLED, 'true');
@@ -119,6 +121,11 @@ for (const name of ['billing-rc-sandbox', 'production']) {
   );
   assert.equal(resolved.version, expo.version);
   assert.equal(resolved.ios.bundleIdentifier, expo.ios.bundleIdentifier);
+  assert.equal(resolved.extra.eas.projectId, expo.extra.eas.projectId);
+  assert.equal(
+    resolved._internal.modResults.ios.infoPlist.CFBundleShortVersionString,
+    '1.4.1',
+  );
   assert.equal(
     resolved._internal.modResults.ios.infoPlist.CFBundleVersion,
     profile.env.HOMEYPAW_IOS_BUILD_NUMBER,
@@ -150,7 +157,7 @@ for (const key of [
 assert.equal(ios.entitlements['aps-environment'], 'development');
 assert.ok(!ios.infoPlist.UIBackgroundModes?.includes('remote-notification'));
 console.log(
-  'PASS: 1.4.0 (11 RC / 14 Production), package/lock alignment, local EAS store profile, Production target and isolated review entry, CNG version/permissions/APNs generation and pawday scheme. Remote EAS variables, ASC build availability and signed archive are not checked.',
+  'PASS: 1.4.1 (15 Production/default / 11 isolated RC), package/lock alignment, local EAS store profile, Production target and isolated review entry, CNG version/permissions/APNs generation and pawday scheme. Remote EAS variables, ASC build availability and signed archive are not checked.',
 );
 // Build preparation can stop after static configuration introspection, without
 // running the unrelated startup-policy and push-registration Mock cases below.

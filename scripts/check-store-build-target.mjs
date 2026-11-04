@@ -88,7 +88,7 @@ export function checkStoreBuildTarget(env) {
   if (
     !/^[1-9]\d*$/.test(rcNumber ?? '') ||
     !/^[1-9]\d*$/.test(productionNumber ?? '') ||
-    rcNumber !== app.ios.buildNumber ||
+    productionNumber !== app.ios.buildNumber ||
     Number(productionNumber) <= Number(rcNumber) ||
     env.HOMEYPAW_IOS_BUILD_NUMBER !== (production ? productionNumber : rcNumber)
   )
