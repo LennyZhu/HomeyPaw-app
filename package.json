@@ -108,6 +108,8 @@
     "verify:user-avatar-rls": "node scripts/verify-user-profile-avatar-rls.mjs",
     "verify:user-feedback-client": "node --experimental-strip-types scripts/verify-user-feedback-client.mjs",
     "verify:family-member-cap": "node scripts/verify-family-member-cap.mjs",
+    "verify:family-member-entitlements": "node scripts/verify-family-member-entitlements.mjs",
+    "verify:family-member-capacity-client": "node scripts/verify-family-member-capacity-client.mjs",
     "verify:multi-pet-family-phase-a": "node scripts/verify-multi-pet-family-phase-a.mjs",
     "verify:multi-pet-family-phase-b1": "node scripts/verify-multi-pet-family-phase-b1.mjs",
     "verify:multi-pet-family-phase-b2": "node scripts/verify-multi-pet-family-phase-b2.mjs",

@@ -472,12 +472,13 @@
       "remove": "移除",
       "removeTitle": "移除{{name}}？",
       "removeConfirm": "{{name}}會立即失去這隻毛孩及其日記的存取權；過去發布的日記會繼續保留。",
-      "removed": "已移除家庭成員。"
+      "removed": "已移除家庭成員。",
+      "capacity": "家庭人數 {{count}} / {{maximum}}（包含擁有者）"
     },
     "invite": {
       "title": "邀請家人加入照顧{{name}}",
-      "fixedRules": "7 日內有效 · 家庭最多 {{maximum}} 人",
-      "memberLimit": "家庭成員已達 {{maximum}} 人上限。",
+      "fixedRules": "7 日內有效 · 家庭總人數最多 {{maximum}} 人（包含擁有者）",
+      "memberLimit": "家庭成員已達 {{maximum}} 人上限。所有現有成員仍可正常使用，只限制新增邀請。",
       "loading": "正在檢查目前邀請…",
       "create": "建立邀請碼",
       "regenerate": "重新產生邀請碼",
@@ -493,7 +494,14 @@
       "share": "分享",
       "copiedTitle": "已複製邀請碼",
       "copiedBody": "現在可以私下傳送給家庭成員。",
-      "shareMessage": "一起加入 HomeyPaw 照顧{{name}} 🐾\n\n邀請碼：{{code}}"
+      "shareMessage": "一起加入 HomeyPaw 照顧{{name}} 🐾\n\n邀請碼：{{code}}",
+      "freeLimit": "Free 家庭最多 2 人（包含擁有者）。所有現有成員均會保留；升級 Family Plus 後，可在總人數少於 10 人時新增邀請。",
+      "upgrade": "查看 Family Plus",
+      "reserved": "有效邀請尚預留 {{count}} 個名額；撤銷或到期後釋放，接受時仍會核對家庭人數。",
+      "legacy": "新規則前的有效邀請仍保留最多 {{count}} 次接受資格，須符合原有名額及到期限制。新增邀請會按目前家庭方案處理。",
+      "replaceLegacyTitle": "重新產生邀請碼？",
+      "replaceLegacyBody": "原有邀請及其歷史接受資格將失效。新邀請會按目前家庭方案的人數上限建立；已加入成員不受影響。",
+      "capacityUnavailable": "暫時無法確認家庭人數上限，新增邀請暫不可用。現有成員的使用權限不受影響。"
     },
     "join": {
       "action": "加入家庭",
@@ -516,7 +524,9 @@
       "revokeInvite": "暫時無法撤銷邀請，請稍後再試。",
       "loadMembers": "暫時無法載入家庭成員，或你已失去存取權。",
       "removeMember": "暫時無法移除這位家庭成員，請稍後再試。",
-      "memberLimit": "家庭成員已達 10 人上限。"
+      "memberLimit": "這個家庭的人數已滿，暫時無法加入。請聯絡家庭擁有者。",
+      "freeMemberLimit": "這個 Free 家庭已達 2 人上限（包含擁有者）。請聯絡擁有者升級 Family Plus，或等待有空缺後重新邀請。",
+      "invitePermission": "只有家庭擁有者可以管理邀請。請重新確認目前的家庭身份。"
     },
     "single": {
       "alreadyInFamily": "你已加入一個家庭。如要加入其他家庭，請先退出目前的家庭。",
@@ -1456,17 +1466,20 @@
     "features": {
       "space": "家庭媒體空間",
       "video": "短影片",
-      "care": "家庭協作"
+      "care": "家庭協作",
+      "members": "家庭總人數"
     },
     "free": {
       "space": "300 MiB",
       "video": "受家庭空間限制",
-      "care": "完整保留"
+      "care": "完整保留",
+      "members": "最多 2 人（包含擁有者）"
     },
     "plus": {
       "space": "5 GiB",
       "video": "受家庭空間限制",
-      "care": "完整保留"
+      "care": "完整保留",
+      "members": "最多 10 人（包含擁有者）"
     },
     "period": {
       "monthly": "月付",
@@ -1489,7 +1502,8 @@
       "learnTitle": "了解 Family Plus 權益",
       "space": "5 GiB 家庭媒體空間",
       "video": "相片與短影片共用家庭空間",
-      "sharing": "一位家庭擁有者訂閱，全家庭共享"
+      "sharing": "一位家庭擁有者訂閱，全家庭共享",
+      "members": "最多 10 位家庭成員共同照顧毛孩"
     },
     "legal": {
       "video": "影片限制",
@@ -1575,7 +1589,8 @@
       "refreshed": "已更新會員狀態。",
       "identityReview": "此購買身份需要核查。請使用原付款人的 HomeyPaw 帳戶恢復購買，勿透過再次購買轉移訂閱。",
       "summaryUnavailable": "暫時無法讀取家庭方案，未能確認會員狀態或儲存用量。"
-    }
+    },
+    "membersIncludeOwner": "10 人為整個家庭的總人數，包含擁有者；月付及年付相同。到期後保留所有現有成員，只限制新增邀請。"
   },
   "billingTestAccount": {
     "title": "測試帳戶登入",

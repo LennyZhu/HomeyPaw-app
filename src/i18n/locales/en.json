@@ -472,12 +472,13 @@
       "remove": "Remove",
       "removeTitle": "Remove {{name}}?",
       "removeConfirm": "{{name}} will immediately lose access to this pet and its journal. Their existing journal entries will remain.",
-      "removed": "The family member has been removed."
+      "removed": "The family member has been removed.",
+      "capacity": "Family members {{count}} / {{maximum}}, including the Owner"
     },
     "invite": {
       "title": "Invite family to care for {{name}}",
-      "fixedRules": "Valid for 7 days · Family limit {{maximum}} people",
-      "memberLimit": "This family has reached its {{maximum}}-person limit.",
+      "fixedRules": "Valid for 7 days · Up to {{maximum}} people in the family, including the Owner",
+      "memberLimit": "Your family has reached the {{maximum}}-person limit. All existing members keep access; only new invitations are limited.",
       "loading": "Checking the current invitation…",
       "create": "Create invite code",
       "regenerate": "Generate a new code",
@@ -493,7 +494,14 @@
       "share": "Share",
       "copiedTitle": "Invite code copied",
       "copiedBody": "You can now send it privately to your family member.",
-      "shareMessage": "Join me on HomeyPaw to care for {{name}} 🐾\n\nInvite code: {{code}}"
+      "shareMessage": "Join me on HomeyPaw to care for {{name}} 🐾\n\nInvite code: {{code}}",
+      "freeLimit": "Free families can have up to 2 people, including the Owner. All existing members keep access. Upgrade to Family Plus to invite more when the family has fewer than 10 people.",
+      "upgrade": "View Family Plus",
+      "reserved": "Places reserved by the active invitation: {{count}}. Revocation or expiry releases them; family capacity is checked again on acceptance.",
+      "legacy": "Remaining uses for the pre-existing invitation: {{count}}, subject to its original expiry and eligibility. New invitations follow the current family plan.",
+      "replaceLegacyTitle": "Generate a new invitation code?",
+      "replaceLegacyBody": "The existing invitation and its legacy acceptance allowance will end. The new invitation will use your current family plan’s limit. Existing members keep access.",
+      "capacityUnavailable": "We cannot confirm your family limit right now. New invitations are temporarily unavailable; existing members keep access."
     },
     "join": {
       "action": "Join a family",
@@ -516,7 +524,9 @@
       "revokeInvite": "We couldn't revoke the invitation. Try again shortly.",
       "loadMembers": "We couldn't load the family members, or you no longer have access.",
       "removeMember": "We couldn't remove this family member. Try again shortly.",
-      "memberLimit": "This family has reached the 10-person limit."
+      "memberLimit": "This family is full and cannot add a member right now. Please contact the Owner.",
+      "freeMemberLimit": "This Free family has reached its 2-person limit, including the Owner. Ask the Owner to upgrade to Family Plus or send a new invitation when a place opens.",
+      "invitePermission": "Only the family Owner can manage invitations. Please check your current family role."
     },
     "single": {
       "alreadyInFamily": "You’re already in a family. Leave your current family before joining another one.",
@@ -1456,17 +1466,20 @@
     "features": {
       "space": "Family media storage",
       "video": "Short videos",
-      "care": "Family collaboration"
+      "care": "Family collaboration",
+      "members": "Total family members"
     },
     "free": {
       "space": "300 MiB",
       "video": "Within Family storage",
-      "care": "All core features"
+      "care": "All core features",
+      "members": "Up to 2, including the Owner"
     },
     "plus": {
       "space": "5 GiB",
       "video": "Within Family storage",
-      "care": "All core features"
+      "care": "All core features",
+      "members": "Up to 10, including the Owner"
     },
     "period": {
       "monthly": "Monthly",
@@ -1489,7 +1502,8 @@
       "learnTitle": "Explore Family Plus benefits",
       "space": "5 GiB of Family media storage",
       "video": "Photos and short videos share Family storage",
-      "sharing": "One Family Owner subscribes. Everyone shares."
+      "sharing": "One Family Owner subscribes. Everyone shares.",
+      "members": "Care for your pets with up to 10 family members"
     },
     "legal": {
       "video": "Video limits",
@@ -1575,7 +1589,8 @@
       "refreshed": "Membership status refreshed.",
       "identityReview": "This purchase identity needs review. Restore using the original HomeyPaw payer account; do not purchase again to move a subscription.",
       "summaryUnavailable": "Family plan data is temporarily unavailable. No subscription status or usage is assumed."
-    }
+    },
+    "membersIncludeOwner": "The 10-person total includes the Owner and is the same for Monthly and Yearly. After expiry, all existing members keep access; only new invitations are limited."
   },
   "billingTestAccount": {
     "title": "Test account sign-in",

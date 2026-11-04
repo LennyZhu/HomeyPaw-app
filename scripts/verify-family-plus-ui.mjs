@@ -1022,7 +1022,9 @@ const settingsModule = load(
     },
     './family-access-cleanup': { clearRevokedFamilyAccess: () => undefined },
     './family-label': { familyLabel: () => longName },
-    './family-member-limit': { familyMemberLimit: 10 },
+    './use-family-member-capacity': {
+      useFamilyMemberCapacity: () => ({ capacity: null }),
+    },
     './family-queries': {
       deleteFamily: async () => undefined,
       useFamilyMemberSummaries: () => ({ data: [], refetch: () => undefined }),

@@ -361,7 +361,7 @@ export function FamilyPlusPreview({
             Family Plus
           </AppText>
         </View>
-        {(['space', 'video', 'care'] as const).map((feature) => (
+        {(['space', 'members', 'video', 'care'] as const).map((feature) => (
           <View key={feature} style={styles.comparisonRow}>
             <AppText variant="subheadline" style={styles.featureColumn}>
               {t(`familyPlus.features.${feature}`)}
@@ -738,7 +738,7 @@ function FamilyPlusBenefits({
       <AppText accessibilityRole="header" variant="title3">
         {t(`familyPlus.benefits.${title}`)}
       </AppText>
-      {(['space', 'video', 'sharing'] as const).map((benefit) => (
+      {(['space', 'members', 'video', 'sharing'] as const).map((benefit) => (
         <View key={benefit} style={styles.benefitRow}>
           <Ionicons
             accessible={false}
@@ -751,6 +751,9 @@ function FamilyPlusBenefits({
           </AppText>
         </View>
       ))}
+      <AppText tone="secondary" variant="footnote">
+        {t('familyPlus.membersIncludeOwner')}
+      </AppText>
     </View>
   );
 }

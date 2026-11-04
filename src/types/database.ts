@@ -1079,6 +1079,10 @@ export type Database = {
           task_title: string;
         }[];
       };
+      get_family_member_capacity: {
+        Args: { target_family_id: string };
+        Returns: Json;
+      };
       create_family_invite: {
         Args: { target_family_id: string };
         Returns: {

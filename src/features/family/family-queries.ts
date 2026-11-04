@@ -28,6 +28,16 @@ import { familyKeys } from './family-query-keys';
 
 export { familyKeys } from './family-query-keys';
 
+function refreshMemberCapacity(
+  queryClient: QueryClient,
+  userId: string | undefined,
+) {
+  return queryClient.invalidateQueries({
+    queryKey: familyKeys.all(userId),
+    predicate: (query) => query.queryKey.at(-1) === 'member-capacity',
+  });
+}
+
 export type PetMemberSummary = {
   avatarPath: string | null;
   avatarUrl: string | null;
@@ -554,7 +564,7 @@ export function useCreatePetInvite(petId: string) {
       if (!capability.data) throw new Error('BACKEND_CAPABILITY_UNAVAILABLE');
       return createInvite(petId, capability.data);
     },
-    onSuccess: (invite) => {
+    onSuccess: async (invite) => {
       queryClient.setQueriesData(
         { queryKey: ['family', user?.id, 'invite'] },
         null,
@@ -571,6 +581,7 @@ export function useCreatePetInvite(petId: string) {
           used_count: invite.usedCount,
         },
       );
+      await refreshMemberCapacity(queryClient, user?.id);
     },
   });
 }
@@ -585,11 +596,12 @@ export function useRevokePetInvite(petId: string) {
       if (!capability.data) throw new Error('BACKEND_CAPABILITY_UNAVAILABLE');
       return revokeInvite(petId, capability.data);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.setQueriesData(
         { queryKey: ['family', user?.id, 'invite'] },
         null,
       );
+      await refreshMemberCapacity(queryClient, user?.id);
     },
   });
 }
@@ -606,6 +618,7 @@ export function useJoinPet() {
     },
     onSuccess: async (result) => {
       await Promise.all([
+        refreshMemberCapacity(queryClient, user?.id),
         queryClient.invalidateQueries({ queryKey: petKeys.all(user?.id) }),
         queryClient.invalidateQueries({
           queryKey: familyKeys.list(user?.id),
@@ -647,6 +660,7 @@ export function useRemovePetMember(petId: string) {
         null,
       );
       await Promise.all([
+        refreshMemberCapacity(queryClient, user?.id),
         queryClient.invalidateQueries({
           queryKey: result.familyId
             ? familyKeys.members(user?.id, result.familyId)
@@ -690,6 +704,7 @@ export function useTransferFamilyOwnership(familyId: string) {
       transferFamilyOwnership(familyId, newOwnerUserId),
     onSuccess: async () => {
       await Promise.all([
+        refreshMemberCapacity(queryClient, user?.id),
         queryClient.invalidateQueries({ queryKey: familyKeys.list(user?.id) }),
         queryClient.invalidateQueries({
           queryKey: familyKeys.members(user?.id, familyId),
@@ -710,6 +725,10 @@ export function useRemoveFamilyMember(familyId: string) {
       removeFamilyMember(familyId, memberUserId),
     onSuccess: async () => {
       await Promise.all([
+        refreshMemberCapacity(queryClient, user?.id),
+        queryClient.invalidateQueries({
+          queryKey: ['family', user?.id, 'invite'],
+        }),
         queryClient.invalidateQueries({
           queryKey: familyKeys.members(user?.id, familyId),
         }),

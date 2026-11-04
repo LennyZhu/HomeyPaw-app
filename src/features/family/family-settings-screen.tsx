@@ -25,7 +25,7 @@ import { lightColors, radius, spacing } from '@/theme';
 
 import { clearRevokedFamilyAccess } from './family-access-cleanup';
 import { familyLabel } from './family-label';
-import { familyMemberLimit } from './family-member-limit';
+import { useFamilyMemberCapacity } from './use-family-member-capacity';
 import {
   deleteFamily,
   useFamilyMemberSummaries,
@@ -44,6 +44,7 @@ export default function FamilySettingsScreen() {
   const { user } = useAuth();
   const context = useCurrentFamily();
   const membersQuery = useFamilyMemberSummaries(id);
+  const capacityQuery = useFamilyMemberCapacity(id);
   const familyPetsQuery = useFamilyPets(id);
   const leave = useLeaveFamily();
   const transfer = useTransferFamilyOwnership(id);
@@ -310,6 +311,12 @@ export default function FamilySettingsScreen() {
 
       <View style={styles.section}>
         <AppText variant="title3">{t('family.members.title')}</AppText>
+        <AppText tone="secondary" variant="subheadline">
+          {t('family.members.capacity', {
+            count: capacityQuery.capacity?.count ?? members.length,
+            maximum: capacityQuery.capacity?.limit ?? '—',
+          })}
+        </AppText>
         <View style={styles.card}>
           {membersQuery.isPending ? (
             <LoadingView label={t('family.members.loading')} />
@@ -415,7 +422,7 @@ export default function FamilySettingsScreen() {
                 last
                 onPress={() => router.push(`/pets/${pets[0]?.id}/members`)}
                 subtitle={t('family.invite.fixedRules', {
-                  maximum: familyMemberLimit,
+                  maximum: capacityQuery.capacity?.limit ?? '—',
                 })}
               />
             ) : (
