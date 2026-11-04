@@ -76,6 +76,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify:i18n": "node scripts/verify-i18n-parity.mjs",
+    "verify:i18n-language": "node scripts/verify-i18n-language-selection.mjs",
     "verify:home-ui": "node --experimental-strip-types scripts/verify-home-ui.mjs",
     "verify:journal-create-ui": "node --experimental-strip-types scripts/verify-journal-create-ui.mjs",
     "verify:journal-composer-ui": "node --experimental-strip-types scripts/verify-journal-composer-ui.mjs",

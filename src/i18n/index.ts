@@ -17,8 +17,8 @@ const i18n = createInstance();
 
 void i18n.use(initReactI18next).init({
   resources,
-  lng: 'zh-HK',
-  fallbackLng: 'zh-HK',
+  lng: getDeviceLanguage(),
+  fallbackLng: 'en',
   supportedLngs: supportedLanguages,
   interpolation: {
     escapeValue: false,
@@ -27,7 +27,7 @@ void i18n.use(initReactI18next).init({
 
 export function getDeviceLanguage(): SupportedLanguage {
   const locale = getLocales()[0];
-  return locale?.languageCode === 'en' ? 'en' : 'zh-HK';
+  return locale?.languageCode?.toLowerCase() === 'zh' ? 'zh-HK' : 'en';
 }
 
 export function isSupportedLanguage(value: string): value is SupportedLanguage {
