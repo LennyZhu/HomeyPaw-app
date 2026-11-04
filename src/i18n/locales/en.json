@@ -1359,9 +1359,9 @@
     "title": "Family Plus Sandbox",
     "notice": "Development test only. Storage limits remain unenforced. Use an Apple Sandbox tester; no production purchase is available here.",
     "noFamily": "Join or create a family first.",
-    "free": "Free · 300 MiB",
-    "transition": "Transition · 1 GiB",
-    "plus": "Family Plus · 5 GiB",
+    "free": "Free · 300 MB",
+    "transition": "Transition · about 1.1 GB",
+    "plus": "Family Plus · 5 GB",
     "loadProducts": "Load subscription products",
     "monthly": "Monthly",
     "yearly": "Yearly",
@@ -1437,7 +1437,7 @@
       "cancelled": "Renewal is cancelled. Plus remains available until the verified access period ends.",
       "expired": "Existing content is retained and core Family care features remain available.",
       "unavailable": "A verified status is unavailable. Unknown does not mean subscribed or expired.",
-      "transition": "Eligible Free Families over the allowance receive a one-time 15-day, 1 GiB transition from policy activation. Existing media is retained after expiry; only new media uploads are paused when over the allowance.",
+      "transition": "Eligible Free Families over the allowance receive a one-time 15-day, about 1.1 GB transition from policy activation. Existing media is retained after expiry; only new media uploads are paused when over the allowance.",
       "revoked": "Membership access was revoked. Existing media and core care features are retained."
     },
     "transitionDeadline_one": "{{count}} day remaining · Ends {{date}}",
@@ -1470,13 +1470,13 @@
       "members": "Total family members"
     },
     "free": {
-      "space": "300 MiB",
+      "space": "300 MB",
       "video": "Within Family storage",
       "care": "All core features",
       "members": "Up to 2, including the Owner"
     },
     "plus": {
-      "space": "5 GiB",
+      "space": "5 GB",
       "video": "Within Family storage",
       "care": "All core features",
       "members": "Up to 10, including the Owner"
@@ -1500,7 +1500,7 @@
       "resubscribeTitle": "Resubscribe to Family Plus for",
       "offeredTitle": "What Family Plus offers",
       "learnTitle": "Explore Family Plus benefits",
-      "space": "5 GiB of Family media storage",
+      "space": "5 GB of Family media storage",
       "video": "Photos and short videos share Family storage",
       "sharing": "One Family Owner subscribes. Everyone shares.",
       "members": "Care for your pets with up to 10 family members"

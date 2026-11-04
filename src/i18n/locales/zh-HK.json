@@ -1359,9 +1359,9 @@
     "title": "Family Plus Sandbox",
     "notice": "僅供開發測試，尚未啟用儲存限制。請使用 Apple Sandbox 測試帳戶；此頁不提供正式購買。",
     "noFamily": "請先加入或建立家庭。",
-    "free": "免費 · 300 MiB",
-    "transition": "過渡期 · 1 GiB",
-    "plus": "Family Plus · 5 GiB",
+    "free": "免費 · 300 MB",
+    "transition": "過渡期 · 約 1.1 GB",
+    "plus": "Family Plus · 5 GB",
     "loadProducts": "載入訂閱商品",
     "monthly": "月付",
     "yearly": "年付",
@@ -1437,7 +1437,7 @@
       "cancelled": "不再自動續訂；已確認有效期內仍保留 Plus 權益。",
       "expired": "歷史資料不會自動刪除，基本家庭照顧功能不受影響。",
       "unavailable": "未能取得可信狀態；不會將未知狀態視為已開通或已到期。",
-      "transition": "符合資格的超額 Free 家庭，由容量政策啟用起享有一次性 15 天、1 GiB 過渡期。到期後保留歷史媒體，超額時只暫停新增媒體。",
+      "transition": "符合資格的超額 Free 家庭，由容量政策啟用起享有一次性 15 天、約 1.1 GB 過渡期。到期後保留歷史媒體，超額時只暫停新增媒體。",
       "revoked": "會員存取已撤銷，歷史媒體與基本照顧功能仍保留。"
     },
     "transitionDeadline_one": "尚餘 {{count}} 天 · 截止 {{date}}",
@@ -1470,13 +1470,13 @@
       "members": "家庭總人數"
     },
     "free": {
-      "space": "300 MiB",
+      "space": "300 MB",
       "video": "受家庭空間限制",
       "care": "完整保留",
       "members": "最多 2 人（包含擁有者）"
     },
     "plus": {
-      "space": "5 GiB",
+      "space": "5 GB",
       "video": "受家庭空間限制",
       "care": "完整保留",
       "members": "最多 10 人（包含擁有者）"
@@ -1500,7 +1500,7 @@
       "resubscribeTitle": "重新訂閱 Family Plus 可享",
       "offeredTitle": "Family Plus 提供的權益",
       "learnTitle": "了解 Family Plus 權益",
-      "space": "5 GiB 家庭媒體空間",
+      "space": "5 GB 家庭媒體空間",
       "video": "相片與短影片共用家庭空間",
       "sharing": "一位家庭擁有者訂閱，全家庭共享",
       "members": "最多 10 位家庭成員共同照顧毛孩"

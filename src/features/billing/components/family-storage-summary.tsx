@@ -32,7 +32,7 @@ export function FamilyStorageSummary({
             <AppText tone="secondary" variant="subheadline">
               {t('familyPlus.storage.used')}
             </AppText>
-            <AppText variant="headline">
+            <AppText variant="headline" style={styles.amount}>
               {format(storage.usedBytes)} / {format(storage.limitBytes)}
             </AppText>
           </View>
@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
+  amount: { minWidth: 0, maxWidth: '100%', flexShrink: 1, textAlign: 'right' },
   track: {
     height: 6,
     borderRadius: radius.full,
