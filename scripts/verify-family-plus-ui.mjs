@@ -103,7 +103,47 @@ const over = model.storagePresentation(480 * 1024 ** 2, 300 * 1024 ** 2);
 assert.equal(over.percent, 100);
 assert.equal(over.remainingBytes, 0);
 assert.equal(over.overBytes, 180 * 1024 ** 2);
-assert.equal(model.formatStorageBytes(5 * 1024 ** 3, 'en'), '5 GiB');
+const freeLimitBytes = 314_572_800;
+const plusLimitBytes = 5_368_709_120;
+for (const locale of ['en', 'zh-HK']) {
+  for (const [bytes, expected] of [
+    [0, '0 MB'],
+    [1_000_000, '1 MB'],
+    [12.5 * 1024 ** 2, '13.1 MB'],
+    [freeLimitBytes, '314.6 MB'],
+    [plusLimitBytes, '5.4 GB'],
+    [1024 ** 3, '1.1 GB'],
+    [999_999_999, '1,000 MB'],
+    [1_000_000_000, '1 GB'],
+    [Number.MAX_SAFE_INTEGER, '9,007,199.3 GB'],
+  ]) {
+    assert.equal(model.formatStorageBytes(bytes, locale), expected);
+  }
+  assert.equal(model.formatStorageBytes(over.overBytes, locale), '188.7 MB');
+}
+const nearLimit = model.storagePresentation(freeLimitBytes - 1, freeLimitBytes);
+assert.equal(nearLimit.remainingBytes, 1);
+assert.equal(nearLimit.overBytes, 0);
+assert.ok(
+  nearLimit.percent < 100,
+  'Rounded display never decides quota access',
+);
+assert.equal(
+  model.storagePresentation(freeLimitBytes, freeLimitBytes).remainingBytes,
+  0,
+);
+assert.equal(
+  model.storagePresentation(freeLimitBytes + 100_000, freeLimitBytes).overBytes,
+  100_000,
+);
+assert.equal(
+  model.storagePresentation(300_000_000, freeLimitBytes).remainingBytes,
+  14_572_800,
+);
+assert.equal(
+  model.storagePresentation(5_000_000_000, plusLimitBytes).remainingBytes,
+  368_709_120,
+);
 console.log(
   'PASS: Development + loopback isolation; release/cloud/Production denial; preview actions cannot succeed; localized price pass-through and storage boundaries.',
 );
@@ -450,6 +490,73 @@ const text = (node) =>
 const buttons = (tree) =>
   nodes(tree).filter((node) => ['AppButton', 'Pressable'].includes(node.type));
 const label = (node) => node.props.label ?? text(node);
+
+// Actual storage summary JSX: decimal figures, unchanged byte-based progress,
+// retained historical media, and wrapping constraints for small screens.
+for (const locale of ['en', 'zh-HK']) {
+  await translator.changeLanguage(locale);
+  assert.equal(locales[locale].translation.familyPlus.free.space, '300 MB');
+  assert.equal(locales[locale].translation.familyPlus.plus.space, '5 GB');
+  assert.doesNotMatch(JSON.stringify(locales[locale]), /\b(?:MiB|GiB)\b/);
+  for (const [usedBytes, limitBytes] of [
+    [0, freeLimitBytes],
+    [12.5 * 1024 ** 2, freeLimitBytes],
+    [freeLimitBytes - 100_000, freeLimitBytes],
+    [freeLimitBytes, freeLimitBytes],
+    [freeLimitBytes + 100_000, freeLimitBytes],
+    [480 * 1024 ** 2, freeLimitBytes],
+    [5_000_000_000, plusLimitBytes],
+    [plusLimitBytes, plusLimitBytes],
+    [Number.MAX_SAFE_INTEGER - 1_000_000_000, Number.MAX_SAFE_INTEGER],
+  ]) {
+    const snapshot = {
+      source: 'server',
+      quotaEnabled: true,
+      storage: { usedBytes, limitBytes },
+    };
+    const tree = render(storage.FamilyStorageSummary({ snapshot }));
+    const copy = text(tree).replace(/\s+/g, ' ');
+    const facts = model.storagePresentation(usedBytes, limitBytes);
+    assert.ok(
+      copy.includes(
+        `${model.formatStorageBytes(usedBytes, locale)} / ${model.formatStorageBytes(limitBytes, locale)}`,
+      ),
+    );
+    assert.ok(
+      copy.includes(
+        translator.t(
+          facts.overBytes > 0
+            ? 'familyPlus.storage.over'
+            : 'familyPlus.storage.remaining',
+          {
+            amount: model.formatStorageBytes(
+              facts.overBytes > 0 ? facts.overBytes : facts.remainingBytes,
+              locale,
+            ),
+          },
+        ),
+      ),
+    );
+    if (facts.overBytes > 0)
+      assert.ok(copy.includes(translator.t('familyPlus.storage.retained')));
+    assert.equal(
+      nodes(tree).find((n) => n.props.accessibilityRole === 'progressbar').props
+        .accessibilityValue.now,
+      facts.percent,
+    );
+    const amount = nodes(tree).find(
+      (n) => n.type === 'AppText' && n.props.variant === 'headline',
+    );
+    assert.equal(amount.props.style.maxWidth, '100%');
+    assert.equal(amount.props.style.flexShrink, 1);
+    assert.equal(amount.props.numberOfLines, undefined);
+    assert.equal(amount.props.style.height, undefined);
+  }
+}
+console.log(
+  'PASS: decimal MB/GB boundaries and bilingual storage JSX; nominal 300 MB / 5 GB; exact byte quotas/progress retained; historical overage and long-number wrapping constraints. Static render only.',
+);
+
 const mount = (props = {}) => {
   slots = [];
   feedback.length = 0;
@@ -1022,7 +1129,9 @@ const settingsModule = load(
     },
     './family-access-cleanup': { clearRevokedFamilyAccess: () => undefined },
     './family-label': { familyLabel: () => longName },
-    './family-member-limit': { familyMemberLimit: 10 },
+    './use-family-member-capacity': {
+      useFamilyMemberCapacity: () => ({ capacity: null }),
+    },
     './family-queries': {
       deleteFamily: async () => undefined,
       useFamilyMemberSummaries: () => ({ data: [], refetch: () => undefined }),
@@ -1716,6 +1825,7 @@ for (const lang of ['en', 'zh-HK']) {
   await translator.changeLanguage(lang);
   for (const dimensions of [
     { wide: false, scale: 1 },
+    { wide: false, scale: 1.6 },
     { wide: true, scale: 1 },
     { wide: true, scale: 1.6 },
   ]) {
@@ -1725,7 +1835,14 @@ for (const lang of ['en', 'zh-HK']) {
       const actions = [];
       const prices = connected.prices.map((p) => ({
         ...p,
-        priceString: p.period === 'monthly' ? '€4,99' : '€39,99',
+        priceString:
+          dimensions.scale > 1
+            ? p.period === 'monthly'
+              ? 'CHF 1’234’567.89'
+              : 'CHF 12’345’678.90'
+            : p.period === 'monthly'
+              ? '€4,99'
+              : '€39,99',
       }));
       const price = prices.find((p) => p.period === period).priceString;
       const tree = render(
@@ -1739,11 +1856,18 @@ for (const lang of ['en', 'zh-HK']) {
           billing: { ...connected, prices },
         }),
       );
-      const prominent = nodes(tree).filter(
-        (n) => n.type === 'AppText' && n.props.variant === 'largeTitle',
+      const cards = nodes(tree).filter(
+        (n) => n.type === 'Pressable' && n.props.accessibilityRole === 'radio',
       );
-      assert.equal(prominent.length, 2);
+      assert.equal(cards.length, 2);
+      const prominent = cards.map((card) =>
+        nodes(card).find(
+          (n) => n.type === 'AppText' && n.props.variant === 'title3',
+        ),
+      );
+      assert.ok(prominent.every(Boolean));
       assert.ok(prominent.some((n) => text(n).includes(price)));
+      assert.ok(prominent.every((n) => n.props.style.maxWidth === '100%'));
       assert.ok(
         text(tree).includes(
           translator.t(`familyPlus.purchase.total.${period}`, { price }),

@@ -361,7 +361,7 @@ export function FamilyPlusPreview({
             Family Plus
           </AppText>
         </View>
-        {(['space', 'video', 'care'] as const).map((feature) => (
+        {(['space', 'members', 'video', 'care'] as const).map((feature) => (
           <View key={feature} style={styles.comparisonRow}>
             <AppText variant="subheadline" style={styles.featureColumn}>
               {t(`familyPlus.features.${feature}`)}
@@ -581,7 +581,7 @@ export function FamilyPlusDetails({
                       size={22}
                     />
                   </View>
-                  <AppText variant="largeTitle">
+                  <AppText variant="title3" style={styles.planPrice}>
                     {price
                       ? price.priceString
                       : t('familyPlus.priceUnavailable')}
@@ -738,7 +738,7 @@ function FamilyPlusBenefits({
       <AppText accessibilityRole="header" variant="title3">
         {t(`familyPlus.benefits.${title}`)}
       </AppText>
-      {(['space', 'video', 'sharing'] as const).map((benefit) => (
+      {(['space', 'members', 'video', 'sharing'] as const).map((benefit) => (
         <View key={benefit} style={styles.benefitRow}>
           <Ionicons
             accessible={false}
@@ -751,6 +751,9 @@ function FamilyPlusBenefits({
           </AppText>
         </View>
       ))}
+      <AppText tone="secondary" variant="footnote">
+        {t('familyPlus.membersIncludeOwner')}
+      </AppText>
     </View>
   );
 }
@@ -813,8 +816,9 @@ const styles = StyleSheet.create({
   widePlans: { flexDirection: 'row', alignItems: 'stretch' },
   plan: {
     minWidth: 0,
-    gap: spacing.sm,
-    padding: spacing.lg,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: lightColors.border,
@@ -825,6 +829,7 @@ const styles = StyleSheet.create({
     backgroundColor: lightColors.primarySoft,
   },
   planHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  planPrice: { minWidth: 0, maxWidth: '100%', flexShrink: 1 },
   chargeSummary: { gap: spacing.xs },
   purchaseButton: { paddingVertical: spacing.md },
   management: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },

@@ -65,7 +65,7 @@
         "EXPO_PUBLIC_FAMILY_BILLING_SANDBOX_ENABLED": "false",
         "EXPO_PUBLIC_APP_REVIEW_ACCOUNT_ENABLED": "true",
         "EXPO_PUBLIC_SANDBOX_SUPABASE_URL": "https://yhxxsawcaffxonpconaq.supabase.co",
-        "HOMEYPAW_IOS_BUILD_NUMBER": "14"
+        "HOMEYPAW_IOS_BUILD_NUMBER": "15"
       }
     }
   },

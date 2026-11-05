@@ -106,9 +106,11 @@ export function storagePresentation(usedBytes: number, limitBytes: number) {
 }
 
 export function formatStorageBytes(bytes: number, locale: string) {
-  const gibibyte = 1024 ** 3;
-  const unit = bytes >= gibibyte ? 'GiB' : 'MiB';
-  const amount = bytes / (unit === 'GiB' ? gibibyte : 1024 ** 2);
+  // Display only: server quotas stay in bytes; nominal plan labels are separate.
+  const gigabyte = 1_000_000_000;
+  const megabyte = 1_000_000;
+  const unit = bytes >= gigabyte ? 'GB' : 'MB';
+  const amount = bytes / (unit === 'GB' ? gigabyte : megabyte);
   return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(amount)} ${unit}`;
 }
 

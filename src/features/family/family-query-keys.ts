@@ -2,6 +2,8 @@ export const familyKeys = {
   all: (userId: string | undefined) => ['families', userId] as const,
   detail: (userId: string | undefined, familyId: string) =>
     [...familyKeys.all(userId), 'detail', familyId] as const,
+  capacity: (userId: string | undefined, familyId: string) =>
+    [...familyKeys.detail(userId, familyId), 'member-capacity'] as const,
   list: (userId: string | undefined) =>
     [...familyKeys.all(userId), 'list'] as const,
   members: (userId: string | undefined, familyId: string) =>

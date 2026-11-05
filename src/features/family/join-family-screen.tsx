@@ -23,7 +23,10 @@ import {
   previewInvite,
   useJoinPet,
 } from './family-queries';
-import { isFamilyMemberLimitError } from './family-member-limit';
+import {
+  isFamilyMemberLimitError,
+  isFreeFamilyMemberLimitError,
+} from './family-member-limit';
 import { isAlreadyInFamilyError } from './family-single-membership';
 import { useCurrentFamily } from './use-current-family';
 
@@ -136,11 +139,13 @@ export default function JoinFamilyScreen() {
       setErrorMessage(
         isAlreadyInFamilyError(error)
           ? t('family.single.alreadyInFamily')
-          : isFamilyMemberLimitError(error)
-            ? t('family.errors.memberLimit')
-            : (await isInvalidInviteError(error))
-              ? t('family.errors.invalidInvite')
-              : t('family.errors.network'),
+          : isFreeFamilyMemberLimitError(error)
+            ? t('family.errors.freeMemberLimit')
+            : isFamilyMemberLimitError(error)
+              ? t('family.errors.memberLimit')
+              : (await isInvalidInviteError(error))
+                ? t('family.errors.invalidInvite')
+                : t('family.errors.network'),
       );
     }
   };

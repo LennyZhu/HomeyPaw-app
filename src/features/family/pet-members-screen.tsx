@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Clipboard from 'expo-clipboard';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Share, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -26,7 +26,12 @@ import {
   useRemovePetMember,
   useRevokePetInvite,
 } from './family-queries';
-import { familyMemberLimit } from './family-member-limit';
+import {
+  isFamilyInvitePermissionError,
+  isFamilyMemberLimitError,
+  isFreeFamilyMemberLimitError,
+} from './family-member-limit';
+import { useFamilyMemberCapacity } from './use-family-member-capacity';
 
 export default function PetMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,10 +43,13 @@ export default function PetMembersScreen() {
   const petQuery = usePet(id);
   const membersQuery = usePetMembers(id);
   const members = membersQuery.data ?? [];
-  const activeMemberCount = members.filter(
-    (member) => member.role === 'owner' || member.role === 'member',
-  ).length;
-  const isFamilyFull = activeMemberCount >= familyMemberLimit;
+  const capacityQuery = useFamilyMemberCapacity(
+    petQuery.data?.family_id ?? null,
+  );
+  const capacity = capacityQuery.capacity;
+  const capacityCount = capacity?.count;
+  const activeMemberCount = capacity?.count ?? members.length;
+  const memberLimit = capacity?.limit ?? '—';
   const isOwner = members.some(
     (member) => member.userId === user?.id && member.role === 'owner',
   );
@@ -49,17 +57,49 @@ export default function PetMembersScreen() {
   const createInvite = useCreatePetInvite(id);
   const revokeInvite = useRevokePetInvite(id);
   const removeMember = useRemovePetMember(id);
-  const [screenOpenedAt] = useState(() => Date.now());
-  const [visibleCode, setVisibleCode] = useState<string | null>(null);
+  const [openedAt] = useState(() => Date.now());
+  const [createdInvite, setCreatedInvite] = useState<{
+    id: string;
+    code: string;
+  } | null>(null);
+  const visibleCode =
+    createdInvite?.id === activeInviteQuery.data?.id
+      ? (createdInvite?.code ?? null)
+      : null;
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const inviteState = useMemo(() => {
+  const { refetch: refetchMembers } = membersQuery;
+  const { refetch: refetchInvite } = activeInviteQuery;
+  useFocusEffect(
+    useCallback(() => {
+      if (!id || !capabilityQuery.data) return;
+      void refetchMembers();
+      if (isOwner) void refetchInvite();
+    }, [id, capabilityQuery.data, isOwner, refetchMembers, refetchInvite]),
+  );
+  useEffect(() => {
+    if (!capacityQuery.dataUpdatedAt || capacityCount === undefined) return;
+    if (capacityCount !== members.length) void refetchMembers();
+    if (isOwner) void refetchInvite();
+  }, [
+    capacityQuery.dataUpdatedAt,
+    capacityCount,
+    members.length,
+    isOwner,
+    refetchMembers,
+    refetchInvite,
+  ]);
+
+  const inviteState = (() => {
     const invite = activeInviteQuery.data;
     if (!invite) {
       return null;
     }
 
-    if (new Date(invite.expires_at).getTime() <= screenOpenedAt) {
+    if (
+      new Date(invite.expires_at).getTime() <=
+      (capacityQuery.serverNow ?? openedAt)
+    ) {
       return 'expired' as const;
     }
 
@@ -68,16 +108,45 @@ export default function PetMembersScreen() {
     }
 
     return 'active' as const;
-  }, [activeInviteQuery.data, screenOpenedAt]);
+  })();
 
   const handleCreateInvite = async () => {
-    setActionError(null);
-    try {
-      const invite = await createInvite.mutateAsync();
-      setVisibleCode(invite.code);
-    } catch {
-      setActionError(t('family.errors.createInvite'));
+    if (!isOwner || !capacityQuery.canCreate) return;
+    const perform = async () => {
+      setActionError(null);
+      try {
+        const invite = await createInvite.mutateAsync();
+        setCreatedInvite({ id: invite.id, code: invite.code });
+      } catch (error) {
+        setActionError(
+          isFreeFamilyMemberLimitError(error)
+            ? t('family.invite.freeLimit')
+            : isFamilyMemberLimitError(error)
+              ? t('family.invite.memberLimit', { maximum: 10 })
+              : isFamilyInvitePermissionError(error)
+                ? t('family.errors.invitePermission')
+                : t('family.errors.createInvite'),
+        );
+        void capacityQuery.refetch();
+      }
+    };
+    if (capacity && capacity.legacyRemaining > 0) {
+      if (Platform.OS === 'web') {
+        if (globalThis.confirm(t('family.invite.replaceLegacyBody')))
+          await perform();
+      } else {
+        Alert.alert(
+          t('family.invite.replaceLegacyTitle'),
+          t('family.invite.replaceLegacyBody'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('common.continue'), onPress: () => void perform() },
+          ],
+        );
+      }
+      return;
     }
+    await perform();
   };
 
   const handleRevokeInvite = async () => {
@@ -85,9 +154,13 @@ export default function PetMembersScreen() {
       setActionError(null);
       try {
         await revokeInvite.mutateAsync();
-        setVisibleCode(null);
-      } catch {
-        setActionError(t('family.errors.revokeInvite'));
+        setCreatedInvite(null);
+      } catch (error) {
+        setActionError(
+          isFamilyInvitePermissionError(error)
+            ? t('family.errors.invitePermission')
+            : t('family.errors.revokeInvite'),
+        );
       }
     };
 
@@ -211,7 +284,7 @@ export default function PetMembersScreen() {
         <AppText tone="secondary">
           {t('family.members.subtitle', {
             count: activeMemberCount,
-            maximum: familyMemberLimit,
+            maximum: memberLimit,
             name: pet.name,
           })}
         </AppText>
@@ -269,7 +342,7 @@ export default function PetMembersScreen() {
               </AppText>
               <AppText tone="secondary" variant="subheadline">
                 {t('family.invite.fixedRules', {
-                  maximum: familyMemberLimit,
+                  maximum: memberLimit,
                 })}
               </AppText>
             </View>
@@ -336,7 +409,7 @@ export default function PetMembersScreen() {
 
               <View style={styles.buttonRow}>
                 <AppButton
-                  disabled={isFamilyFull}
+                  disabled={!capacityQuery.canCreate || !isOwner}
                   label={t('family.invite.regenerate')}
                   loading={createInvite.isPending}
                   onPress={() => void handleCreateInvite()}
@@ -354,7 +427,7 @@ export default function PetMembersScreen() {
             </View>
           ) : (
             <AppButton
-              disabled={isFamilyFull}
+              disabled={!capacityQuery.canCreate || !isOwner}
               label={t('family.invite.create')}
               loading={createInvite.isPending}
               onPress={() => void handleCreateInvite()}
@@ -363,10 +436,43 @@ export default function PetMembersScreen() {
         </View>
       ) : null}
 
-      {isOwner && isFamilyFull ? (
-        <AppText tone="warning" variant="footnote">
-          {t('family.invite.memberLimit', { maximum: familyMemberLimit })}
+      {isOwner && capacity?.reserved ? (
+        <AppText tone="secondary" variant="footnote">
+          {t('family.invite.reserved', { count: capacity.reserved })}
         </AppText>
+      ) : null}
+      {isOwner && capacity && capacity.legacyRemaining > 0 ? (
+        <AppText tone="secondary" variant="footnote">
+          {t('family.invite.legacy', { count: capacity.legacyRemaining })}
+        </AppText>
+      ) : null}
+      {isOwner && capacity?.full ? (
+        <View style={styles.inviteDetails}>
+          <AppText tone="warning" variant="footnote">
+            {capacity.plus
+              ? t('family.invite.memberLimit', { maximum: capacity.limit })
+              : t('family.invite.freeLimit')}
+          </AppText>
+          {!capacity.plus ? (
+            <AppButton
+              label={t('family.invite.upgrade')}
+              onPress={() => router.push('/family-plus')}
+              variant="secondary"
+            />
+          ) : null}
+        </View>
+      ) : null}
+      {isOwner && !capacity ? (
+        <View style={styles.inviteDetails}>
+          <AppText tone="secondary" variant="footnote">
+            {t('family.invite.capacityUnavailable')}
+          </AppText>
+          <AppButton
+            label={t('familyPlus.retry')}
+            onPress={() => void capacityQuery.refetch()}
+            variant="ghost"
+          />
+        </View>
       ) : null}
 
       {actionError ? <AppText tone="error">{actionError}</AppText> : null}

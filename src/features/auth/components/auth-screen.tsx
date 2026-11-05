@@ -3,6 +3,7 @@ import type { PropsWithChildren, ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -16,11 +17,13 @@ type AuthScreenProps = PropsWithChildren<{
   subtitle?: string;
   title: string;
   footer?: ReactNode;
+  onBrandPress?: () => void;
 }>;
 
 export function AuthScreen({
   children,
   footer,
+  onBrandPress,
   subtitle,
   title,
 }: AuthScreenProps) {
@@ -39,9 +42,23 @@ export function AuthScreen({
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.brand}>
-            <AppText tone="brand" variant="headline">
-              HomeyPaw
-            </AppText>
+            {onBrandPress ? (
+              <Pressable
+                accessibilityLabel="HomeyPaw"
+                accessibilityRole="button"
+                hitSlop={12}
+                onPress={onBrandPress}
+                style={styles.brandAction}
+              >
+                <AppText tone="brand" variant="headline">
+                  HomeyPaw
+                </AppText>
+              </Pressable>
+            ) : (
+              <AppText tone="brand" variant="headline">
+                HomeyPaw
+              </AppText>
+            )}
             <AppText accessibilityRole="header" variant="largeTitle">
               {title}
             </AppText>
@@ -78,6 +95,9 @@ const styles = StyleSheet.create({
   },
   brand: {
     gap: spacing.sm,
+  },
+  brandAction: {
+    alignSelf: 'flex-start',
   },
   subtitle: {
     maxWidth: 360,
