@@ -8,6 +8,10 @@ import {
 
 const free = 300 * 1024 ** 2;
 const plus = 5 * 1024 ** 3;
+const probeFix = process.argv.includes('--storage-probe-fix');
+const incidentStorage = probeFix && !process.argv.includes('--legacy-storage');
+const probeMigration =
+  'supabase/migrations/20261124125009_family_media_storage_probe_rollback.sql';
 const migration =
   'supabase/migrations/20261023055340_family_media_capacity_enforcement.sql';
 await withIsolatedMedia(
@@ -150,6 +154,244 @@ await withIsolatedMedia(
       query(
         'update private.family_media_quota_policy set storage_enforcement_enabled=true,metering_started_at=clock_timestamp();',
       );
+    if (probeFix) {
+      reset();
+      seed(0);
+      enable();
+      if (incidentStorage) {
+        const rejected = await upload('before-probe-fix');
+        assert.equal(
+          rejected.status,
+          400,
+          'reproduce Production on the same Storage version',
+        );
+        assert.ok(
+          docker(['logs', storageName]).includes(
+            'QUOTA_STORAGE_FINALIZATION_UNVERIFIED',
+          ),
+        );
+        assert.equal(used(), 0);
+        assert.equal(
+          query(
+            "select count(*) from storage.objects where version<>'fixture';",
+          ),
+          '0',
+        );
+      }
+      const beforeFix = query(`select json_build_array(
+        (select md5(string_agg(to_jsonb(p)::text,',' order by policyname)) from pg_policies p where schemaname='storage'),
+        (select md5(to_jsonb(q)::text) from private.family_media_quota_policy q),
+        (select md5(to_jsonb(c)::text) from private.family_billing_config c),
+        (select md5(string_agg(to_jsonb(m)::text,',' order by storage_object_id)) from private.family_media_objects m));`);
+      assert.throws(
+        () =>
+          query(
+            read(probeMigration).replace(
+              /commit;\s*$/u,
+              () =>
+                "do $$begin raise exception 'INJECTED_PROBE_INSTALL_FAILURE'; end$$; commit;",
+            ),
+          ),
+        /ERROR:\s+INJECTED_PROBE_INSTALL_FAILURE/,
+      );
+      assert.equal(
+        query(
+          "select to_regclass('private.family_media_storage_probe_guards') is null;",
+        ),
+        't',
+        'failed installation rolls back all new objects',
+      );
+      query(read(probeMigration));
+      assert.equal(
+        query(`select json_build_array(
+        (select md5(string_agg(to_jsonb(p)::text,',' order by policyname)) from pg_policies p where schemaname='storage'),
+        (select md5(to_jsonb(q)::text) from private.family_media_quota_policy q),
+        (select md5(to_jsonb(c)::text) from private.family_billing_config c),
+        (select md5(string_agg(to_jsonb(m)::text,',' order by storage_object_id)) from private.family_media_objects m));`),
+        beforeFix,
+      );
+      assert.equal(
+        query(
+          "select tgdeferrable and tginitdeferred and tgenabled='O' from pg_trigger where tgname='family_media_storage_probe_rollback';",
+        ),
+        't',
+      );
+      assert.equal(
+        query(
+          "select has_function_privilege('authenticated','private.require_family_media_storage_probe_rollback()','EXECUTE');",
+        ),
+        'f',
+      );
+      // SESSION AUTHORIZATION is used only by this isolated superuser fixture;
+      // an app JWT/role cannot manufacture the Storage backend login.
+      const callerWrite = (label, version, finish) => `
+        set session authorization supabase_storage_admin;
+        begin; set local role authenticated;
+        set local request.jwt.claim.role='authenticated';
+        select set_config('request.jwt.claim.sub',${quote(id('owner'))},true);
+        set local request.headers='{"x-homeypaw-platform":"ios","x-homeypaw-app-version":"1.3.0","x-homeypaw-build":"10"}';
+        insert into storage.objects(bucket_id,name,owner_id,version,metadata)
+        values('post-media',${quote(path(label))},${quote(id('owner'))},${quote(version)},'{"size":0}');
+        ${finish};`;
+      for (const version of ['1', id('random-probe-version')]) {
+        query(
+          callerWrite('rollback-' + version, version, 'rollback'),
+          undefined,
+          'supabase_admin',
+        );
+        for (const finish of [
+          'commit',
+          'set local role service_role; commit',
+          'set constraints all immediate; commit',
+        ]) {
+          assert.throws(
+            () =>
+              query(
+                callerWrite('reject-' + version, version, finish),
+                undefined,
+                'supabase_admin',
+              ),
+            /QUOTA_STORAGE_FINALIZATION_UNVERIFIED/,
+          );
+        }
+      }
+      const unsignedFinal = callerWrite(
+        'unsigned-final',
+        id('unsigned-version'),
+        'commit',
+      )
+        .replace(
+          'set local role authenticated;',
+          'set local role service_role;',
+        )
+        .replace('\'{"size":0}\'', "'{}'");
+      assert.throws(
+        () => query(unsignedFinal, undefined, 'supabase_admin'),
+        /QUOTA_STORAGE_FINALIZATION_UNVERIFIED/,
+        'even trusted final writes without backend size cannot commit',
+      );
+      assert.equal(
+        used(),
+        0,
+        'probes and failed commits leave no ledger charge',
+      );
+      assert.equal(
+        query("select count(*) from storage.objects where version<>'fixture';"),
+        '0',
+      );
+      await okay(await upload('after-probe-fix'));
+      assert.equal(used(), 4);
+      const freeLabel = 'after-probe-fix';
+      const freePhotos = JSON.stringify([
+        {
+          id: id(freeLabel),
+          storage_path: path(freeLabel),
+          width: 10,
+          height: 10,
+          mime_type: 'image/jpeg',
+          position: 0,
+        },
+      ]);
+      auth(
+        'owner',
+        `select public.create_post_v2(${quote(id('post-' + freeLabel))}::uuid,${quote(id('pet'))}::uuid,null,'other',current_date,null,${quote(freePhotos)}::jsonb,null);`,
+      );
+      assert.equal(
+        query(
+          `select count(*) from public.post_media where storage_path=${quote(path(freeLabel))};`,
+        ),
+        '1',
+        'Free photo publishes with the unchanged RPC',
+      );
+      assert.equal(
+        query(
+          'select count(*) from private.family_media_storage_probe_guards;',
+        ),
+        '0',
+      );
+      const signedName = path('signed-photo');
+      const signedResponse = await fetch(
+        `${baseUrl}/object/upload/sign/post-media/${signedName}`,
+        {
+          method: 'POST',
+          headers: { ...headers(), 'content-type': 'application/json' },
+          body: '{}',
+        },
+      );
+      await okay(signedResponse);
+      const signed = await signedResponse.json();
+      const signedUrl = new URL(signed.url, baseUrl);
+      assert.equal(signedUrl.hostname, '127.0.0.1');
+      await okay(
+        await fetch(signedUrl, {
+          method: 'PUT',
+          headers: { 'content-type': 'image/jpeg' },
+          body: new Uint8Array([255, 216, 255, 217]),
+        }),
+      );
+      assert.equal(used(), 8, 'signed upload still finalizes actual bytes');
+      query(
+        `delete from public.posts where id=${quote(id('post-' + freeLabel))}; delete from public.media_cleanup_jobs where storage_path=${quote(path(freeLabel))};`,
+      );
+      console.log(
+        'PASS: incident reproduced; random/literal probes roll back, escaped probes cannot commit even after role restore or SET CONSTRAINTS; final measured upload counts once.',
+      );
+      reset();
+      seed(548000000);
+      query(`insert into private.family_billing_customers(id,user_id) values(${quote(id('paid-customer'))},${quote(id('owner'))});
+        insert into private.family_billing_intents(id,family_id,customer_id,product_id,status)
+        values(${quote(id('paid-intent'))},${quote(id('family'))},${quote(id('paid-customer'))},'synthetic.monthly','fulfilled');
+        insert into private.family_store_subscriptions(id,environment,store,original_transaction_id,rc_subscription_id,customer_id,family_id,intent_id,product_id,status,gives_access,auto_renewal_status,started_at,access_until,last_generation,checked_at)
+        values(${quote(id('paid-sub'))},'SANDBOX','APP_STORE','synthetic-chain','synthetic-sub',${quote(id('paid-customer'))},${quote(id('family'))},${quote(id('paid-intent'))},'synthetic.monthly','active',true,'will_renew',now()-interval '1 day',now()+interval '1 day',1,now());
+        insert into private.family_media_entitlements(family_id,tier,starts_at,ends_at,ends_inclusive,source_reference)
+        values(${quote(id('family'))},'transition',clock_timestamp()-interval '16 days',clock_timestamp()-interval '1 day',false,'expired transition');
+        insert into private.family_media_entitlements(family_id,tier,starts_at,ends_at,ends_inclusive,source_reference,billing_subscription_id,billing_environment)
+        values(${quote(id('family'))},'plus',now()-interval '1 day',now()+interval '1 day',false,'isolated verified Plus',${quote(id('paid-sub'))},'SANDBOX');`);
+      enable();
+      const label = 'paid-photo-publish';
+      await okay(await upload(label));
+      const photos = JSON.stringify([
+        {
+          id: id(label),
+          storage_path: path(label),
+          width: 10,
+          height: 10,
+          mime_type: 'image/jpeg',
+          position: 0,
+        },
+      ]);
+      auth(
+        'owner',
+        `select public.create_post_v2(${quote(id('post-' + label))}::uuid,${quote(id('pet'))}::uuid,null,'other',current_date,null,${quote(photos)}::jsonb,null);`,
+      );
+      assert.equal(
+        query(
+          `select count(*) from public.post_media where storage_path=${quote(path(label))};`,
+        ),
+        '1',
+      );
+      const charged = used();
+      assert.ok(!(await upload(label)).ok);
+      assert.equal(used(), charged);
+      assert.equal(
+        query(
+          `select count(*) from public.post_media where storage_path=${quote(path(label))};`,
+        ),
+        '1',
+      );
+      assert.equal(summary().gives_plus_access, true);
+      query(`delete from public.posts where id=${quote(id('post-' + label))};`);
+      query(
+        `delete from public.media_cleanup_jobs where storage_path=${quote(path(label))};`,
+      );
+      console.log(
+        'PASS: 548 MB Plus Family with expired transition publishes through unchanged create_post_v2; duplicate retry preserves one reference and one charge.',
+      );
+      reset();
+      query(`delete from private.family_store_subscriptions where id=${quote(id('paid-sub'))};
+        delete from private.family_billing_intents where id=${quote(id('paid-intent'))};
+        delete from private.family_billing_customers where id=${quote(id('paid-customer'))};`);
+    }
     assert.equal(summary().usage.status, 'uninitialized');
     await okay(await upload('off'));
     assert.equal(
@@ -182,7 +424,14 @@ await withIsolatedMedia(
     );
     enable();
     await okay(await oldInFlight);
-    assert.equal(summary().usage.status, 'pending');
+    const activationSummary = summary();
+    if (probeFix && activationSummary.usage.status === 'ready') {
+      assert.equal(
+        activationSummary.usage.used_bytes,
+        free,
+        'new Storage final caller probe may serialize activation; ready must still include all bytes',
+      );
+    } else assert.equal(activationSummary.usage.status, 'pending');
     assert.ok(
       !(await upload('activation-overflow')).ok,
       'in-flight OFF upload cannot disappear from the activated budget',
@@ -650,6 +899,9 @@ await withIsolatedMedia(
   },
   {
     storage: true,
+    ...(incidentStorage
+      ? { storageImage: 'public.ecr.aws/supabase/storage-api:v1.96.4' }
+      : {}),
     storageFileSizeLimitBytes: 25 * 1024 ** 2,
     migration:
       'supabase/migrations/20261014104554_family_storage_quota_prototype.sql',

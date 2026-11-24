@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer';
 import { execFileSync } from 'node:child_process';
 import { createHmac, randomUUID } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const dbContainer = 'supabase_db_pawday';
@@ -15,12 +15,24 @@ export const read = (path) =>
   readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8');
 export const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const docker = (args, options = {}) =>
-  execFileSync('docker', args, {
-    encoding: 'utf8',
-    timeout: 60_000,
-    maxBuffer: 32 * 1024 * 1024,
-    ...options,
-  });
+  execFileSync(
+    process.platform === 'darwin'
+      ? '/Applications/Docker.app/Contents/Resources/bin/docker'
+      : 'docker',
+    [
+      '--host',
+      process.platform === 'darwin'
+        ? `unix://${join(homedir(), '.docker/run/docker.sock')}`
+        : 'unix:///var/run/docker.sock',
+      ...args,
+    ],
+    {
+      encoding: 'utf8',
+      timeout: 60_000,
+      maxBuffer: 32 * 1024 * 1024,
+      ...options,
+    },
+  );
 const fingerprint = `select json_build_object('tables',(
  select json_object_agg(table_schema||'.'||table_name,fingerprint) from (
  select t.table_schema,t.table_name,(xpath('/row/value/text()',query_to_xml(
@@ -36,6 +48,7 @@ export async function withIsolatedMedia(
     storage = false,
     tusExpiryMs = 60_000,
     storageFileSizeLimitBytes,
+    storageImage,
   } = {},
 ) {
   // Fixed local targets only. No URL, linked project or Production credential option.
@@ -154,6 +167,11 @@ export async function withIsolatedMedia(
         inspected.Config.Image.includes('supabase/storage-api:'),
         'Existing local Storage image required.',
       );
+      assert.ok(
+        storageImage === undefined ||
+          storageImage === 'public.ecr.aws/supabase/storage-api:v1.96.4',
+        'Only the pinned incident Storage image may override the existing local image.',
+      );
       const env = Object.fromEntries(
         inspected.Config.Env.map((line) => {
           const index = line.indexOf('=');
@@ -213,7 +231,7 @@ export async function withIsolatedMedia(
         '/var/lib/storage:rw,size=96m',
         '--env-file',
         envFile,
-        inspected.Config.Image,
+        storageImage ?? inspected.Config.Image,
       ]);
       storageStarted = true;
       const port = docker(['port', storageName, '5000/tcp'])
